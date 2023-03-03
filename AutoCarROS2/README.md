@@ -85,6 +85,7 @@ $ ros2 launch launches click_launch.py
 
 |Launch File|Purpose|
 |-----------|-------|
+|`odom_launch.py`|Complete pipeline with odom and visual|
 |`default_launch.py`|Complete pipeline with preset waypoints|
 |`click_launch.py`|Interactive pipeline for testing and fun|
 
@@ -95,9 +96,11 @@ $ ros2 launch launches click_launch.py
 |`launches`|Contains the main launch files for quick launching|
 |`autocar_description`|Contains the model's URDF and RViz configuration files|
 |`autocar_gazebo`|Contains the world files and model's SDF|
-|`autocar_map`|Contains the Bayesian Occupancy Filter stack|
+|`autocar_odom`|Contains the odometry from gps and imu|
+|`autocar_route`|Contains the Bayesian Occupancy Filter stack|
 |`autocar_msgs`|Contains all custom messages used throughout every package|
 |`autocar_nav`|Contains the navigation stack|
+|`autocar_map`|Contains the map information|
 
 ## Troubleshoot
 
