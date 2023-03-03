@@ -31,25 +31,25 @@ def generate_launch_description():
         SetEnvironmentVariable(
             'RCUTILS_COLORIZED_OUTPUT', '1'
         ),
-
-        ExecuteProcess(
-            cmd=['gzserver', '--verbose', world, 'libgazebo_ros_factory.so'],
-        ),
-
-        DeclareLaunchArgument(
-            'use_sim_time',
-            default_value='false',
-            description='Use simulation (Gazebo) clock if true'
-        ),
-
-        Node(
-            package='robot_state_publisher',
-            name='robot_state_publisher',
-            executable='robot_state_publisher',
-            output={'both': 'log'},
-            parameters=[{'use_sim_time': use_sim_time}],
-            arguments=[urdf]
-        ),
+#
+        # ExecuteProcess(
+            # cmd=['gzserver', '--verbose', world, 'libgazebo_ros_factory.so'],
+        # ),
+#
+        # DeclareLaunchArgument(
+            # 'use_sim_time',
+            # default_value='false',
+            # description='Use simulation (Gazebo) clock if true'
+        # ),
+#
+        # Node(
+            # package='robot_state_publisher',
+            # name='robot_state_publisher',
+            # executable='robot_state_publisher',
+            # output={'both': 'log'},
+            # parameters=[{'use_sim_time': use_sim_time}],
+            # arguments=[urdf]
+        # ),
 
         Node(
             package = odom,

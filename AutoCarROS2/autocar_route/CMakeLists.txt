@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autocar_map)
+project(autocar_route)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)

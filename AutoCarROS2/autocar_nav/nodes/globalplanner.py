@@ -47,7 +47,7 @@ class GlobalPathPlanner(Node):
             raise Exception("Missing ROS parameters. Check the configuration file.")
 
         # Get path to waypoints.csv
-        dir_path = os.path.join(get_package_share_directory('autocar_nav'), 'data', 'output.csv')
+        dir_path = os.path.join(get_package_share_directory('autocar_nav'), 'data', 'circuit.csv')
         df = pd.read_csv(dir_path)
 
         # Import waypoints.csv into class variables ax and ay

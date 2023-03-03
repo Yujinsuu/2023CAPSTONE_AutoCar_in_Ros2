@@ -21,7 +21,7 @@ class PathTracker(Node):
         super().__init__('path_tracker')
 
         # Initialise publishers
-        self.tracker_pub = self.create_publisher(AckermannDriveStamped, '/autocar/cmd_ackermann', 10)
+        self.tracker_pub = self.create_publisher(AckermannDriveStamped, '/autocar/ackermann_cmd', 10)
         self.lateral_ref_pub = self.create_publisher(PoseStamped, '/autocar/lateral_ref', 10)
 
         # Initialise subscribers

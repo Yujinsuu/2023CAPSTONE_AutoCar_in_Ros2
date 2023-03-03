@@ -36,6 +36,7 @@ class Converter(Node):
             ax = df['X-axis'].values.tolist()
             ay = df['Y-axis'].values.tolist()
             points = min(len(ax), len(ay))
+            print(points)
             self.points = points
 
             if points != 0:
@@ -82,7 +83,7 @@ def main(args=None):
     rclpy.init(args=args)
 
     # Get path to waypoints.csv
-    link_file = os.path.join(get_package_share_directory('autocar_nav'), 'data', 'output.csv')
+    link_file = os.path.join(get_package_share_directory('autocar_nav'), 'data', 'circuit.csv')
 
     try:
         # Initialise the class
