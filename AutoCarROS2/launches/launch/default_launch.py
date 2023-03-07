@@ -34,12 +34,6 @@ def generate_launch_description():
 
         Node(
             package = navpkg,
-            name = 'global_map',
-            executable = 'map_visualizer.py'
-        ),
-
-        Node(
-            package = navpkg,
             name = 'global_planner',
             executable = 'globalplanner.py',
             parameters = [navconfig]

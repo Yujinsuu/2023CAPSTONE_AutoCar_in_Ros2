@@ -11,6 +11,7 @@ from launch.actions import DeclareLaunchArgument, ExecuteProcess, SetEnvironment
 def generate_launch_description():
 
     odom = 'autocar_odom'
+    mappkg = 'autocar_map'
     gzpkg = 'autocar_gazebo'
     descpkg = 'autocar_description'
 
@@ -70,7 +71,13 @@ def generate_launch_description():
             name='rviz2',
             arguments=['-d', rviz],
             output={'both': 'log'}
-        )
+        ),
+
+        Node(
+            package = mappkg,
+            name = 'mapviz',
+            executable = 'map_visualizer.py'
+        ),
     ])
 
 def main():

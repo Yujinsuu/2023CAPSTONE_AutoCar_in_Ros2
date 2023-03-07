@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autocar_msgs)
+project(autocar_map)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -17,22 +17,24 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(autocar_msgs REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Path2D.msg"
-  "msg/State2D.msg"
-  "msg/Twist2D.msg"
-  "msg/Object.msg"
-  "msg/ObjectArray.msg"
-  "msg/Control.msg"
-  "msg/Polygon.msg"
-  "msg/PolygonArray.msg"
-  "msg/PathArray.msg"
-  DEPENDENCIES geometry_msgs std_msgs
- )
+
+install(DIRECTORY
+  data
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  src/map_visualizer.py
+  src/path_map.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

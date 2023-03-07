@@ -8,7 +8,7 @@ import rclpy
 from ament_index_python.packages import get_package_share_directory
 from rclpy.node import Node
 from visualization_msgs.msg import Marker, MarkerArray
-from autocar_msgs.msg import Path2D
+from path_map import *
 
 class Converter(Node):
 
@@ -16,10 +16,15 @@ class Converter(Node):
         super().__init__('mapviz')
 
         # Initialise suscriber(s)
-        self.localisation_sub = self.create_subscription(Path2D, '/autocar/path', self.path_pub, 10)
+        self.cb_sub = self.create_subscription(Marker, "/rviz/odom_marker", self.path_pub, 10)
 
         # Initialise publisher(s)
-        self.link_pub = self.create_publisher(MarkerArray, '/rviz/lane_links', 10)
+        self.link_pub = self.create_publisher(MarkerArray, '/rviz/global_links', 10)
+
+        if not use_map.mission_map_num==0:
+            for i in range(use_map.delivery_map_num):
+                mission_topic="/rviz/mission_link_"+str(i)
+                globals()["mission_pub_{}".format(i)]=self.create_publisher(MarkerArray, mission_topic, 10)
 
         self.r = r
         self.g = g
@@ -35,7 +40,6 @@ class Converter(Node):
             ax = df['X-axis'].values.tolist()
             ay = df['Y-axis'].values.tolist()
             points = min(len(ax), len(ay))
-            print(points)
             self.points = points
 
             if points != 0:
@@ -76,17 +80,29 @@ class Converter(Node):
     def path_pub(self, msg):
         self.link_pub.publish(self.ma)
 
+        if not use_map.mission_map_num==0:
+            for i in range(use_map.mission_map_num):
+                globals()["mission_pub_{}".format(i)].publish(globals()["mission_cv_{}".format(i)].ma)
+
 def main(args=None):
 
     # Initialise the node
     rclpy.init(args=args)
 
     # Get path to waypoints.csv
-    link_file = os.path.join(get_package_share_directory('autocar_nav'), 'data', 'h_parking.csv')
+    link_file = use_map.file
+
+    if not use_map.mission_map_num==0:
+        for i in range(use_map.mission_map_num):
+            globals()["mission_file_{}".format(i)]=use_map.mission_route[i]
 
     try:
         # Initialise the class
         link_cv = Converter(link_file, r=250/255.0, g=236/255.0, b=10/255.0, a=0.5, scale=0.5)
+
+        if not use_map.mission_map_num==0:
+            for i in range(use_map.mission_map_num):
+                globals()["mission_cv_{}".format(i)]=Converter(globals()["mission_file_{}".format(i)], 3000, r=228 / 255.0, g=233 / 255.0, b=237 / 255.0, a=0.8, scale=0.2)
 
         # Stop the node from exiting
         rclpy.spin(link_cv)

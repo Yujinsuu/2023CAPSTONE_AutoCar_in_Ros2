@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Path1/Topic1
+        - /Map1
         - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 659
@@ -61,31 +62,9 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base_link:
-          Value: true
-        bl_1:
-          Value: true
-        br_1:
-          Value: true
-        chassis_link:
-          Value: true
-        fl_1:
-          Value: true
-        fr_1:
-          Value: true
-        hokuyo_link:
-          Value: true
-        l_steer_1:
-          Value: true
         map:
           Value: true
         odom:
-          Value: true
-        r_steer_1:
-          Value: true
-        spoiler_link:
-          Value: true
-        steering_wheel:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -95,26 +74,7 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            base_link:
-              bl_1:
-                {}
-              br_1:
-                {}
-              chassis_link:
-                hokuyo_link:
-                  {}
-                spoiler_link:
-                  {}
-              fl_1:
-                {}
-              fr_1:
-                {}
-              l_steer_1:
-                {}
-              r_steer_1:
-                {}
-              steering_wheel:
-                {}
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -238,7 +198,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /rviz/lane_links
+        Value: /rviz/global_links
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -258,53 +218,6 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        bl_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        br_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        chassis_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        fl_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        fr_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        hokuyo_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        l_steer_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        r_steer_1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        spoiler_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       TF Prefix: ""
       Update Interval: 0
@@ -353,16 +266,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 342.2664489746094
+      Distance: 674.3935546875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 962785.3125
-        Y: 1958972.875
-        Z: -140.19476318359375
+        X: 962777.1875
+        Y: 1959080.125
+        Z: -140.0865478515625
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
