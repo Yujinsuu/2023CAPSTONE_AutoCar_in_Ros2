@@ -173,7 +173,7 @@ def main():
     import pandas as pd
     import matplotlib.pyplot as plt
 
-    dir_path = 'playground.csv'
+    dir_path = 'circuit.csv'
     df = pd.read_csv(dir_path)
     x = df['X-axis'].values.tolist()
     y = df['Y-axis'].values.tolist()

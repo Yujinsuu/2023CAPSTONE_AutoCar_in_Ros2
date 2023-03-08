@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
 import os
-
+import sys
 import numpy as np
 import pandas as pd
 import rclpy
+from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import Pose, Pose2D, PoseArray
-from rclpy.node import Node
-
 from autocar_msgs.msg import Path2D, State2D
+
+path_module = os.path.join(get_package_share_directory('autocar_map'), 'path')
+sys.path.append(path_module)
+from path_map import *
 
 class GlobalPathPlanner(Node):
 
@@ -21,7 +24,7 @@ class GlobalPathPlanner(Node):
 
         # Initialise publisher(s)
         self.goals_pub = self.create_publisher(Path2D, '/autocar/goals', 10)
-        self.goals_viz_pub = self.create_publisher(PoseArray, '/autocar/viz_goals', 10)
+        # self.goals_viz_pub = self.create_publisher(PoseArray, '/autocar/viz_goals', 10)
         # Initialise suscriber(s)
         self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10)
 
@@ -47,15 +50,17 @@ class GlobalPathPlanner(Node):
             raise Exception("Missing ROS parameters. Check the configuration file.")
 
         # Get path to waypoints.csv
-        dir_path = os.path.join(get_package_share_directory('autocar_nav'), 'data', 'circuit.csv')
-        df = pd.read_csv(dir_path)
+        df = pd.read_csv(use_map.file)
 
         # Import waypoints.csv into class variables ax and ay
-        self.ax = df['X-axis'].values.tolist()
-        self.ay = df['Y-axis'].values.tolist()
+        mx = df['X-axis'].values.tolist()
+        my = df['Y-axis'].values.tolist()
+
+        self.mx = mx[0:len(mx):1]
+        self.my = my[0:len(my):1]
 
         # Class constants
-        self.waypoints = min(len(self.ax), len(self.ay))
+        self.wp_num = min(len(self.mx), len(self.my))
         self.wp_published = self.wp_ahead + self.wp_behind
 
         # Class variables to use whenever within the class when necessary
@@ -90,60 +95,46 @@ class GlobalPathPlanner(Node):
                 self.wp_behind          - Indicates number of waypoints to preserve behind the vehicle
                 self.wp_published       - Indicates the total number of waypoints published
                 self.passed_threshold   - Indicates the distance after which a waypoint is considered passed
-                self.waypoints          - Total number of waypoints
+                self.wp_num             - Total number of waypoints
         '''
 
         # Identify position of vehicle front axle
-        fx = self.x + self.cg2frontaxle * np.cos(self.theta)
-        fy = self.y + self.cg2frontaxle * np.sin(self.theta)
+        fx = self.x + self.cg2frontaxle * -np.sin(self.theta)
+        fy = self.y + self.cg2frontaxle * np.cos(self.theta)
 
-        dx = [fx - icx for icx in self.ax] # Find the x-axis of the front axle relative to the path
-        dy = [fy - icy for icy in self.ay] # Find the y-axis of the front axle relative to the path
+        dx = [fx - icx for icx in self.mx] # Find the x-axis of the front axle relative to the path
+        dy = [fy - icy for icy in self.my] # Find the y-axis of the front axle relative to the path
 
         d = np.hypot(dx, dy)        # Find the distance from the front axle to the path
         closest_id = np.argmin(d)   # Returns the index with the shortest distance in the array
 
-        transform = self.frame_transform(self.ax[closest_id], self.ay[closest_id], fx, fy, self.theta)
+        transform = self.frame_transform(self.mx[closest_id], self.my[closest_id], fx, fy, self.theta)
 
         if closest_id < 2:
             # If the vehicle is starting along the path
             self.get_logger().info('Closest Waypoint #{} (Starting Path)'.format(closest_id))
-            px = self.ax[0: self.wp_published]
-            py = self.ay[0: self.wp_published]
+            px = self.mx[0: self.wp_published]
+            py = self.my[0: self.wp_published]
 
-        elif closest_id > (self.waypoints - self.wp_published):
+        elif closest_id > (self.wp_num - self.wp_published):
             # If the vehicle is finishing the given set of waypoints
             self.get_logger().info('Closest Waypoint #{} (Terminating Path)'.format(closest_id))
-            px = self.ax[-self.wp_published:]
-            py = self.ay[-self.wp_published:]
+            px = self.mx[-self.wp_published:]
+            py = self.my[-self.wp_published:]
 
         elif transform[1] < (0.0 - self.passed_threshold):
             # If the vehicle has passed, closest point is preserved as a point behind the car
             self.get_logger().info('Closest Waypoint #{} (Passed)'.format(closest_id))
-            px = self.ax[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
-            py = self.ay[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
+            px = self.mx[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
+            py = self.my[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
 
         else:
             # If the vehicle has yet to pass, a point behind the closest is preserved as a point behind the car
             self.get_logger().info('Closest Waypoint #{} (Approaching)'.format(closest_id))
-            px = self.ax[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
-            py = self.ay[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
+            px = self.mx[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
+            py = self.my[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
 
         self.publish_goals(px, py)
-
-    def start_end_condition(self, closest_id):
-
-        ''' [NOT IN USE] Dictates the goals published when vehicle is near the start / end of the waypoints list '''
-
-        if (closest_id < self.wp_behind):
-            px = self.ax[0 : self.wp_ahead]
-            py = self.ay[0 : self.wp_ahead]
-            return px, py
-
-        elif  (closest_id > self.waypoints - 1):
-            px = self.ax[(self.waypoints - self.wp_ahead - 1) : self.waypoints]
-            py = self.ay[(self.waypoints - self.wp_ahead - 1) : self.waypoints]
-            return px, py
 
     def frame_transform(self, point_x, point_y, axle_x, axle_y, theta):
         '''
@@ -186,15 +177,15 @@ class GlobalPathPlanner(Node):
             goals.poses.append(goal)
 
             # Appending to Visualization Path
-            vpose = Pose()
-            vpose.position.x = px[i]
-            vpose.position.y = py[i]
-            vpose.position.z = 0.0
-            vpose.orientation
-            viz_goals.poses.append(vpose)
+            # vpose = Pose()
+            # vpose.position.x = px[i]
+            # vpose.position.y = py[i]
+            # vpose.position.z = 0.0
+            # vpose.orientation
+            # viz_goals.poses.append(vpose)
 
         self.goals_pub.publish(goals)
-        self.goals_viz_pub.publish(viz_goals)
+        # self.goals_viz_pub.publish(viz_goals)
 
 def main(args=None):
 

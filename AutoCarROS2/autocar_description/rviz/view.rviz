@@ -7,8 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /Path1/Topic1
-        - /Map1
-        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 659
   - Class: rviz_common/Selection
@@ -45,6 +43,30 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        map:
+          Value: true
+        odom:
+          Value: true
+        velodyne:
+          Value: true
+      Marker Scale: 0.800000011920929
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        map:
+          odom:
+            {}
+          velodyne:
+            {}
+      Update Interval: 0
+      Value: true
     - Class: rviz_default_plugins/Marker
       Enabled: true
       Name: Autocar
@@ -57,58 +79,17 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /rviz/odom_marker
       Value: true
-    - Class: rviz_default_plugins/TF
+    - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Frame Timeout: 15
-      Frames:
-        All Enabled: true
-        map:
-          Value: true
-        odom:
-          Value: true
-      Marker Scale: 0.800000011920929
-      Name: TF
-      Show Arrows: true
-      Show Axes: true
-      Show Names: false
-      Tree:
-        map:
-          odom:
-            {}
-      Update Interval: 0
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: y
-      Class: rviz_default_plugins/LaserScan
-      Color: 236; 16; 110
-      Color Transformer: FlatColor
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 18.191085815429688
-      Min Color: 0; 0; 0
-      Min Intensity: 3.9490795135498047
-      Name: LaserScan
-      Position Transformer: XYZ
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.10000000149011612
-      Style: Flat Squares
+      Name: Map
+      Namespaces:
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Best Effort
-        Value: /scan
-      Use Fixed Frame: true
-      Use rainbow: true
+        Reliability Policy: Reliable
+        Value: /rviz/global_links
       Value: true
     - Alpha: 0.699999988079071
       Class: rviz_default_plugins/Map
@@ -157,72 +138,39 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /autocar/viz_path
       Value: true
-    - Class: rviz_default_plugins/Marker
-      Enabled: true
-      Name: Marker
-      Namespaces:
-        {}
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /autocar/viz_goals
-      Value: true
     - Alpha: 1
-      Axes Length: 1
-      Axes Radius: 0.10000000149011612
-      Class: rviz_default_plugins/Pose
-      Color: 114; 159; 207
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: y
+      Class: rviz_default_plugins/LaserScan
+      Color: 236; 16; 110
+      Color Transformer: FlatColor
+      Decay Time: 0
       Enabled: true
-      Head Length: 0.30000001192092896
-      Head Radius: 0.10000000149011612
-      Name: Pose
-      Shaft Length: 1
-      Shaft Radius: 0.05000000074505806
-      Shape: Arrow
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 18.191085815429688
+      Min Color: 0; 0; 0
+      Min Intensity: 3.9490795135498047
+      Name: LaserScan
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.10000000149011612
+      Style: Flat Squares
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /autocar/lateral_ref
+        Reliability Policy: Best Effort
+        Value: /scan
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: Map
-      Namespaces:
-        "": true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /rviz/global_links
-      Value: true
-    - Alpha: 1
-      Class: rviz_default_plugins/RobotModel
-      Collision Enabled: false
-      Description File: ""
-      Description Source: Topic
-      Description Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /robot_description
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-      Name: RobotModel
-      TF Prefix: ""
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -266,16 +214,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 674.3935546875
+      Distance: 392.8669738769531
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 962777.1875
-        Y: 1959080.125
-        Z: -140.0865478515625
+        X: 962698.25
+        Y: 1959086.125
+        Z: -140.09634399414062
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

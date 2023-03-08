@@ -25,13 +25,13 @@ find_package(autocar_msgs REQUIRED)
 
 
 install(DIRECTORY
+  path
   data
   DESTINATION share/${PROJECT_NAME}
 )
 
 install(PROGRAMS
   src/map_visualizer.py
-  src/path_map.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

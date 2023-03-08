@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 
 import os
-
+import sys
 import numpy as np
 import pandas as pd
 import rclpy
 from ament_index_python.packages import get_package_share_directory
 from rclpy.node import Node
 from visualization_msgs.msg import Marker, MarkerArray
+
+path_module = os.path.join(get_package_share_directory('autocar_map'), 'path')
+print(path_module)
+sys.path.append(path_module)
 from path_map import *
 
 class Converter(Node):
@@ -15,14 +19,11 @@ class Converter(Node):
     def __init__(self, file_=None, r=255/255.0, g=255/255.0, b=255/255.0, a= 0.5, scale=0.1):
         super().__init__('mapviz')
 
-        # Initialise suscriber(s)
-        self.cb_sub = self.create_subscription(Marker, "/rviz/odom_marker", self.path_pub, 10)
-
         # Initialise publisher(s)
         self.link_pub = self.create_publisher(MarkerArray, '/rviz/global_links', 10)
 
         if not use_map.mission_map_num==0:
-            for i in range(use_map.delivery_map_num):
+            for i in range(use_map.mission_map_num):
                 mission_topic="/rviz/mission_link_"+str(i)
                 globals()["mission_pub_{}".format(i)]=self.create_publisher(MarkerArray, mission_topic, 10)
 
@@ -40,7 +41,8 @@ class Converter(Node):
             ax = df['X-axis'].values.tolist()
             ay = df['Y-axis'].values.tolist()
             points = min(len(ax), len(ay))
-            self.points = points
+            self.wp_num = points
+            print(self.wp_num)
 
             if points != 0:
                 self.make_marker_array(ax,ay)
@@ -48,7 +50,7 @@ class Converter(Node):
     def make_marker_array(self, ax, ay):
         ma = MarkerArray()
 
-        for i in range(self.points):
+        for i in range(self.wp_num):
             m = Marker()
             m.id = i
             m.header.frame_id = "map"
@@ -77,7 +79,9 @@ class Converter(Node):
 
         self.ma = ma
 
-    def path_pub(self, msg):
+        self.timer = self.create_timer(0.5, self.path_pub)
+
+    def path_pub(self):
         self.link_pub.publish(self.ma)
 
         if not use_map.mission_map_num==0:
@@ -102,7 +106,7 @@ def main(args=None):
 
         if not use_map.mission_map_num==0:
             for i in range(use_map.mission_map_num):
-                globals()["mission_cv_{}".format(i)]=Converter(globals()["mission_file_{}".format(i)], 3000, r=228 / 255.0, g=233 / 255.0, b=237 / 255.0, a=0.8, scale=0.2)
+                globals()["mission_cv_{}".format(i)]=Converter(globals()["mission_file_{}".format(i)], r=228/255.0, g=233/255.0, b=237/255.0, a=0.8, scale=0.2)
 
         # Stop the node from exiting
         rclpy.spin(link_cv)

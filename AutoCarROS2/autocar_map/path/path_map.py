@@ -40,7 +40,8 @@ class Path(Node):
         self.target_speed = []
         self.link_change = []
         self.car_mode = []
-        self.mission_map_num = 0
+        self.mission_map_num = 1
+        self.mission_route=[]
 
     # link_wp 안에 마지막 waypoint 추가 및 0 제거하는 함수
     def set_global_link(self, wp_list=[0], mode='global'):
@@ -50,6 +51,7 @@ class Path(Node):
 def linear_track():
     link_file = file_path + '/straight.csv'
     linear_track = Path(link_file)
+    linear_track.mission_route = [file_path+'/circuit.csv']
     linear_track.link_change = [405]
     linear_track.car_mode = ['G','E']
     linear_track.set_global_link(linear_track.link_change)

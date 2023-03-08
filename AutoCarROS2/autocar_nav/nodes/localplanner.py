@@ -57,10 +57,6 @@ class LocalPathPlanner(Node):
         self.ax = []
         self.ay = []
 
-        # For debug purposes, do not delete
-        # self.ax = [103.67, 102.6610906864386, 99.65400001792553, 94.70725759380844, 87.91714612853669]
-        # self.ay = [0, 14.428075376529984, 28.575324677548302, 42.16638778766821, 54.93673012305635]
-
         # Initialise timer
         self.timer = self.create_timer(self.ds, self.timer_cb)
 
@@ -105,7 +101,7 @@ class LocalPathPlanner(Node):
         target_path = Path2D()
         viz_path = Path()
 
-        viz_path.header.frame_id = "odom"
+        viz_path.header.frame_id = "map"
         viz_path.header.stamp = self.get_clock().now().to_msg()
 
         for n in range(0, path_length):
@@ -118,7 +114,7 @@ class LocalPathPlanner(Node):
 
             # Appending to Visualization Path
             vpose = PoseStamped()
-            vpose.header.frame_id = "odom"
+            vpose.header.frame_id = "map"
             vpose.header.stamp = self.get_clock().now().to_msg()
             vpose.pose.position.x = cx[n]
             vpose.pose.position.y = cy[n]

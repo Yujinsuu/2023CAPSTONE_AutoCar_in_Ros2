@@ -30,17 +30,15 @@ ament_python_install_package(${PROJECT_NAME})
 
 install(DIRECTORY
   config
-  data
   DESTINATION share/${PROJECT_NAME}
 )
 
 install(PROGRAMS
   nodes/globalplanner.py
-  nodes/localisation.py
+  nodes/localization.py
   nodes/localplanner.py
   nodes/clickplanner.py
   nodes/tracker.py
-  nodes/map_visualizer.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
