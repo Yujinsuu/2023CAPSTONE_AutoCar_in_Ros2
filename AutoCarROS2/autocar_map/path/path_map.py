@@ -23,6 +23,7 @@ class Path(Node):
 
         self.ax = {'global':{},'mission':{}}
         self.ay = {'global':{},'mission':{}}
+        self.aw = {'global':{},'mission':{}}
         self.link_wp = {'global':{},'mission':{}}
         self.wp_num = {'global':{},'mission':{}}
 
@@ -34,6 +35,8 @@ class Path(Node):
             self.ax['global'] = ax
             ay = df['Y-axis'].values.tolist()
             self.ay['global'] = ay
+            ayaw = df['Yaw'].values.tolist()
+            self.aw['global'] = ayaw
             points = min(len(ax), len(ay))
             self.wp_num['global'] = points
 

@@ -6,16 +6,16 @@ local_planner:
     ros__parameters:
         update_frequency: 10.0
         car_width: 2.0
-        centreofgravity_to_frontaxle: 1.483
+        centreofgravity_to_frontaxle: 0.713
         frame_id: "base_link"
 
 global_planner:
     ros__parameters:
         update_frequency: 2.0
-        waypoints_ahead: 10
-        waypoints_behind: 10
+        waypoints_ahead: 5
+        waypoints_behind: 3
         passed_threshold: 0.25
-        centreofgravity_to_frontaxle: 1.483
+        centreofgravity_to_frontaxle: 0.713
 
 path_tracker:
     ros__parameters:
@@ -24,4 +24,4 @@ path_tracker:
         softening_gain: 1.0
         yawrate_gain: 1.0
         steering_limits: 0.5
-        centreofgravity_to_frontaxle: 1.483
+        centreofgravity_to_frontaxle: 0.713

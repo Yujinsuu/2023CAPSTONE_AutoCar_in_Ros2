@@ -53,9 +53,10 @@ class LocalPathPlanner(Node):
         self.ds = 1 / self.frequency
 
         # Class variables to use whenever within the class when necessary
-        self.target_vel = 1.0
+        self.target_vel = 2.0
         self.ax = []
         self.ay = []
+        self.aw = []
 
         # Initialise timer
         self.timer = self.create_timer(self.ds, self.timer_cb)
@@ -72,12 +73,15 @@ class LocalPathPlanner(Node):
         '''
         self.ax = []
         self.ay = []
+        self.aw = []
 
         for i in range(0, len(msg.poses)):
             px = msg.poses[i].x
             py = msg.poses[i].y
+            pw = msg.poses[i].theta
             self.ax.append(px)
             self.ay.append(py)
+            self.aw.append(pw)
 
         self.publish_path()
 
@@ -94,7 +98,9 @@ class LocalPathPlanner(Node):
         Default path draw across waypoints
         '''
 
-        cx, cy, cyaw, _ = generate_cubic_path(self.ax, self.ay, self.ds)
+        # cx, cy, cyaw, _ = generate_cubic_path(self.ax, self.ay, self.ds)
+
+        cx, cy, cyaw = self.ax, self.ay, self.aw
 
         path_length = min(len(cx), len(cy), len(cyaw))
 

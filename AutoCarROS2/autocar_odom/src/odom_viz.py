@@ -131,12 +131,3 @@ def main(args=None):
 
 if __name__ == "__main__":
   main()
-
-
-	# rospy.init_node("state")
-	# node = ImuPub()
-	# r = rospy.Rate(10)
-
-	# while not rospy.is_shutdown():
-	# 	node.msg_pub()
-	# 	r.sleep()

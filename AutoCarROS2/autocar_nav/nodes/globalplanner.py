@@ -49,15 +49,14 @@ class GlobalPathPlanner(Node):
         except:
             raise Exception("Missing ROS parameters. Check the configuration file.")
 
-        # Get path to waypoints.csv
-        df = pd.read_csv(use_map.file)
-
         # Import waypoints.csv into class variables ax and ay
-        mx = df['X-axis'].values.tolist()
-        my = df['Y-axis'].values.tolist()
+        mx = use_map.ax['global']
+        my = use_map.ay['global']
+        mw = use_map.aw['global']
 
         self.mx = mx[0:len(mx):1]
         self.my = my[0:len(my):1]
+        self.mw = mw[0:len(mw):1]
 
         # Class constants
         self.wp_num = min(len(self.mx), len(self.my))
@@ -115,26 +114,30 @@ class GlobalPathPlanner(Node):
             self.get_logger().info('Closest Waypoint #{} (Starting Path)'.format(closest_id))
             px = self.mx[0: self.wp_published]
             py = self.my[0: self.wp_published]
+            pw = self.my[0: self.wp_published]
 
         elif closest_id > (self.wp_num - self.wp_published):
             # If the vehicle is finishing the given set of waypoints
             self.get_logger().info('Closest Waypoint #{} (Terminating Path)'.format(closest_id))
             px = self.mx[-self.wp_published:]
             py = self.my[-self.wp_published:]
+            pw = self.my[-self.wp_published:]
 
         elif transform[1] < (0.0 - self.passed_threshold):
             # If the vehicle has passed, closest point is preserved as a point behind the car
             self.get_logger().info('Closest Waypoint #{} (Passed)'.format(closest_id))
             px = self.mx[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
             py = self.my[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
+            pw = self.my[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
 
         else:
             # If the vehicle has yet to pass, a point behind the closest is preserved as a point behind the car
             self.get_logger().info('Closest Waypoint #{} (Approaching)'.format(closest_id))
             px = self.mx[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
             py = self.my[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
+            pw = self.mw[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
 
-        self.publish_goals(px, py)
+        self.publish_goals(px, py, pw)
 
     def frame_transform(self, point_x, point_y, axle_x, axle_y, theta):
         '''
@@ -158,34 +161,23 @@ class GlobalPathPlanner(Node):
 
         return transform
 
-    def publish_goals(self, px, py):
+    def publish_goals(self, px, py, pw):
 
         ''' Publishes an array of waypoints for the Local Path Planner '''
 
-        waypoints = min(len(px), len(py))
+        waypoints = min(len(px), len(py), len(pw))
         goals = Path2D()
-
-        viz_goals = PoseArray()
-        viz_goals.header.frame_id = "odom"
-        viz_goals.header.stamp = self.get_clock().now().to_msg()
 
         for i in range(0, waypoints):
             # Appending to Target Goals
             goal = Pose2D()
             goal.x = px[i]
             goal.y = py[i]
+            goal.theta = pw[i]
+
             goals.poses.append(goal)
 
-            # Appending to Visualization Path
-            # vpose = Pose()
-            # vpose.position.x = px[i]
-            # vpose.position.y = py[i]
-            # vpose.position.z = 0.0
-            # vpose.orientation
-            # viz_goals.poses.append(vpose)
-
         self.goals_pub.publish(goals)
-        # self.goals_viz_pub.publish(viz_goals)
 
 def main(args=None):
 
