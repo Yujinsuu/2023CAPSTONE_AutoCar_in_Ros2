@@ -22,7 +22,7 @@ class PathTracker(Node):
 
         # Initialise publishers
         self.tracker_pub = self.create_publisher(AckermannDriveStamped, '/autocar/ackermann_cmd', 10)
-        # self.lateral_ref_pub = self.create_publisher(PoseStamped, '/autocar/lateral_ref', 10)
+
 
         # Initialise subscribers
         self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10)
@@ -82,7 +82,7 @@ class PathTracker(Node):
         self.lock.acquire()
         self.x = msg.pose.x
         self.y = msg.pose.y
-        self.yaw = msg.pose.theta
+        self.yaw = msg.pose.theta - np.deg2rad(90)
         self.vel = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
         self.yawrate = msg.twist.w
 
@@ -133,16 +133,6 @@ class PathTracker(Node):
         self.heading_error = normalise_angle(self.cyaw[target_idx] - self.yaw - np.pi * 0.5)
         self.target_idx = target_idx
 
-        # pose = PoseStamped()
-        # pose.header.frame_id = "odom"
-        # pose.header.stamp = self.get_clock().now().to_msg()
-        # pose.pose.position.x = self.cx[target_idx]
-        # pose.pose.position.y = self.cy[target_idx]
-        # pose.pose.position.z = 0.0
-        # pose.pose.orientation = yaw_to_quaternion(self.cyaw[target_idx])
-        # self.lateral_ref_pub.publish(pose)
-
-    # Stanley controller determines the appropriate steering angle
     def stanley_control(self):
 
         self.lock.acquire()

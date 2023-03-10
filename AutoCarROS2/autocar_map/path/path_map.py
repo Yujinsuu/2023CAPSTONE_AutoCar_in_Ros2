@@ -16,14 +16,12 @@ class MakingPath:
     def __init__(self):
         self.x = []
         self.y = []
-        self.yaw = []
 
 class Path(Node):
     def __init__(self, file_=None):
 
         self.ax = {'global':{},'mission':{}}
         self.ay = {'global':{},'mission':{}}
-        self.aw = {'global':{},'mission':{}}
         self.link_wp = {'global':{},'mission':{}}
         self.wp_num = {'global':{},'mission':{}}
 
@@ -35,15 +33,13 @@ class Path(Node):
             self.ax['global'] = ax
             ay = df['Y-axis'].values.tolist()
             self.ay['global'] = ay
-            ayaw = df['Yaw'].values.tolist()
-            self.aw['global'] = ayaw
             points = min(len(ax), len(ay))
             self.wp_num['global'] = points
 
         self.target_speed = []
         self.link_change = []
         self.car_mode = []
-        self.mission_map_num = 1
+        self.mission_map_num = 0
         self.mission_route=[]
 
     # link_wp 안에 마지막 waypoint 추가 및 0 제거하는 함수
@@ -52,10 +48,10 @@ class Path(Node):
         self.link_wp[mode] = wp_list
 
 def linear_track():
-    link_file = file_path + '/straight.csv'
+    link_file = file_path + '/h_cw.csv'
     linear_track = Path(link_file)
-    linear_track.mission_route = [file_path+'/circuit.csv']
-    linear_track.link_change = [405]
+    #linear_track.mission_route = [file_path+'/origin.csv']
+    linear_track.link_change = [105]
     linear_track.car_mode = ['G','E']
     linear_track.set_global_link(linear_track.link_change)
 

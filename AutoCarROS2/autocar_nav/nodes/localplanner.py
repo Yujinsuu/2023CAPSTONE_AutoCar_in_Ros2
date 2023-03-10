@@ -98,9 +98,7 @@ class LocalPathPlanner(Node):
         Default path draw across waypoints
         '''
 
-        # cx, cy, cyaw, _ = generate_cubic_path(self.ax, self.ay, self.ds)
-
-        cx, cy, cyaw = self.ax, self.ay, self.aw
+        cx, cy, cyaw,_ = generate_cubic_path(self.ax, self.ay, 0.1)
 
         path_length = min(len(cx), len(cy), len(cyaw))
 

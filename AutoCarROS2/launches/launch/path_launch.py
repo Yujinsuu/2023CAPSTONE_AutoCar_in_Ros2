@@ -14,7 +14,6 @@ def generate_launch_description():
 
     navconfig = os.path.join(get_package_share_directory(navpkg), 'config', 'navigation_params.yaml')
 
-    # 962730.0368901521;1959367.9756638794;0.0
 
     return LaunchDescription([
         SetEnvironmentVariable(

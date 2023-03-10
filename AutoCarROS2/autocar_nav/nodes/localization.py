@@ -42,6 +42,7 @@ class Localization(Node):
         self.state = None
         self.tx = []
         self.ty = []
+        self.tw = []
 
     def vehicle_state_cb(self, msg):
         self.state = msg
@@ -51,44 +52,46 @@ class Localization(Node):
     def update_state(self):
 
         # Define vehicle pose x,y, theta
-        state2d = State2D()
-        state2d.pose.x = self.state.pose.pose.position.x
-        state2d.pose.y = self.state.pose.pose.position.y
-        state2d.pose.theta = 2.0 * np.arctan2(self.state.pose.pose.orientation.z, self.state.pose.pose.orientation.w)
+        self.state2d = State2D()
+        self.state2d.pose.x = self.state.pose.pose.position.x
+        self.state2d.pose.y = self.state.pose.pose.position.y
+        self.state2d.pose.theta = 2.0 * np.arctan2(self.state.pose.pose.orientation.z, self.state.pose.pose.orientation.w)
 
         # Aligning heading to y-axis, accounts for double rotation error
-        if state2d.pose.theta < 0.0:
-            state2d.pose.theta += 2.0 * np.pi
+        if self.state2d.pose.theta < 0.0:
+            self.state2d.pose.theta += 2.0 * np.pi
 
         # Define linear velocity x,y and angular velocity w
-        state2d.twist.x = self.state.twist.twist.linear.x
-        state2d.twist.y = self.state.twist.twist.linear.y
-        state2d.twist.w = -self.state.twist.twist.angular.z
+        self.state2d.twist.x = self.state.twist.twist.linear.x
+        self.state2d.twist.y = self.state.twist.twist.linear.y
+        self.state2d.twist.w = -self.state.twist.twist.angular.z
 
-        self.localization_pub.publish(state2d)
+        self.localization_pub.publish(self.state2d)
         self.timer = self.create_timer(3, self.trajectory)
 
     def trajectory(self):
-        self.tx.append(self.state.pose.pose.position.x)
-        self.ty.append(self.state.pose.pose.position.y)
+        self.tx.append(self.state2d.pose.x)
+        self.ty.append(self.state2d.pose.y)
+        self.tw.append(self.state2d.pose.theta)
 
         if len(self.tx) > 2:
-            f = interp1d(self.tx, self.ty, kind='linear')
-
-            # 보간 구간 설정 (예: 0.1초 간격으로 보간)
-            t = np.linspace(self.tx[0], self.tx[-1], num=100)
-            interp_y = f(t)
-
             # Path 메시지 구성
             path = Path()
             path.header.frame_id = "odom"
+            path.header.stamp = self.get_clock().now().to_msg()
 
-            for j in range(len(t)):
-                p = PoseStamped()
-                p.pose.position.x = t[j]
-                p.pose.position.y = interp_y[j]
-                p.pose.orientation.w = 1.0
-                path.poses.append(p)
+            path_length = min(len(self.tx), len(self.ty), len(self.tw))
+
+            for n in range(0, path_length):
+                # Appending to Visualization Path
+                vpose = PoseStamped()
+                vpose.header.frame_id = "odom"
+                vpose.header.stamp = self.get_clock().now().to_msg()
+                vpose.pose.position.x = self.tx[n]
+                vpose.pose.position.y = self.ty[n]
+                vpose.pose.position.z = 0.0
+                vpose.pose.orientation = yaw_to_quaternion(np.pi * 0.5 - self.tw[n])
+                path.poses.append(vpose)
 
             self.trajectory_pub.publish(path)
 

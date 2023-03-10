@@ -107,12 +107,12 @@ class odom_viz(Node):
     m.pose.orientation.z = quat[2]
     m.pose.orientation.w = quat[3]
 
-    m.scale.x = 1.600*2
-    m.scale.y = 1.160*2
-    m.scale.z = 1.645*2
-    m.color.r = 93 / 255.0
-    m.color.g = 122 / 255.0
-    m.color.b = 177 / 255.0
+    m.scale.x = 1.600
+    m.scale.y = 1.160
+    m.scale.z = 1.645
+    m.color.r = 17 / 255.0
+    m.color.g = 17 / 255.0
+    m.color.b = 252 / 255.0
     m.color.a = 0.97
     self.marker_pub.publish(m)
 

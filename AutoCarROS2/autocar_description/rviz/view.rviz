@@ -7,7 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Path1/Topic1
-        - /Path2
+        - /trajectory1
       Splitter Ratio: 0.5
     Tree Height: 659
   - Class: rviz_common/Selection
@@ -53,8 +53,6 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
-        velodyne:
-          Value: true
       Marker Scale: 0.800000011920929
       Name: TF
       Show Arrows: true
@@ -63,8 +61,6 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            {}
-          velodyne:
             {}
       Update Interval: 0
       Value: true
@@ -182,7 +178,7 @@ Visualization Manager:
       Length: 0.30000001192092896
       Line Style: Lines
       Line Width: 0.029999999329447746
-      Name: Path
+      Name: trajectory
       Offset:
         X: 0
         Y: 0
@@ -242,16 +238,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 387.2096862792969
+      Distance: 331.7090148925781
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 962679.75
-        Y: 1959119.375
-        Z: -140.0702362060547
+        X: 962708.5
+        Y: 1959022.625
+        Z: -140.14019775390625
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

@@ -52,11 +52,9 @@ class GlobalPathPlanner(Node):
         # Import waypoints.csv into class variables ax and ay
         mx = use_map.ax['global']
         my = use_map.ay['global']
-        mw = use_map.aw['global']
 
         self.mx = mx[0:len(mx):1]
         self.my = my[0:len(my):1]
-        self.mw = mw[0:len(mw):1]
 
         # Class constants
         self.wp_num = min(len(self.mx), len(self.my))
@@ -114,30 +112,26 @@ class GlobalPathPlanner(Node):
             self.get_logger().info('Closest Waypoint #{} (Starting Path)'.format(closest_id))
             px = self.mx[0: self.wp_published]
             py = self.my[0: self.wp_published]
-            pw = self.my[0: self.wp_published]
 
         elif closest_id > (self.wp_num - self.wp_published):
             # If the vehicle is finishing the given set of waypoints
             self.get_logger().info('Closest Waypoint #{} (Terminating Path)'.format(closest_id))
             px = self.mx[-self.wp_published:]
             py = self.my[-self.wp_published:]
-            pw = self.my[-self.wp_published:]
 
         elif transform[1] < (0.0 - self.passed_threshold):
             # If the vehicle has passed, closest point is preserved as a point behind the car
             self.get_logger().info('Closest Waypoint #{} (Passed)'.format(closest_id))
             px = self.mx[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
             py = self.my[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
-            pw = self.my[closest_id - (self.wp_behind - 1) : closest_id + (self.wp_ahead + 1)]
 
         else:
             # If the vehicle has yet to pass, a point behind the closest is preserved as a point behind the car
             self.get_logger().info('Closest Waypoint #{} (Approaching)'.format(closest_id))
             px = self.mx[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
             py = self.my[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
-            pw = self.mw[(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
 
-        self.publish_goals(px, py, pw)
+        self.publish_goals(px, py)
 
     def frame_transform(self, point_x, point_y, axle_x, axle_y, theta):
         '''
@@ -161,11 +155,11 @@ class GlobalPathPlanner(Node):
 
         return transform
 
-    def publish_goals(self, px, py, pw):
+    def publish_goals(self, px, py):
 
         ''' Publishes an array of waypoints for the Local Path Planner '''
 
-        waypoints = min(len(px), len(py), len(pw))
+        waypoints = min(len(px), len(py))
         goals = Path2D()
 
         for i in range(0, waypoints):
@@ -173,7 +167,6 @@ class GlobalPathPlanner(Node):
             goal = Pose2D()
             goal.x = px[i]
             goal.y = py[i]
-            goal.theta = pw[i]
 
             goals.poses.append(goal)
 

@@ -16,7 +16,7 @@ from path_map import *
 
 class Converter(Node):
 
-    def __init__(self, file_=None, r=255/255.0, g=255/255.0, b=255/255.0, a= 0.5, scale=0.1):
+    def __init__(self, file_=None, r=255/255.0, g=255/255.0, b=255/255.0, a= 0.5, scale=0.05):
         super().__init__('mapviz')
 
         # Initialise publisher(s)

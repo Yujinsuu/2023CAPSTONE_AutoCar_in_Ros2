@@ -10,8 +10,54 @@ from pyproj import Proj, transform, CRS, Transformer
 from rclpy.clock import Clock
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import StaticTransformBroadcaster
-
+import math
 import numpy as np
+import numpy as np
+
+def euler_from_quaternion(x, y, z, w):
+
+	"""
+	Convert a quaternion into euler angles (roll, pitch, yaw)
+	roll is rotation around x in radians (counterclockwise)
+	pitch is rotation around y in radians (counterclockwise)
+	yaw is rotation around z in radians (counterclockwise)
+	"""
+
+	t0 = +2.0 * (w * x + y * z)
+	t1 = +1.0 - 2.0 * (x * x + y * y)
+	roll_x = math.atan2(t0, t1)
+
+	t2 = +2.0 * (w * y - z * x)
+	t2 = +1.0 if t2 > +1.0 else t2
+	t2 = -1.0 if t2 < -1.0 else t2
+	pitch_y = math.asin(t2)
+
+	t3 = +2.0 * (w * z + x * y)
+	t4 = +1.0 - 2.0 * (y * y + z * z)
+	yaw_z = math.atan2(t3, t4)
+
+	return yaw_z
+
+def get_quaternion_from_euler(roll, pitch, yaw):
+
+	"""
+	Convert an Euler angle to a quaternion.
+
+	Input
+	:param roll: The roll (rotation around x-axis) angle in radians.
+	:param pitch: The pitch (rotation around y-axis) angle in radians.
+	:param yaw: The yaw (rotation around z-axis) angle in radians.
+
+	Output
+	:return qx, qy, qz, qw: The orientation in quaternion [x,y,z,w] format
+	"""
+
+	qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+	qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+	qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+	qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+
+	return [qx, qy, qz, qw]
 
 class odomPublisher(Node):
 	def __init__(self):
@@ -37,8 +83,8 @@ class odomPublisher(Node):
 		# p2 = Proj(init='epsg:5179')
 		# a, b = transform(p1, p2, gps.longitude, gps.latitude)
 
-		self.gpose.pose.pose.position.x=b #-1.8177898578578606
-		self.gpose.pose.pose.position.y=a #+0.34575470979325473
+		self.gpose.pose.pose.position.x=b#-962765.386350862
+		self.gpose.pose.pose.position.y=a-10#-1958988.02084955
 		# self.gpose.pose.covariance[0]=cov1
 		# self.gpose.pose.covariance[7]=cov2
 		# self.gpose.pose.covariance[14]=cov3
@@ -53,10 +99,15 @@ class odomPublisher(Node):
 
 
 	def imu_callback(self, imu):
-		self.gpose.pose.pose.orientation.x= imu.quaternion.x
-		self.gpose.pose.pose.orientation.y= imu.quaternion.y
-		self.gpose.pose.pose.orientation.z= imu.quaternion.z
-		self.gpose.pose.pose.orientation.w= imu.quaternion.w
+		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
+		imu_yaw +=  np.deg2rad(0) # 오차 보정
+
+		imu_qx, imu_qy, imu_qz, imu_qw = get_quaternion_from_euler(0,0,imu_yaw)
+
+		self.gpose.pose.pose.orientation.x= imu_qx
+		self.gpose.pose.pose.orientation.y= imu_qy
+		self.gpose.pose.pose.orientation.z= imu_qz
+		self.gpose.pose.pose.orientation.w= imu_qw
 
 	def odom_publish(self):
 		self.odom_pub.publish(self.gpose)
