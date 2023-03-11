@@ -2,6 +2,7 @@
 
 import numpy as np
 import rclpy
+from scipy.interpolate import CubicSpline
 from geometry_msgs.msg import Pose2D, PoseStamped
 from nav_msgs.msg import Path
 from rclpy.node import Node
@@ -75,13 +76,11 @@ class LocalPathPlanner(Node):
         self.ay = []
         self.aw = []
 
-        for i in range(0, len(msg.poses)):
+        for i in range(len(msg.poses)):
             px = msg.poses[i].x
             py = msg.poses[i].y
-            pw = msg.poses[i].theta
             self.ax.append(px)
             self.ay.append(py)
-            self.aw.append(pw)
 
         self.publish_path()
 
@@ -98,7 +97,14 @@ class LocalPathPlanner(Node):
         Default path draw across waypoints
         '''
 
-        cx, cy, cyaw,_ = generate_cubic_path(self.ax, self.ay, 0.1)
+        # Cubic Spline 보간
+        cx_ = CubicSpline(range(len(self.ax)), self.ax)
+        cy_ = CubicSpline(range(len(self.ay)), self.ay)
+        dx = cx_(np.arange(0, len(self.ax) - 1, 0.05))
+        dy = cy_(np.arange(0, len(self.ay) - 1, 0.05))
+        cyaw = np.arctan2(dy[1:] - dy[:-1], dx[1:] - dx[:-1])
+        cx = dx[:-1]
+        cy = dy[:-1]
 
         path_length = min(len(cx), len(cy), len(cyaw))
 

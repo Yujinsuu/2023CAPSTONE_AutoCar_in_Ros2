@@ -66,8 +66,8 @@ class odomPublisher(Node):
 		self.gpose.header.stamp = self.get_clock().now().to_msg()
 		self.gpose.header.frame_id = 'odom'
 		qos_profile = QoSProfile(depth=10)
-		self.gps_sub = self.create_subscription(NavSatFix, '/fix', self.gps_callback, qos_profile)
-		self.gps_vel_sub = self.create_subscription(TwistWithCovarianceStamped, '/fix_velocity', self.gps_vel_callback, qos_profile)
+		self.gps_sub = self.create_subscription(NavSatFix, '/ublox_gps/fix', self.gps_callback, qos_profile)
+		self.gps_vel_sub = self.create_subscription(TwistWithCovarianceStamped, '/ublox_gps/fix_velocity', self.gps_vel_callback, qos_profile)
 		self.imu_sub = self.create_subscription(QuaternionStamped, '/filter/quaternion', self.imu_callback, qos_profile)
 		self.odom_pub = self.create_publisher(Odometry, '/autocar/odom', qos_profile)
 
@@ -77,14 +77,14 @@ class odomPublisher(Node):
 		# cov1 = gps.position_covariance[0]
 		# cov2 = gps.position_covariance[4]
 		# cov3 = gps.position_covariance[8]
-		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
+		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5178')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 		# p1 = Proj(init='epsg:4326')
 		# p2 = Proj(init='epsg:5179')
 		# a, b = transform(p1, p2, gps.longitude, gps.latitude)
 
-		self.gpose.pose.pose.position.x=b#-962765.386350862
-		self.gpose.pose.pose.position.y=a-10#-1958988.02084955
+		self.gpose.pose.pose.position.x=b-962897.516413939
+		self.gpose.pose.pose.position.y=a-1958728.3104721
 		# self.gpose.pose.covariance[0]=cov1
 		# self.gpose.pose.covariance[7]=cov2
 		# self.gpose.pose.covariance[14]=cov3

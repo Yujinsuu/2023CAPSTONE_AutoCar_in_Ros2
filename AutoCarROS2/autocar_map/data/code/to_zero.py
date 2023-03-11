@@ -8,13 +8,13 @@ import geopandas as gpd
 from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 
-file_path = '/home/jinsu/Downloads/straight.csv'
+file_path = 'circle.csv'
 df=pd.read_csv(file_path)
 
 x= df['X-axis'].tolist()
-wx = list(i-962765.386350862 for i in x)
+wx = list(i-962897.516413939 for i in x)
 y = df['Y-axis'].tolist()
-wy = list(j-1958988.02084955 for j in y)
+wy = list(j-1958728.3104721 for j in y)
 
 # Cubic Spline 보간
 # cs_x = CubicSpline(range(len(wx)), wx)

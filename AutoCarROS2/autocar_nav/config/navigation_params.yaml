@@ -1,6 +1,6 @@
 localization:
     ros__parameters:
-        update_frequency: 50.0
+        update_frequency: 10.0
 
 local_planner:
     ros__parameters:
@@ -11,15 +11,15 @@ local_planner:
 
 global_planner:
     ros__parameters:
-        update_frequency: 2.0
+        update_frequency: 10.0
         waypoints_ahead: 10
-        waypoints_behind: 5
+        waypoints_behind: 3
         passed_threshold: 0.25
         centreofgravity_to_frontaxle: 0.713
 
 path_tracker:
     ros__parameters:
-        update_frequency: 50.0
+        update_frequency: 10.0
         control_gain: 1.0
         softening_gain: 1.0
         yawrate_gain: 1.0
