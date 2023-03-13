@@ -3,11 +3,13 @@ Ros2 환경에서 자율주행 자동차 개발
 
 <img src="resources/Architecture.png">
 
-
-sh AutoCarROS2/ros-foxy-desktop-full-install.sh
-sh AutoCarROS2/requirements.sh
-
+```bash
 pushd imu/lib/xspublic && make && popd
+
+cd AutoCarROS2
+sh ros-foxy-desktop-full-install.sh
+sh requirements.sh
+
 ```
 
 ```bash
