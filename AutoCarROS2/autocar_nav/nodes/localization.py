@@ -3,7 +3,6 @@
 import numpy as np
 import rclpy
 from rclpy.node import Node
-import time
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D
@@ -39,10 +38,12 @@ class Localization(Node):
             raise Exception("Missing ROS parameters. Check the configuration file.")
 
         # Class constants
+        self.state2d = State2D()
         self.state = None
         self.tx = []
         self.ty = []
         self.tw = []
+        self.timer = self.create_timer(3, self.trajectory)
 
     def vehicle_state_cb(self, msg):
         self.state = msg
@@ -50,7 +51,6 @@ class Localization(Node):
 
     # Gets vehicle position from Gazebo and publishes data
     def update_state(self):
-        s=time.time()
         # Define vehicle pose x,y, theta
         self.state2d = State2D()
         self.state2d.pose.x = self.state.pose.pose.position.x
@@ -66,13 +66,8 @@ class Localization(Node):
         self.state2d.twist.y = self.state.twist.twist.linear.y
         self.state2d.twist.w = -self.state.twist.twist.angular.z
 
-
-        e=time.time()
-        t=e-s
-        self.get_logger().info('duration of time {} # {}'.format(t,len(self.tx)))
-
         self.localization_pub.publish(self.state2d)
-        self.timer = self.create_timer(3, self.trajectory)
+
 
     def trajectory(self):
         self.tx.append(self.state2d.pose.x)
