@@ -2,7 +2,8 @@
 Ros2 환경에서 자율주행 자동차 개발
 
 <img src="resources/Architecture.png">
-```bash
+
+
 sh AutoCarROS2/ros-foxy-desktop-full-install.sh
 sh AutoCarROS2/requirements.sh
 
