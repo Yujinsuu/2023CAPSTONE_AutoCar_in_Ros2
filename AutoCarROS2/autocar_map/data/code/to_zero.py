@@ -8,7 +8,7 @@ import geopandas as gpd
 from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 
-file_path = 'circle.csv'
+file_path = 'h_cw.csv'
 df=pd.read_csv(file_path)
 
 x= df['X-axis'].tolist()

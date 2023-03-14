@@ -50,7 +50,7 @@ class Path(Node):
         self.max_link = len(self.link_wp[mode])
 
 def test_track():
-    link_file = file_path + '/z_circle.csv'
+    link_file = file_path + '/z_h_cw.csv'
     test_track = Path(link_file)
     test_track.mission_route = [file_path+'/origin.csv']
     test_track.link_change = [20,30,40,50,60,80]

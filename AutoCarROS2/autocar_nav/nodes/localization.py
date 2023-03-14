@@ -43,7 +43,7 @@ class Localization(Node):
         self.tx = []
         self.ty = []
         self.tw = []
-        self.timer = self.create_timer(3, self.trajectory)
+        self.timer = self.create_timer(0.1, self.trajectory)
 
     def vehicle_state_cb(self, msg):
         self.state = msg

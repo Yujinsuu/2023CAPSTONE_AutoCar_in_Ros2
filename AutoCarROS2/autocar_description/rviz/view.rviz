@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /Path1/Topic1
-        - /trajectory1
       Splitter Ratio: 0.5
     Tree Height: 659
   - Class: rviz_common/Selection
@@ -238,16 +237,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 331.7090148925781
+      Distance: 175.2370147705078
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 962708.5
-        Y: 1959022.625
-        Z: -140.14019775390625
+        X: -258.9454650878906
+        Y: 531.5531616210938
+        Z: 0.457093209028244
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
