@@ -24,6 +24,3 @@ sudo apt update
 sudo apt install python3-colcon-common-extensions
 sudo apt install ros-foxy-desktop
 sh requirements.sh
-echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc
-echo "source /usr/share/colcon_cd/function/colcon_cd.sh" >> ~/.bashrc
-echo "export _colcon_cd_root=~/ros2_install" >> ~/.bashrc
