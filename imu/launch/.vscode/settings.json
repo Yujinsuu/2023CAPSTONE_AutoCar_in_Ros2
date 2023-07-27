@@ -1,0 +1,11 @@
+{
+  "python.autoComplete.extraPaths": [
+    "/home/jinsu/robot_ws/install/ros1_bridge/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/build/erp_control",
+    "/home/jinsu/robot_ws/install/erp_control/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/darknet_ros_msgs/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/autocar_nav/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/autocar_msgs/lib/python3.8/site-packages",
+    "/opt/ros/foxy/lib/python3.8/site-packages"
+  ]
+}

@@ -1,0 +1,29 @@
+localization:
+    ros__parameters:
+        update_frequency: 10.0
+        centreofgravity_to_frontaxle: 1.04
+
+global_planner:
+    ros__parameters:
+        update_frequency: 10.0
+        waypoints_ahead: 15
+        waypoints_behind: 5
+        passed_threshold: 0.25
+        centreofgravity_to_frontaxle: 1.04
+        
+local_planner:
+    ros__parameters:
+        update_frequency: 10.0
+        car_width: 0.9
+        centreofgravity_to_frontaxle: 1.04
+
+path_tracker:
+    ros__parameters:
+        update_frequency: 10.0
+        steering_limits: 0.42
+        rearaxle_to_frontaxle: 1.04
+        centreofgravity_to_frontaxle: 1.04
+
+Core:
+    ros__parameters:
+        update_frequency: 10.0
