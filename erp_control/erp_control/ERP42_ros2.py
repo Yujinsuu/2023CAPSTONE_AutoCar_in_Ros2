@@ -4,7 +4,7 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
-from std_msgs.msg import String, Int32, Float32
+from std_msgs.msg import String, Int32, Float32, Float64MultiArray
 from ackermann_msgs.msg import AckermannDriveStamped
 #from geometry_msgs.msg import Twist
 
@@ -40,10 +40,12 @@ class erp42(Node):
 	def __init__(self):
 		super().__init__('erp42')
 		self.ackermann_subscriber = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.acker_callback, 10)
+		self.lanenet_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
 		self.ser = serial.serial_for_url("/dev/ttyUSB0", baudrate=115200, timeout=1)
 
 		self.speed = 0.0
 		self.cmd_steer = 0.0
+		self.vision_steer = 0.0
 		self.steer = 0.0
 		self.brake = 0
 		self.gear = 0
@@ -143,14 +145,19 @@ class erp42(Node):
 	def acker_callback(self, msg):
 		self.speed = msg.drive.speed
 		self.cmd_steer = np.rad2deg(msg.drive.steering_angle)
-		self.steer = self.real_steer(self.cmd_steer)
+		# self.steer = self.real_steer(self.cmd_steer)
+		# self.steer = self.vision_steer
+		self.steer = self.cmd_steer
 		self.brake = int(msg.drive.jerk)
 		self.gear = int(msg.drive.acceleration)
+
+	def vision_cb(self, msg):
+		self.vision_steer = msg.data[1]
 
 	def timer_callback(self):
 		# steer=radians(float(input("steer_angle:")))
 
-		print("Speed :",round(self.speed*3.6, 1), "km/h\t Steer :", round(self.cmd_steer, 2), "deg\t Brake :",self.brake, "%\t Gear :", self.dir[self.gear])
+		print("Speed :",round(self.speed*3.6, 1), "km/h\t Steer :", round(self.steer, 2), "deg\t Brake :",self.brake, "%\t Gear :", self.dir[self.gear])
 		self.Send_to_ERP42(self.gear, self.speed, -self.steer, self.brake)
 
 def main(args=None):

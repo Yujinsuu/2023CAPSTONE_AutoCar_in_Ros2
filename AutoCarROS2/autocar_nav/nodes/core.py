@@ -7,7 +7,7 @@ from collections import deque, Counter
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Int32MultiArray, Float32, String, Bool
+from std_msgs.msg import Int32MultiArray, Float64MultiArray, Float32, String, Bool
 from autocar_msgs.msg import LinkArray, State2D
 from ackermann_msgs.msg import AckermannDriveStamped
 
@@ -27,7 +27,7 @@ class Core(Node):
         self.ackermann_sub = self.create_subscription(AckermannDriveStamped, '/autocar/ackermann_cmd', self.command_cb, 10)
         self.links_sub = self.create_subscription(LinkArray, '/autocar/mode', self.links_cb, 10)
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
-        self.vision_sub = self.create_subscription(Float32, '/lanenet_steer', self.vision_cb, 10)
+        self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
         self.obstacle_sub = self.create_subscription(Bool, '/autocar/estop', self.obstacle_cb, 10)
         self.traffic_sub = self.create_subscription(String, '/traffic_sign', self.traffic_cb, 10)
         self.delivery_sub = self.create_subscription(Int32MultiArray, '/delivery_sign', self.delivery_cb, 10)
@@ -57,6 +57,7 @@ class Core(Node):
         self.gear = 0.0
 
         self.dynamic_obstacle = False
+        self.lane_detected = False
         self.vision_steer = 0.0
         self.avoid_count = 0
 
@@ -87,7 +88,7 @@ class Core(Node):
     def command_cb(self, msg):
         self.cmd_speed = self.target_speed[self.mode]
 
-        if self.status == 'lanenet':
+        if self.status == 'lanenet' and self.lane_detected:
             self.cmd_steer = self.vision_steer
         else:
             self.cmd_steer = msg.drive.steering_angle
@@ -110,7 +111,8 @@ class Core(Node):
         self.dynamic_obstacle = msg.data
 
     def vision_cb(self, msg):
-        self.vision_steer = msg.data
+        self.lane_detected = bool(msg.data[0])
+        self.vision_steer = msg.data[1]
 
     def traffic_cb(self, msg):
         self.yolo_light = msg.data

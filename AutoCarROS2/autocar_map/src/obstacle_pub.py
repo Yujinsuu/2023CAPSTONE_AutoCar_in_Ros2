@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
+import time
 import numpy as np
 
 import rclpy
@@ -51,12 +52,11 @@ class ObstaclePub(Node):
                          [0.0, 0.0, 1.0, 0.0],
                          [0.0, 0.0, 0.0, 1.0]])
         now = rclpy.time.Time()
-        a = self.tf_buffer.can_transform(world_frame, detection_frame, now, Duration(seconds=1))
+        a = self.tf_buffer.can_transform(world_frame, detection_frame, now)#, Duration(seconds=1))
         if a:
             t = self.tf_buffer.lookup_transform(world_frame, detection_frame, rclpy.time.Time(), Duration(seconds=1))
         else:
             t = TransformStamped()
-
 
         # a = self.tf_buffer.can_transform(world_frame, detection_frame, now, Duration(seconds=1))
         # while(True):
@@ -142,10 +142,14 @@ class ObstaclePub(Node):
                 msg.object_list.append(o)
 
         sign = Float32()
-        if len(self.signs):
-            sign.data = min(self.signs) / 0.2
 
         if self.mode != 'delivery' or self.angle == 0.0:
+            sign.data = -1.0
+
+        elif len(self.signs):
+            sign.data = min(self.signs) / 0.2
+
+        else:
             sign.data = -1.0
 
         self.delivery_stop_pub.publish(sign)

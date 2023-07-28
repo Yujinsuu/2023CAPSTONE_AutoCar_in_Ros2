@@ -278,7 +278,7 @@ class UltrafastLaneDetector():
 		if not lanes_detected[1] and not lanes_detected[2] : # 아무것도 안잡히면 지정한 steer angle을 저장해줌
 			filtered_angle =  0
 
-		if lanes_detected[1] : # 왼쪽만 잡혔을 때
+		if lanes_detected[1]: # 왼쪽만 잡혔을 때
 			L1_x = process_lane(1, lanes_points, visualization_img)
 			#filtered_angle = 20000
 			if not lanes_detected[2] :
@@ -286,7 +286,7 @@ class UltrafastLaneDetector():
 				filtered_angle = int(filtered_angle*0.9 + ct_error * 0.1)
 				print(filtered_angle)
 
-		if lanes_detected[2] : # 오른쪽만 잡혔을 때
+		if lanes_detected[2]: # 오른쪽만 잡혔을 때
 			L2_x = process_lane(2, lanes_points, visualization_img)
 			#filtered_angle = 20000
 			if not lanes_detected[1] :
@@ -294,6 +294,7 @@ class UltrafastLaneDetector():
 				filtered_angle = int(filtered_angle*0.9 + ct_error * 0.1)
 				print(filtered_angle)
 
+		check = False
 		if lanes_detected[1]  and lanes_detected[2] :
 			ct_error = int((L1_x + L2_x ) / 2) - center_x
 			filtered_angle = int(filtered_angle*0.9 + ct_error * 0.1)
@@ -306,9 +307,12 @@ class UltrafastLaneDetector():
 			cv2.line(visualization_img, (center_x, dcsion_y ), (center_x + filtered_angle, dcsion_y), (0, 255, 0), 5)
 			cv2.line(visualization_img, (center_x, dcsion_y+30 ), (center_x  + ct_error , dcsion_y+30), (122, 122, 255), 5)
 
+			check = True
+
+
 		if(draw_points):
 			for lane_num,lane_points in enumerate(lanes_points) :
 				for lane_point in lane_points :
 					cv2.circle(visualization_img, (lane_point[0],lane_point[1]), 4, lane_colors[lane_num], -1)
 
-		return visualization_img, filtered_angle
+		return check, visualization_img, filtered_angle

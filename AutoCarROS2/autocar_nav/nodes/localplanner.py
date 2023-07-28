@@ -65,6 +65,8 @@ class LocalPathPlanner(Node):
         df = pd.read_csv(file_path + '/htech/tunnel_lane.csv')
         self.center_x = df['x'].tolist()
         self.center_y = df['y'].tolist()
+        # self.center_x = [i - 4.5 for i in self.center_x]
+        # self.center_y = [i + 1.5 for i in self.center_y]
         self.center_yaw = df['yaw'].tolist()
         self.offset_x = 0.0
         self.offset_y = 0.0
@@ -207,8 +209,9 @@ class LocalPathPlanner(Node):
 
         # 모드에 따라 reroute할것인지 급정거 할 것인지 설정
         if len(obstacle_colliding) != 0:
-            if self.mode == 'static':
+            if self.mode in ['static', 'tunnel']:
                 cx, cy, cyaw = self.collision_reroute(cx, cy, cyaw, obstacle_colliding)
+                self.estop = True
             if self.mode == 'dynamic':
                 self.estop = True
 
@@ -309,7 +312,7 @@ class LocalPathPlanner(Node):
         cx = dx[:-1]
         cy = dy[:-1]
 
-        if self.mode == 'dynamic' or self.mode == 'static':
+        if self.mode in ['dynamic', 'static', 'tunnel']:
             cx, cy, cyaw = self.determine_path(cx, cy, cyaw)
         if self.is_fail == True:
             return

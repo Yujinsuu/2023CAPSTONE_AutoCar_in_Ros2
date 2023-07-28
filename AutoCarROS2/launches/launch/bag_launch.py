@@ -27,7 +27,12 @@ def generate_launch_description():
             name = 'tf_pub',
             executable = 'tf_pub.py'
         ),
-
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            arguments=['0', '0', '0', '0', '0', '0', 'car', 'velodyne'],
+            name='static_transform_publisher'
+        ),
         Node(
             package='rviz2',
             executable='rviz2',
