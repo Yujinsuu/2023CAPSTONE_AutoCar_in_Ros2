@@ -30,6 +30,7 @@ install(DIRECTORY
 )
 
 install(PROGRAMS
+  src/gps_save.py
   src/dead_reckoning.py
   src/odom_pub.py
   src/odom_viz.py
