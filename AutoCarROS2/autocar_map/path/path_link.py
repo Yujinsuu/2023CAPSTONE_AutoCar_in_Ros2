@@ -108,7 +108,7 @@ def boong():
     boong.car_mode[7] = 'delivery_A'
     boong.car_mode[8] = 'uturn'
     boong.car_mode[9] = 'delivery_B'
-    boong.car_mode[11] = 'static'
+    boong.car_mode[11] = 'tunnel'
     boong.car_mode[14] = 'revpark'
 
     left = [7,8,9,11]
@@ -131,14 +131,13 @@ def qualifier():
     revpark_file = None
     qualifier = Path(base_file, global_file, parking_file, revpark_file)
     qualifier.car_mode[1] = 'parking'
-    qualifier.car_mode[5] = 'uturn'
-    qualifier.car_mode[7] = 'static'
+    qualifier.car_mode[4] = 'uturn'
+    qualifier.car_mode[6] = 'tollgate'
     qualifier.car_mode[8] = 'tunnel'
 
-    left = [5]
-    right = [1]
-    for i in left:
-        qualifier.next_path[i] = 'left'
+    for i in range(len(qualifier.next_path)):
+        qualifier.next_path[i] = 'none'
+    right = [1,4]
     for i in right:
         qualifier.next_path[i] = 'right'
 

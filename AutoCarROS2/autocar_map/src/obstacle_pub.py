@@ -51,30 +51,13 @@ class ObstaclePub(Node):
                          [0.0, 1.0, 0.0, y],
                          [0.0, 0.0, 1.0, 0.0],
                          [0.0, 0.0, 0.0, 1.0]])
-        now = rclpy.time.Time()
-        a = self.tf_buffer.can_transform(world_frame, detection_frame, now)#, Duration(seconds=1))
-        if a:
-            t = self.tf_buffer.lookup_transform(world_frame, detection_frame, rclpy.time.Time(), Duration(seconds=1))
-        else:
+
+        try:
+            now = rclpy.time.Time()
+            t = self.tf_buffer.lookup_transform(world_frame, detection_frame, now)# Duration(seconds=1))
+        except:
+            self.get_logger().info("can't transform")
             t = TransformStamped()
-
-        # a = self.tf_buffer.can_transform(world_frame, detection_frame, now, Duration(seconds=1))
-        # while(True):
-        #     if a:
-        #         t = self.tf_buffer.lookup_transform(world_frame, detection_frame, now)
-        #         break
-        #     else:
-        #         now = rclpy.time.Time()
-        #         a = self.tf_buffer.can_transform(world_frame, detection_frame, now, Duration(seconds=1))
-        #         self.get_logger().info('stuck!')
-
-
-        # try:
-        #     t = self.tf_buffer.lookup_transform(world_frame, detection_frame, rclpy.time.Time(), Duration(seconds=1)) #
-        # except (LookupException, ConnectivityException, ExtrapolationException):
-        #     pass
-        # self.get_logger().info('%f' % t.transform.rotation.z)
-
 
         tf_matrix = transform_to_matrix(t)
         yaw = euler_from_quaternion(t.transform.rotation.x,
@@ -116,13 +99,14 @@ class ObstaclePub(Node):
         x = (obs.points[0].x + obs.points[1].x)/2
         y = (obs.points[4].y + obs.points[3].y)/2
         yaw = 0.0
+        dist = x + 0.2
 
         # Compare Slope
         xmin = 0 if xmin < 0 else xmin
         slope_min = np.arctan2(ymin-self.cam_y, xmin-self.cam_x)
         slope_max = np.arctan2(ymax-self.cam_y, xmin-self.cam_x)
-        if slope_min <= self.angle <= slope_max and x <= 10:
-            self.signs.append(x + 0.2)
+        if slope_min <= self.angle <= slope_max and dist <= 10:
+            self.signs.append(dist)
 
         # transformation (car -> map)
         o.x, o.y, o.yaw = self.change_frame(x, y, yaw, self.world_frame, self.detection_frame)

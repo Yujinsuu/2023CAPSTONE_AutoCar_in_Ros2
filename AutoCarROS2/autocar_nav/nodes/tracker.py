@@ -83,6 +83,7 @@ class PathTracker(Node):
                   'uturn'     : {'Straight': 2.0, 'Curve': 2.0},
                   'static'    : {'Straight': 1.0, 'Curve': 1.0},
                   'dynamic'   : {'Straight': 1.0, 'Curve': 1.0},
+                  'tollgate'  : {'Straight': 1.0, 'Curve': 1.0},
                   'tunnel'    : {'Straight': 1.0, 'Curve': 1.0},
                   'delivery_A': {'Straight': 1.0, 'Curve': 1.0},
                   'delivery_B': {'Straight': 1.0, 'Curve': 1.0},

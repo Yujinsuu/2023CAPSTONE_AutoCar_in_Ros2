@@ -8,6 +8,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 
+from std_msgs.msg import Int32MultiArray
 from sensor_msgs.msg import LaserScan
 from autocar_msgs.msg import Path2D
 from geometry_msgs.msg import Point, Pose2D, TransformStamped
@@ -24,12 +25,13 @@ class WallFollower(Node):
     def __init__(self):
         super().__init__('wall_follower')
         self.create_rate(10)
-        self.viz_pub = self.create_publisher(Marker,'/rviz/wall', 10)
-        self.path_pub = self.create_publisher(Path2D,'/wall_path', 10)
+        self.viz_pub = self.create_publisher(Marker, '/rviz/wall', 10)
+        self.path_pub = self.create_publisher(Path2D, '/wall_path', 10)
+        self.inf_pub = self.create_publisher(Int32MultiArray, '/tunnel_check', 10)
 
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
 
-        self.LaneWidth = 4.34
+        self.LaneWidth = 4.72
         self.path_length = 50
 
         self.x_coords = None
@@ -39,6 +41,7 @@ class WallFollower(Node):
         self.world_frame = "odom"
         self.detection_frame = "car"
 
+        self.wall_inf = Int32MultiArray()
         self.ransac = RANSACRegressor()
 
         self.tf_buffer = Buffer()
@@ -93,18 +96,24 @@ class WallFollower(Node):
         x_coords_raw = np.multiply(lidar_data, np.cos(angles))
         y_coords_raw = np.multiply(lidar_data, np.sin(angles))
 
-        # inf 값의 인덱스 찾기
+        wall_length = len(x_coords_raw)
+
+        # inf 값의 인덱스 탐색 및 제거
         inf_indices = np.where(np.isinf(y_coords_raw))[0]
+        x_coords_raw = np.delete(x_coords_raw, inf_indices)
+        y_coords_raw = np.delete(y_coords_raw, inf_indices)
+
+        wall_inf = list(map(int, inf_indices))
+        wall_inf.append(wall_length)
+
+        self.wall_inf = Int32MultiArray()
+        self.wall_inf.data = wall_inf
+        self.inf_pub.publish(self.wall_inf)
+
         # x raw 값의 범위 지정
         x_indices = np.where((x_coords_raw < -10) | (x_coords_raw > 30))[0]
-
-        del_indices = list(set(np.concatenate([inf_indices, x_indices],0)))
-        indices = np.array(del_indices)
-
-        # inf 값의 인덱스 제거
-        y_coords_raw = np.delete(y_coords_raw, indices)
-        x_coords_raw = np.delete(x_coords_raw, indices)
-
+        x_coords_raw = np.delete(x_coords_raw, x_indices)
+        y_coords_raw = np.delete(y_coords_raw, x_indices)
         x_coords, y_coords = self.get_line_RANSAC(x_coords_raw, y_coords_raw)
         self.slope = np.arctan2(y_coords[-1]-y_coords[0],x_coords[-1]-x_coords[0])
 
@@ -140,13 +149,11 @@ class WallFollower(Node):
                          [0.0, 0.0, 1.0, 0.0],
                          [0.0, 0.0, 0.0, 1.0]])
 
-        now = rclpy.time.Time()
-
-        a = self.tf_buffer.can_transform(world_frame, detection_frame, now)#, Duration(seconds=1))
-
-        if a:
-            t = self.tf_buffer.lookup_transform(world_frame, detection_frame, rclpy.time.Time())#, Duration(seconds=1))
-        else:
+        try:
+            now = rclpy.time.Time()
+            t = self.tf_buffer.lookup_transform(world_frame, detection_frame, now)# Duration(seconds=1))
+        except:
+            self.get_logger().info("can't transform")
             t = TransformStamped()
 
         tf_matrix = transform_to_matrix(t)

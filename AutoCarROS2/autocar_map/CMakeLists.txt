@@ -33,6 +33,7 @@ install(DIRECTORY
 install(PROGRAMS
   src/link_visualizer.py
   src/obstacle_pub.py
+  src/obstacle_viz.py
   src/wall_following.py
   DESTINATION lib/${PROJECT_NAME}
 )

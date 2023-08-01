@@ -75,9 +75,9 @@ class Simulation(Node):
 
     def vehicle_cb(self, msg):
         if self.x == None:
-            self.x = -71.#-7.#-288.9
-            self.y = 610.#9.#486.2
-            self.theta = 3.9#1.4#6
+            self.x = -1.78#-71.#-7.#-288.9
+            self.y = 19.9#610.#9.#486.2
+            self.theta = 1.15#3.9#1.4#6
 
         sigma = msg.drive.steering_angle
         self.vel = msg.drive.speed

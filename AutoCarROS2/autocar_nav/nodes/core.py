@@ -29,6 +29,7 @@ class Core(Node):
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
         self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
         self.obstacle_sub = self.create_subscription(Bool, '/autocar/estop', self.obstacle_cb, 10)
+        self.inf_sub = self.create_subscription(Int32MultiArray, '/tunnel_check', self.tunnel_check, 10)
         self.traffic_sub = self.create_subscription(String, '/traffic_sign', self.traffic_cb, 10)
         self.delivery_sub = self.create_subscription(Int32MultiArray, '/delivery_sign', self.delivery_cb, 10)
         self.delivery_stop_sub = self.create_subscription(Float32, '/delivery_stop', self.delivery_stop_cb, 10)
@@ -47,9 +48,9 @@ class Core(Node):
         self.next_path = 'straight'
         self.status = 'driving'
 
-        self.target_speed = {'global':  8/3.6, 'parking': 4/3.6,   'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 5/3.6,
-                             'static':  5/3.6, 'dynamic': 5/3.6, 'tunnel':   7/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
-                             'finish':  10/3.6}
+        self.target_speed = {'global': 18/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 5/3.6,
+                             'static':  5/3.6, 'dynamic': 5/3.6,  'tunnel': 7/3.6, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+                             'finish': 10/3.6}
 
         self.vel = 1.0
         self.cmd_speed = self.target_speed[self.mode]
@@ -60,6 +61,7 @@ class Core(Node):
         self.lane_detected = False
         self.vision_steer = 0.0
         self.avoid_count = 0
+        self.tunnel_state = 'outside'
 
         self.yolo_light = 'Straightleft'
         self.traffic_stop = False
@@ -88,10 +90,7 @@ class Core(Node):
     def command_cb(self, msg):
         self.cmd_speed = self.target_speed[self.mode]
 
-        if self.status == 'lanenet' and self.lane_detected:
-            self.cmd_steer = self.vision_steer
-        else:
-            self.cmd_steer = msg.drive.steering_angle
+        self.cmd_steer = msg.drive.steering_angle
 
         self.autocar_control()
 
@@ -113,6 +112,23 @@ class Core(Node):
     def vision_cb(self, msg):
         self.lane_detected = bool(msg.data[0])
         self.vision_steer = msg.data[1]
+
+    def tunnel_check(self, msg):
+        scan_range = msg.data[-1]
+        inf_index = np.array(msg.data)
+
+        f_inf = len(inf_index[inf_index > 0.6 * scan_range])
+        r_inf = len(inf_index[inf_index < 0.4 * scan_range])
+        threshold = 0.2 * scan_range
+
+        if self.mode == 'tunnel' and self.status == 'lanenet':
+            if self.tunnel_state == 'outside':
+                if (f_inf <= threshold <= r_inf) or (f_inf < threshold and r_inf < threshold):
+                    self.tunnel_state = 'inside'
+            elif self.tunnel_state == 'inside':
+                if (f_inf >= threshold >= r_inf) or (f_inf > threshold and r_inf > threshold):
+                    self.tunnel_state = 'outside'
+
 
     def traffic_cb(self, msg):
         self.yolo_light = msg.data
@@ -206,7 +222,7 @@ class Core(Node):
             self.status = 'driving'
 
             if self.direction == 'Curve' or abs(np.rad2deg(self.cmd_steer)) >= 10:
-                self.cmd_speed = self.cmd_speed - 3/3.6
+                self.cmd_speed = self.target_speed['curve']
                 self.brake = 30.0
             else:
                 self.brake = 0.0
@@ -221,6 +237,9 @@ class Core(Node):
                 self.status = 'lanenet'
 
             elif self.status == 'lanenet':
+                if self.tunnel_state == 'outside' or self.lane_detected:
+                    self.cmd_steer = self.vision_steer
+
                 if self.dynamic_obstacle:
                     self.avoid_count = time.time()
                     self.status = 'avoid'
@@ -235,7 +254,7 @@ class Core(Node):
 
                 brake_force = 30
                 max_brake = 100
-                self.brake_control(brake_force, max_brake, 1)
+                self.brake_control(brake_force, max_brake, 2)
 
                 if self.dynamic_obstacle:
                     self.avoid_count = time.time()

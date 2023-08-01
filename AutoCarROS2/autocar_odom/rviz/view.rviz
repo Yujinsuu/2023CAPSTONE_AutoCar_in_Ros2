@@ -55,6 +55,8 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
+        velodyne:
+          Value: true
       Marker Scale: 0.800000011920929
       Name: TF
       Show Arrows: true
@@ -64,7 +66,8 @@ Visualization Manager:
         map:
           odom:
             car:
-              {}
+              velodyne:
+                {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/Marker
@@ -170,7 +173,7 @@ Visualization Manager:
       Enabled: true
       Name: WallScan
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -205,6 +208,18 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /rviz/trajectory
       Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Obstacles
+      Namespaces:
+        "": true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rviz/obstacles
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -220,7 +235,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 116
+      Max Intensity: 128
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
@@ -242,7 +257,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        {}
+        adaptive_clustering_v1: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -340,16 +355,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 71.69522857666016
+      Distance: 96.82766723632812
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -111.79926300048828
-        Y: 623.9692993164062
-        Z: -6.225314140319824
+        X: -84.87921142578125
+        Y: 628.7655639648438
+        Z: -6.213801383972168
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
