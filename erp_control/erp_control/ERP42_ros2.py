@@ -41,7 +41,7 @@ class erp42(Node):
 		super().__init__('erp42')
 		self.ackermann_subscriber = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.acker_callback, 10)
 		self.lanenet_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
-		self.ser = serial.serial_for_url("/dev/ttyUSB0", baudrate=115200, timeout=1)
+		self.ser = serial.serial_for_url("/dev/ttyERP", baudrate=115200, timeout=1)
 
 		self.speed = 0.0
 		self.cmd_steer = 0.0

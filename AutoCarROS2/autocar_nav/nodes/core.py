@@ -61,7 +61,7 @@ class Core(Node):
         self.lane_detected = False
         self.vision_steer = 0.0
         self.avoid_count = 0
-        self.tunnel_state = 'outside'
+        self.tunnel_state = 'entry'
 
         self.yolo_light = 'Straightleft'
         self.traffic_stop = False
@@ -122,12 +122,12 @@ class Core(Node):
         threshold = 0.2 * scan_range
 
         if self.mode == 'tunnel' and self.status == 'lanenet':
-            if self.tunnel_state == 'outside':
+            if self.tunnel_state == 'entry':
                 if (f_inf <= threshold <= r_inf) or (f_inf < threshold and r_inf < threshold):
                     self.tunnel_state = 'inside'
             elif self.tunnel_state == 'inside':
                 if (f_inf >= threshold >= r_inf) or (f_inf > threshold and r_inf > threshold):
-                    self.tunnel_state = 'outside'
+                    self.tunnel_state = 'exit'
 
 
     def traffic_cb(self, msg):
@@ -237,14 +237,14 @@ class Core(Node):
                 self.status = 'lanenet'
 
             elif self.status == 'lanenet':
-                if self.tunnel_state == 'outside' or self.lane_detected:
+                if self.tunnel_state == 'entry' or self.lane_detected:
                     self.cmd_steer = self.vision_steer
 
                 if self.dynamic_obstacle:
                     self.avoid_count = time.time()
                     self.status = 'avoid'
 
-                if self.traffic_stop_wp <= 0:
+                if self.traffic_stop_wp <= 0 or self.tunnel_state == 'exit':
                     self.status = 'complete'
                     self.brake = 0.0
                     self.t = 0

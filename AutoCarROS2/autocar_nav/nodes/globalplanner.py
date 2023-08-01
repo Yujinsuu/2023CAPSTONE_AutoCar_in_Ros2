@@ -178,11 +178,9 @@ class GlobalPathPlanner(Node):
                     self.traffic_stop_wp = 1e3
 
         elif self.status == 'complete':
-            if closest_id >= len(via_x) - self.wp_ahead:
-                if self.global_index < self.count['global'] - 1:
-                    self.global_index += 1
-                    closest_id = self.wp_behind
-                    self.traffic_stop_wp = 1e3
+            self.global_index += 1
+            closest_id = self.wp_behind
+            self.traffic_stop_wp = 1e3
 
 
         self.mode = self.mode_list[self.global_index]

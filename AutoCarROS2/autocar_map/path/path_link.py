@@ -78,20 +78,24 @@ class Path(Node):
 
 def test_track():
     base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/htech_ccw.csv'
-    parking_file = file_path + '/htech/htech_park.csv'
-    revpark_file = file_path + '/htech/htech_park.csv'
+    global_file = file_path + '/htech/htech_track.csv'
+    parking_file = None
+    revpark_file = None
     test_track = Path(base_file, global_file, parking_file, revpark_file)
-    test_track.car_mode[2] = 'parking'
-    test_track.car_mode[4] = 'delivery_A'
+    test_track.car_mode[1] = 'tunnel'
+    test_track.car_mode[3] = 'delivery_A'
+    test_track.car_mode[5] = 'dynamic'
     test_track.car_mode[6] = 'delivery_B'
 
-    left = [1,3]
-    right = [4]
+    left = [3,4]
+    right = [1,2]
+    none = [0,5]
     for i in left:
         test_track.next_path[i] = 'left'
     for i in right:
         test_track.next_path[i] = 'right'
+    for i in none:
+        test_track.next_path[i] = 'none'
 
     return test_track
 
