@@ -13,7 +13,7 @@ from std_msgs.msg import Float64MultiArray, Int32, String
 from autocar_msgs.msg import Path2D, State2D, LinkArray
 from geometry_msgs.msg import Pose2D
 
-from autocar_nav.calculate_offset import return_offset
+from autocar_nav.calculate_offset import point_offset, line_offset
 from autocar_nav.calculate_curvature import classify_segments
 
 path_module = os.path.join(get_package_share_directory('autocar_map'), 'path')
@@ -39,6 +39,7 @@ class GlobalPathPlanner(Node):
         self.parking_path_sub = self.create_subscription(Int32, '/autocar/parking_path', self.parking_path_cb, 10)
         self.mission_status_sub = self.create_subscription(String,'/autocar/mission_status', self.mission_status_cb, 10)
         self.walls_sub = self.create_subscription(Path2D, '/wall_path', self.walls_cb, 10)
+        self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
 
         # Load parameters
         try:
@@ -108,6 +109,10 @@ class GlobalPathPlanner(Node):
         self.saved_tx = []
         self.saved_ty = []
 
+        self.tunnel_state = 'entry'
+        self.offset_x = 0.0
+        self.offset_y = 0.0
+
 
     def parking_path_cb(self, msg):
         self.parking_path_num = msg.data
@@ -118,6 +123,9 @@ class GlobalPathPlanner(Node):
     def mission_status_cb(self, msg):
         self.status = msg.data
 
+
+    def tunnel_check(self, msg):
+        self.tunnel_state = msg.data
 
     def walls_cb(self, msg):
         self.ax = []
@@ -293,28 +301,31 @@ class GlobalPathPlanner(Node):
             self.direction = classify_segments(px[self.wp_behind:], py[self.wp_behind:], self.curv_thresh)
             self.parking_stop_wp = 1e3
 
-            offset_x, offset_y = return_offset(self.x, self.y, px, py)
             if self.mode == 'tunnel':
-                if self.closest_wp > 10 and len(self.ax) != 0:
+                if self.tunnel_state == 'entry' and self.closest_wp > 20:
+                    self.tunnel_state = 'inside'
+
+                if self.tunnel_state == 'inside':
+                    if self.status == 'lanenet':
+                        self.offset_x, self.offset_y = line_offset(self.ax, self.ay, px, py)
                     px = self.ax
                     py = self.ay
-                else:
-                    px = [i - offset_x for i in px]
-                    py = [i - offset_y for i in py]
 
                 if self.status == 'lanenet':
                     self.saved_tx = px
                     self.saved_ty = py
+
                 elif self.status in ['stop', 'avoid']:
                     px = self.saved_tx
                     py = self.saved_ty
 
-            if self.status != 'lanenet':
-                offset_x = 0.0
-                offset_y = 0.0
-            offset = Float64MultiArray()
-            offset.data = [offset_x, offset_y]
-            self.offset_pub.publish(offset)
+            else:
+                self.offset_x = 0.0
+                self.offset_y = 0.0
+
+        offset = Float64MultiArray()
+        offset.data = [self.offset_x, self.offset_y]
+        self.offset_pub.publish(offset)
 
         self.publish_goals(px, py)
 
@@ -389,6 +400,8 @@ class GlobalPathPlanner(Node):
 
         elif self.mode in ['delivery_A', 'delivery_B']:
             to_yolo.data = 'delivery'
+            if self.traffic_stop_wp <= 15/0.2:
+                to_yolo.data = 'traffic'
 
         else:
             to_yolo.data = 'None'

@@ -163,5 +163,5 @@ def htech():
 
 
 # use_map = test_track()
-use_map = htech()
+use_map = test_track()
 start_index = 0

@@ -7,8 +7,8 @@ from collections import deque, Counter
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Int32MultiArray, Float64MultiArray, Float32, String, Bool
-from autocar_msgs.msg import LinkArray, State2D
+from std_msgs.msg import Int32MultiArray, Float64MultiArray, Float32, String
+from autocar_msgs.msg import LinkArray, State2D, Obstacle
 from ackermann_msgs.msg import AckermannDriveStamped
 
 
@@ -28,8 +28,8 @@ class Core(Node):
         self.links_sub = self.create_subscription(LinkArray, '/autocar/mode', self.links_cb, 10)
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
         self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
-        self.obstacle_sub = self.create_subscription(Bool, '/autocar/estop', self.obstacle_cb, 10)
-        self.inf_sub = self.create_subscription(Int32MultiArray, '/tunnel_check', self.tunnel_check, 10)
+        self.obstacle_sub = self.create_subscription(Obstacle, '/autocar/obs_recog', self.obstacle_cb, 10)
+        self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
         self.traffic_sub = self.create_subscription(String, '/traffic_sign', self.traffic_cb, 10)
         self.delivery_sub = self.create_subscription(Int32MultiArray, '/delivery_sign', self.delivery_cb, 10)
         self.delivery_stop_sub = self.create_subscription(Float32, '/delivery_stop', self.delivery_stop_cb, 10)
@@ -48,8 +48,8 @@ class Core(Node):
         self.next_path = 'straight'
         self.status = 'driving'
 
-        self.target_speed = {'global': 18/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 5/3.6,
-                             'static':  5/3.6, 'dynamic': 5/3.6,  'tunnel': 7/3.6, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+        self.target_speed = {'global': 15/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 6/3.6,
+                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 7/3.6, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
@@ -57,7 +57,8 @@ class Core(Node):
         self.cmd_steer = 0.0
         self.gear = 0.0
 
-        self.dynamic_obstacle = False
+        self.obstacle_detected = 0
+        self.obstacle = 'None'
         self.lane_detected = False
         self.vision_steer = 0.0
         self.avoid_count = 0
@@ -107,28 +108,15 @@ class Core(Node):
         self.queue.append(self.mode)
 
     def obstacle_cb(self, msg):
-        self.dynamic_obstacle = msg.data
+        self.obstacle_detected = msg.detected
+        self.obstacle = msg.obstacle
 
     def vision_cb(self, msg):
         self.lane_detected = bool(msg.data[0])
         self.vision_steer = msg.data[1]
 
     def tunnel_check(self, msg):
-        scan_range = msg.data[-1]
-        inf_index = np.array(msg.data)
-
-        f_inf = len(inf_index[inf_index > 0.6 * scan_range])
-        r_inf = len(inf_index[inf_index < 0.4 * scan_range])
-        threshold = 0.2 * scan_range
-
-        if self.mode == 'tunnel' and self.status == 'lanenet':
-            if self.tunnel_state == 'entry':
-                if (f_inf <= threshold <= r_inf) or (f_inf < threshold and r_inf < threshold):
-                    self.tunnel_state = 'inside'
-            elif self.tunnel_state == 'inside':
-                if (f_inf >= threshold >= r_inf) or (f_inf > threshold and r_inf > threshold):
-                    self.tunnel_state = 'exit'
-
+        self.tunnel_state = msg.data
 
     def traffic_cb(self, msg):
         self.yolo_light = msg.data
@@ -240,13 +228,36 @@ class Core(Node):
                 if self.tunnel_state == 'entry' or self.lane_detected:
                     self.cmd_steer = self.vision_steer
 
-                if self.dynamic_obstacle:
+                if self.obstacle == 'dynamic':
+                    self.avoid_count = time.time()
+                    self.status = 'stop'
+                    self.brake = 0.0
+                    self.t = 0
+
+                if self.obstacle == 'static':
                     self.avoid_count = time.time()
                     self.status = 'avoid'
+                    self.brake = 0.0
+                    self.t = 0
 
                 if self.traffic_stop_wp <= 0 or self.tunnel_state == 'exit':
                     self.status = 'complete'
                     self.brake = 0.0
+                    self.t = 0
+
+            elif self.status == 'stop':
+                self.cmd_speed = 0.0
+                self.cmd_steer = 0.0
+
+                brake_force = 60
+                max_brake = 100
+                self.brake_control(brake_force, max_brake, 3)
+
+                if not self.is_static:#self.obstacle == 'dynamic':
+                    self.avoid_count = time.time()
+
+                if time.time() - self.avoid_count >= 2:
+                    self.status = 'lanenet'
                     self.t = 0
 
             elif self.status == 'avoid':
@@ -256,17 +267,17 @@ class Core(Node):
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
-                if self.dynamic_obstacle:
+                if self.is_static:#self.obstacle == 'static':
                     self.avoid_count = time.time()
 
-                if self.t >= 5 and time.time() - self.avoid_count >= 2:
+                if time.time() - self.avoid_count >= 3:
                     self.status = 'lanenet'
                     self.t = 0
 
 
         elif self.mode == 'dynamic':
             if self.status == 'driving':
-                if self.dynamic_obstacle:
+                if self.obstacle_detected:
                     self.avoid_count = time.time()
                     self.status = 'stop'
 
@@ -278,7 +289,7 @@ class Core(Node):
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
-                if self.dynamic_obstacle:
+                if self.obstacle_detected:
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 2:
@@ -428,7 +439,7 @@ class Core(Node):
             else:
                 self.cmd_speed = self.target_speed['global']
 
-                if self.traffic_stop_wp <= 3:
+                if self.traffic_stop_wp <= 3/0.2:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
         elif self.mode == 'finish':

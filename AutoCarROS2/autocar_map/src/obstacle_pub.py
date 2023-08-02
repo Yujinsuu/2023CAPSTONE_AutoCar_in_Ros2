@@ -94,19 +94,21 @@ class ObstaclePub(Node):
         # object length, width
         o.length = abs(obs.points[0].x - obs.points[1].x)
         o.width = abs(obs.points[4].y - obs.points[3].y)
+        if o.length * o.width <= 0.7:
+            o.length += 0.3
+            o.width += 0.3
 
         # object x, y, yaw
         x = (obs.points[0].x + obs.points[1].x)/2
         y = (obs.points[4].y + obs.points[3].y)/2
         yaw = 0.0
-        dist = x + 0.2
 
         # Compare Slope
         xmin = 0 if xmin < 0 else xmin
         slope_min = np.arctan2(ymin-self.cam_y, xmin-self.cam_x)
         slope_max = np.arctan2(ymax-self.cam_y, xmin-self.cam_x)
-        if slope_min <= self.angle <= slope_max and dist <= 10:
-            self.signs.append(dist)
+        if slope_min <= self.angle <= slope_max and x <= 10:
+            self.signs.append(x)
 
         # transformation (car -> map)
         o.x, o.y, o.yaw = self.change_frame(x, y, yaw, self.world_frame, self.detection_frame)

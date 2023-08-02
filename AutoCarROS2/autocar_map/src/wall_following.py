@@ -8,7 +8,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32MultiArray, String
 from sensor_msgs.msg import LaserScan
 from autocar_msgs.msg import Path2D
 from geometry_msgs.msg import Point, Pose2D, TransformStamped
@@ -27,9 +27,10 @@ class WallFollower(Node):
         self.create_rate(10)
         self.viz_pub = self.create_publisher(Marker, '/rviz/wall', 10)
         self.path_pub = self.create_publisher(Path2D, '/wall_path', 10)
-        self.inf_pub = self.create_publisher(Int32MultiArray, '/tunnel_check', 10)
+        self.state_pub = self.create_publisher(String, '/tunnel_check', 10)
 
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
+        self.mode_sub = self.create_subscription(String, '/yolo_mode', self.mode_callback, 10)
 
         self.LaneWidth = 4.72
         self.path_length = 50
@@ -41,13 +42,32 @@ class WallFollower(Node):
         self.world_frame = "odom"
         self.detection_frame = "car"
 
-        self.wall_inf = Int32MultiArray()
+        self.mode = 'None'
+        self.state = String()
+        self.state.data = 'entry'
+
         self.ransac = RANSACRegressor()
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.timer = self.create_timer(0.1, self.scaned_publish)
+
+    def mode_callback(self, msg):
+        self.mode = msg.data
+
+    def tunnel_check(self, inf_index, scan_range):
+        if self.mode == 'tunnel':
+            f_inf = len(inf_index[inf_index > 0.6 * scan_range])
+            r_inf = len(inf_index[inf_index < 0.4 * scan_range])
+            threshold = 0.2 * scan_range
+
+            if self.state.data == 'entry':
+                if (f_inf <= threshold <= r_inf) or (f_inf < threshold and r_inf < threshold):
+                    self.state.data = 'inside'
+            elif self.state.data == 'inside':
+                if (f_inf >= threshold >= r_inf) or (f_inf > threshold and r_inf > threshold):
+                    self.state.data = 'exit'
 
 
     def get_line_RANSAC(self, x_coords_raw, y_coords_raw) :
@@ -60,9 +80,9 @@ class WallFollower(Node):
         slope = self.ransac.estimator_.coef_[0][0]
         intercept = self.ransac.estimator_.intercept_[0]
 
-        x_coords = np.arange(X.min(), X.max())[:, np.newaxis]
-        num = min(self.path_length, len(x_coords))
-        x_coords = x_coords[:num]
+        x_coords = np.arange(-10, 40)[:, np.newaxis]
+        # num = min(self.path_length, len(x_coords))
+        # x_coords = x_coords[:num]
         y_coords = self.ransac.predict(x_coords)
 
         self.plot_line(x_coords, y_coords)
@@ -103,12 +123,7 @@ class WallFollower(Node):
         x_coords_raw = np.delete(x_coords_raw, inf_indices)
         y_coords_raw = np.delete(y_coords_raw, inf_indices)
 
-        wall_inf = list(map(int, inf_indices))
-        wall_inf.append(wall_length)
-
-        self.wall_inf = Int32MultiArray()
-        self.wall_inf.data = wall_inf
-        self.inf_pub.publish(self.wall_inf)
+        self.tunnel_check(inf_indices, wall_length)
 
         # x raw 값의 범위 지정
         x_indices = np.where((x_coords_raw < -10) | (x_coords_raw > 30))[0]
@@ -119,6 +134,7 @@ class WallFollower(Node):
 
         self.x_coords = x_coords
         self.y_coords = y_coords
+
 
     def plot_line(self, x_coords, y_coords):
         line_marker = Marker()
@@ -183,6 +199,7 @@ class WallFollower(Node):
                 wall_path.poses.append(path)
 
         self.path_pub.publish(wall_path)
+        self.state_pub.publish(self.state)
 
 
 def main(args=None):

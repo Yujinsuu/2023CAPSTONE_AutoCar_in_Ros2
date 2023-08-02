@@ -27,6 +27,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Twist2D.msg"
   "msg/Object.msg"
   "msg/ObjectArray.msg"
+  "msg/Obstacle.msg"
   "msg/Control.msg"
   "msg/Polygon.msg"
   "msg/PolygonArray.msg"

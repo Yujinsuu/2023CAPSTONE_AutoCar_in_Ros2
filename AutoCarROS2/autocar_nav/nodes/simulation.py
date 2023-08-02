@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import os
+import sys
 import math
 import numpy as np
 from collections import deque
@@ -13,7 +15,7 @@ from geometry_msgs.msg import PoseStamped, TransformStamped
 from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker
 
-from autocar_nav import yaw_to_quaternion
+from autocar_nav.quaternion import yaw_to_quaternion
 
 from tf2_ros import StaticTransformBroadcaster
 
@@ -40,8 +42,16 @@ class Simulation(Node):
         self.theta = None
         self.sigma = 0.0
         self.vel = 0.0
-        self.brake = 0.0
-        self.b_time = 0.0
+
+        # index = start_index
+        # link = 'global_' + str(index)
+        # self.init_x = use_map.global_map_x[link][0]
+        # self.init_y = use_map.global_may_y[link][0]
+        # self.init_yaw = np.arctan2((use_map.global_may_y[link][1] - self.init_y), (use_map.global_may_x[link][1]) - self.init_x)
+
+        self.init_x = -329.531517151976
+        self.init_y = 450.227843242232
+        self.init_yaw = np.arctan2((451.162895544199-self.init_y),(-329.255662076874-self.init_x))
 
         self.state2d = None
         self.state = Odometry()
@@ -75,9 +85,9 @@ class Simulation(Node):
 
     def vehicle_cb(self, msg):
         if self.x == None:
-            self.x = -1.78#-71.#-7.#-288.9
-            self.y = 19.9#610.#9.#486.2
-            self.theta = 1.15#3.9#1.4#6
+            self.x = self.init_x
+            self.y = self.init_y
+            self.theta = self.init_yaw
 
         sigma = msg.drive.steering_angle
         self.vel = msg.drive.speed

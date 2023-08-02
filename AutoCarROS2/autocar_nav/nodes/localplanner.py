@@ -11,8 +11,8 @@ from rclpy.duration import Duration
 from ament_index_python.packages import get_package_share_directory
 
 from nav_msgs.msg import Path
-from std_msgs.msg import Bool, Float64MultiArray
-from autocar_msgs.msg import Path2D, State2D, ObjectArray, LinkArray
+from std_msgs.msg import Float64MultiArray
+from autocar_msgs.msg import Path2D, State2D, ObjectArray, LinkArray, Obstacle
 from geometry_msgs.msg import Pose2D, PoseStamped, TransformStamped
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -31,7 +31,7 @@ class LocalPathPlanner(Node):
         # Initialise publishers
         self.local_planner_pub = self.create_publisher(Path2D, '/autocar/path', 10)
         self.path_viz_pub = self.create_publisher(Path, '/autocar/viz_path', 10)
-        self.estop_pub = self.create_publisher(Bool, '/autocar/estop', 10)
+        self.obs_recog_pub = self.create_publisher(Obstacle, '/autocar/obs_recog', 10)
         self.center_viz_pub = self.create_publisher(MarkerArray, '/rviz/pathlane', 10)
 
         # Initialise subscribers
@@ -88,7 +88,11 @@ class LocalPathPlanner(Node):
         self.GtoL = 1.29 # gps to lidar distance
         self.L = 1.3 # 차량 길이
         self.W = 0.9 # 차량 폭
-        self.estop = False
+        self.obstacle_detected = False
+        self.obstacle_info = 'None'
+        self.dist_thresh = 5 # 정적 및 동적 판단 기준 : 5m
+        self.queue = 0
+        self.prev_dist = None
         self.is_fail = False
 
         self.timer = self.create_timer(0.1, self.timer_cb)
@@ -191,7 +195,8 @@ class LocalPathPlanner(Node):
         self.center_viz_pub.publish(marray)
 
     def determine_path(self, cx, cy, cyaw):
-        self.estop = False
+        self.obstacle_detected = False
+        self.obstacle_info = 'None'
         obstacle_colliding = []
         car_msg = []
         for i in range(0,len(cyaw),10):
@@ -209,11 +214,18 @@ class LocalPathPlanner(Node):
 
         # 모드에 따라 reroute할것인지 급정거 할 것인지 설정
         if len(obstacle_colliding) != 0:
+            self.queue = 0
             if self.mode in ['static', 'tunnel']:
                 cx, cy, cyaw = self.collision_reroute(cx, cy, cyaw, obstacle_colliding)
-                self.estop = True
+                self.obstacle_detected = True
             if self.mode == 'dynamic':
-                self.estop = True
+                self.obstacle_detected = True
+        ## 최근에 장애물 검출이 안된다면 prev_dist를 None으로 변경
+        else:
+            self.queue += 1
+            if self.queue >= 5:
+                self.queue = 5
+                self.prev_dist = None
 
         return cx, cy, cyaw
 
@@ -237,6 +249,18 @@ class LocalPathPlanner(Node):
 
         self.get_logger().info('obstacle detected!!  target idx : %d' %(target_idx_e))
 
+        ## 가까운 장애물과의 거리
+        dist = np.sqrt((self.x - obs_end[0])**2 + (self.y - obs_end[1])**2)
+        ## 장애물거리가 가깝고 최근에 장애물이 없었다면 동적 장애물로 판단
+        if dist <= self.dist_thresh:
+            if self.prev_dist is None:
+                self.obstacle_info = 'dynamic'
+            else:
+                self.obstacle_info = 'static'
+                self.prev_dist = dist
+        else:
+            self.obstacle_info = 'static'
+            self.prev_dist = dist
 
         # if target_idx_e + (step+10) >= len(cyaw) or target_idx_f - (step+10) <= 0: # 10 대신 step_region
             # return cx, cy, cyaw
@@ -317,9 +341,10 @@ class LocalPathPlanner(Node):
         if self.is_fail == True:
             return
 
-        estop = Bool()
-        estop.data = self.estop
-        self.estop_pub.publish(estop)
+        obs = Obstacle()
+        obs.detected = self.obstacle_detected
+        obs.obstacle = self.obstacle_info
+        self.obs_recog_pub.publish(obs)
 
         path_length = min(len(cx), len(cy), len(cyaw))
 
