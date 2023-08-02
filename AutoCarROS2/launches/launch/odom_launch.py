@@ -31,6 +31,18 @@ def generate_launch_description():
         ),
 
         Node(
+            package = odom,
+            name = 'pub_encoder_tic',
+            executable = 'get_encoder.py'
+        ),
+
+        Node(
+            package = odom,
+            name = 'pub_enc_vel',
+            executable = 'encoder_vel.py'
+        ),
+
+        Node(
             package = 'robot_localization',
             name = 'ekf_filter_node',
             executable = 'ekf_node',

@@ -34,6 +34,8 @@ install(PROGRAMS
   src/dead_reckoning.py
   src/odom_pub.py
   src/odom_viz.py
+  src/get_encoder.py
+  src/encoder_vel.py
   src/tf_pub.py
   DESTINATION lib/${PROJECT_NAME}
 )

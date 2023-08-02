@@ -35,7 +35,7 @@ class PathTracker(Node):
         self.tracker_pub = self.create_publisher(AckermannDriveStamped, '/autocar/ackermann_cmd', 10)
         self.ct_error_pub = self.create_publisher(Float64, '/autocar/cte_error', 10)
         self.h_error_pub = self.create_publisher(Float64, '/autocar/he_error', 10)
-
+        self.car_steer_pub = self.create_publisher(Float64, '/autocar/now_steer', 10)
 
         # Initialise subscribers
         self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10)
@@ -107,6 +107,9 @@ class PathTracker(Node):
         input_steer = msg.drive.steering_angle
 
         self.sigma = self.filter.update(input_steer)
+        steer = Float64()
+        steer.data = self.sigma
+        self.car_steer_pub.publish(steer)
 
     def vehicle_state_cb(self, msg):
         self.lock.acquire()
