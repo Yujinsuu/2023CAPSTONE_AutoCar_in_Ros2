@@ -32,8 +32,8 @@ class WallFollower(Node):
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
         self.mode_sub = self.create_subscription(String, '/yolo_mode', self.mode_callback, 10)
 
-        self.LaneWidth = 4.72
-        self.path_length = 50
+        self.LaneWidth = 4.02
+        self.path_length = 30
 
         self.x_coords = None
         self.y_coords = None
@@ -84,7 +84,7 @@ class WallFollower(Node):
         slope = self.ransac.estimator_.coef_[0][0]
         intercept = self.ransac.estimator_.intercept_[0]
 
-        x_coords = np.arange(-10, 40)[:, np.newaxis]
+        x_coords = np.arange(-10, 20)[:, np.newaxis]
         # num = min(self.path_length, len(x_coords))
         # x_coords = x_coords[:num]
         y_coords = self.ransac.predict(x_coords)

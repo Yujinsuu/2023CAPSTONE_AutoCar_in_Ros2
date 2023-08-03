@@ -82,7 +82,7 @@ ekf_filter_node:
 # default values, and must be specified.
         # odom0: data/gps 
         # odom0: data/encoder_vel
-        odom0: /data/encoder
+        odom0: /data/encoder_vel
 
 # Each sensor reading updates some or all of the filter's state. These options give you greater control over which
 # values from each measurement are fed to the filter. For example, if you have an odometry message as input, but only

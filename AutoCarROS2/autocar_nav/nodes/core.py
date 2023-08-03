@@ -49,8 +49,8 @@ class Core(Node):
         self.status = 'driving'
         self.time = 0.0
 
-        self.target_speed = {'global': 15/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 6/3.6,
-                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 8/3.6, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+        self.target_speed = {'global': 10/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 6/3.6,
+                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 2.0, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
@@ -226,8 +226,7 @@ class Core(Node):
                 self.status = 'lanenet'
 
             elif self.status == 'lanenet':
-                if self.tunnel_state == 'entry' or self.lane_detected:
-                    self.cmd_steer = self.vision_steer
+                self.cmd_steer = self.vision_steer
 
                 if self.obstacle == 'dynamic':
                     self.avoid_count = time.time()
@@ -250,14 +249,14 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 60
+                brake_force = 400
                 max_brake = 100
-                self.brake_control(brake_force, max_brake, 3)
+                self.brake_control(brake_force, max_brake, 2)
 
                 if self.obstacle == 'dynamic':
                     self.avoid_count = time.time()
 
-                if time.time() - self.avoid_count >= 2:
+                if time.time() - self.avoid_count >= 1.5:
                     self.status = 'lanenet'
                     self.t = 0
 

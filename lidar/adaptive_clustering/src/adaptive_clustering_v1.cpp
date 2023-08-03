@@ -56,7 +56,7 @@ class AdaptiveClustering : public rclcpp::Node
     private:
     bool print_fps_ = true;
 
-    int cluster_size_min_ = 10;
+    int cluster_size_min_ = 3;
     int cluster_size_max_ = 2200000;
 
     int regions_[14] = {2,3,3,3,3,3,3,2,3,3,3,3,3,3}; // VLP-16
@@ -83,10 +83,29 @@ class AdaptiveClustering : public rclcpp::Node
       pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pc_in(new pcl::PointCloud<pcl::PointXYZI>);
       pcl::fromROSMsg(*ros_pc2_in, *pcl_pc_in);
 
-        /*** Remove ground and ceiling ***/
-        pcl::IndicesPtr pc_indices(new std::vector<int>);
-        pcl::PassThrough<pcl::PointXYZI> pt;
+      /*** Remove ground and ceiling ***/
+      pcl::IndicesPtr pc_indices(new std::vector<int>);
+      pcl::PassThrough<pcl::PointXYZI> pt;
+      pcl::PointCloud<pcl::PointXYZI>::Ptr center(new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr outskirt(new pcl::PointCloud<pcl::PointXYZI>);
+      pcl::PassThrough<pcl::PointXYZI> xfilter;
+      pcl::PassThrough<pcl::PointXYZI> yfilter;
 
+      // 중앙 이외의 부분 추출
+      xfilter.setInputCloud(pcl_pc_in);
+      xfilter.setFilterFieldName("x");
+      xfilter.setFilterLimits(-1.5, 0.5);
+      xfilter.filter(*center);
+      xfilter.setFilterLimitsNegative(true);
+      xfilter.filter(*outskirt);
+
+      // 그 후 y축 방향으로 중앙에 있는 부분 제거
+      yfilter.setInputCloud(center);
+      yfilter.setFilterFieldName("y");
+      yfilter.setFilterLimits(-0.7, 0.7);
+      yfilter.setFilterLimitsNegative(true);
+      yfilter.filter(*pcl_pc_in);
+      *pcl_pc_in += *outskirt;
 
         if (mode == "delivery") {
             pt.setInputCloud(pcl_pc_in);
@@ -118,7 +137,7 @@ class AdaptiveClustering : public rclcpp::Node
 
             pt.setInputCloud(pcl_pc_in);
             pt.setFilterFieldName("x");
-            pt.setFilterLimits(0.5, 10.0);
+            pt.setFilterLimits(-0.5, 10.0);
             pt.filter(*pc_indices);
         }
 

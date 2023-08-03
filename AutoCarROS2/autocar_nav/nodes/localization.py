@@ -71,7 +71,7 @@ class Localization(Node):
 
         if self.dr_state is not None:
             # if self.mode == 'tunnel':
-                # self.update_state(self.dr_state)
+            #     self.update_state(self.dr_state)
             # else:
             self.update_state(self.state)
 

@@ -68,6 +68,7 @@ alias param='noetic && roslaunch load_params load_params.launch'
 alias bridge='foxy && ros2 run ros1_bridge parameter_bridge'
 alias imu='ros2 run bluespace_ai_xsens_mti_driver xsens_mti_node'
 alias erp='ros2 run erp_control ERP42_ros2'
+alias yaw='ros2 param set odom_pub yaw_init'
 
 export PATH=$PATH:/usr/local/cuda-11.4/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.4/lib64

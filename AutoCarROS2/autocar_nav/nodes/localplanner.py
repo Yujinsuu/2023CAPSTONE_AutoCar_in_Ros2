@@ -66,8 +66,8 @@ class LocalPathPlanner(Node):
         df = pd.read_csv(file_path + '/htech/tunnel_lane.csv')
         self.center_x = df['x'].tolist()
         self.center_y = df['y'].tolist()
-        # self.center_x = [i - 4.5 for i in self.center_x]
-        # self.center_y = [i + 1.5 for i in self.center_y]
+        # self.center_x = [i - 2.5 for i in self.center_x]
+        # self.center_y = [i + 1.0 for i in self.center_y]
         self.center_yaw = df['yaw'].tolist()
         self.offset_x = 0.0
         self.offset_y = 0.0

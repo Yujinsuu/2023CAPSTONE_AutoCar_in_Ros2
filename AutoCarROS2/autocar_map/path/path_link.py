@@ -82,7 +82,7 @@ def test_track():
     parking_file = None
     revpark_file = None
     test_track = Path(base_file, global_file, parking_file, revpark_file)
-    # test_track.car_mode[1] = 'tunnel'
+    test_track.car_mode[1] = 'tunnel'
     test_track.car_mode[3] = 'delivery_A'
     test_track.car_mode[5] = 'dynamic'
     test_track.car_mode[6] = 'delivery_B'
@@ -163,5 +163,5 @@ def htech():
 
 
 # use_map = test_track()
-use_map = boong()
+use_map = test_track()
 start_index = 0
