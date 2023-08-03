@@ -104,10 +104,10 @@ class Pub_Enc_Vel(Node):
 
         if self.steer > 0.4:
             self.delta_pos = self.wheel_radius * self.wheel_pos * speed_up /4
-            self.get_logger().info('up vel gain: %f' %speed_up)
+            # self.get_logger().info('up vel gain: %f' %speed_up)
         elif self.steer < -0.4:
             self.delta_pos = self.wheel_radius * self.wheel_pos * speed_down /4
-            self.get_logger().info('down vel gain: %f' %speed_down)
+            # self.get_logger().info('down vel gain: %f' %speed_down)
         else:
             self.delta_pos = self.wheel_radius * self.wheel_pos /4
 

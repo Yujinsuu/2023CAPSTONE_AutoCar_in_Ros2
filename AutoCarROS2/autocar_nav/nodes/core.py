@@ -47,9 +47,10 @@ class Core(Node):
         self.direction = 'Straight'
         self.next_path = 'straight'
         self.status = 'driving'
+        self.time = 0.0
 
         self.target_speed = {'global': 15/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 6/3.6,
-                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 7/3.6, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 8/3.6, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
@@ -209,7 +210,7 @@ class Core(Node):
         if self.mode == 'global':
             self.status = 'driving'
 
-            if self.direction == 'Curve' or abs(np.rad2deg(self.cmd_steer)) >= 10:
+            if self.direction == 'Curve' or abs(np.rad2deg(self.cmd_steer)) >= 15:
                 self.cmd_speed = self.target_speed['curve']
                 self.brake = 30.0
             else:
@@ -451,7 +452,6 @@ class Core(Node):
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
-
         self.publish_autocar_command()
 
 
@@ -470,6 +470,7 @@ class Core(Node):
             car.drive.speed = 0.0
         else:
             car.drive.steering_angle = self.cmd_steer
+            self.time+=self.dt
             car.drive.speed = self.cmd_speed
 
         car.drive.acceleration = self.gear

@@ -82,7 +82,7 @@ def test_track():
     parking_file = None
     revpark_file = None
     test_track = Path(base_file, global_file, parking_file, revpark_file)
-    test_track.car_mode[1] = 'tunnel'
+    # test_track.car_mode[1] = 'tunnel'
     test_track.car_mode[3] = 'delivery_A'
     test_track.car_mode[5] = 'dynamic'
     test_track.car_mode[6] = 'delivery_B'
@@ -106,14 +106,14 @@ def boong():
     parking_file = file_path + '/boong/boong_parking.csv'
     revpark_file = file_path + '/boong/boong_revpark.csv'
     boong = Path(base_file, global_file, parking_file, revpark_file)
-    boong.car_mode[1] = 'parking'
-    boong.car_mode[3] = 'dynamic'
-    boong.car_mode[5] = 'static'
-    boong.car_mode[7] = 'delivery_A'
-    boong.car_mode[8] = 'uturn'
-    boong.car_mode[9] = 'delivery_B'
-    boong.car_mode[11] = 'tunnel'
-    boong.car_mode[14] = 'revpark'
+    # boong.car_mode[1] = 'parking'
+    # boong.car_mode[3] = 'dynamic'
+    # boong.car_mode[5] = 'static'
+    # boong.car_mode[7] = 'delivery_A'
+    # boong.car_mode[8] = 'uturn'
+    # boong.car_mode[9] = 'delivery_B'
+    # boong.car_mode[11] = 'tunnel'
+    # boong.car_mode[14] = 'revpark'
 
     left = [7,8,9,11]
     right = [1,3,5]
@@ -149,13 +149,13 @@ def qualifier():
 
 def htech():
     base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/tunnel.csv'
+    global_file = file_path + '/htech/htech_ccw.csv'
     # global_file = file_path + '/htech/delivery.csv'
     parking_file = None
     revpark_file = None
     htech = Path(base_file, global_file, parking_file, revpark_file)
-    htech.car_mode[1] = 'tunnel'
-    htech.car_mode[4] = 'tunnel'
+    # htech.car_mode[1] = 'tunnel'
+    # htech.car_mode[4] = 'tunnel'
     # htech.car_mode[0] = 'delivery_A'
     # htech.car_mode[3] = 'delivery_B'
 
@@ -163,5 +163,5 @@ def htech():
 
 
 # use_map = test_track()
-use_map = test_track()
+use_map = boong()
 start_index = 0

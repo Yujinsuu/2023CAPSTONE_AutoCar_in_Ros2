@@ -11,23 +11,23 @@ def generate_launch_description():
         ),
         Node(
             package='adaptive_clustering',
-            executable='adaptive_clustering',
-            name='adaptive_clustering'
+            name='adaptive_clustering',
+            executable='adaptive_clustering'
         ),
         Node(
             package='autocar_map',
-            executable='obstacle_pub.py',
-            name='obstacle_pub'
+            name='obstacle_pub',
+            executable='obstacle_pub.py'
         ),
         Node(
             package='autocar_map',
-            executable='obstacle_viz.py',
-            name='obs_viz'
+            name='obs_viz',
+            executable='obstacle_viz.py'
         ),
         Node(
             package='autocar_map',
-            executable='wall_following.py',
-            name='wall_follower'
+            name='wall_follower',
+            executable='wall_following.py'
         )
     ])
 

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import math
 import numpy as np
+import pandas as pd
 from collections import deque
 
 import rclpy
 from rclpy.node import Node
+from ament_index_python.packages import get_package_share_directory
 
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D
@@ -19,6 +20,17 @@ from autocar_nav.quaternion import yaw_to_quaternion
 
 from tf2_ros import StaticTransformBroadcaster
 
+
+class LowPassFilter:
+    def __init__(self, cutoff_freq, update_rate):
+        self.update_rate = update_rate
+        self.alpha = cutoff_freq / (cutoff_freq + update_rate)
+        self.filtered_angle = 0.0
+
+    def update(self, input_angle):
+        self.filtered_angle += self.alpha * (input_angle - self.filtered_angle)
+
+        return self.filtered_angle
 
 class Simulation(Node):
 
@@ -42,16 +54,16 @@ class Simulation(Node):
         self.theta = None
         self.sigma = 0.0
         self.vel = 0.0
+        self.filter = LowPassFilter(cutoff_freq=4.3, update_rate=10.0)
 
-        # index = start_index
-        # link = 'global_' + str(index)
-        # self.init_x = use_map.global_map_x[link][0]
-        # self.init_y = use_map.global_may_y[link][0]
-        # self.init_yaw = np.arctan2((use_map.global_may_y[link][1] - self.init_y), (use_map.global_may_x[link][1]) - self.init_x)
+        file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
+        df = pd.read_csv(file_path + '/boong/boong_track.csv')
+        map_x = df[df['Link']==0]['X-axis'][0:2]
+        map_y = df[df['Link']==0]['Y-axis'][0:2]
+        self.init_x = map_x[0]
+        self.init_y = map_y[0]
+        self.init_yaw = np.arctan2((map_y[1] - self.init_y), (map_x[1] - self.init_x))+1
 
-        self.init_x = -329.531517151976
-        self.init_y = 450.227843242232
-        self.init_yaw = np.arctan2((451.162895544199-self.init_y),(-329.255662076874-self.init_x))
 
         self.state2d = None
         self.state = Odometry()
@@ -89,7 +101,8 @@ class Simulation(Node):
             self.y = self.init_y
             self.theta = self.init_yaw
 
-        sigma = msg.drive.steering_angle
+        input_steer = msg.drive.steering_angle
+        sigma = self.filter.update(input_steer)
         self.vel = msg.drive.speed
 
         rev = -1 if msg.drive.acceleration == 2.0 else 1

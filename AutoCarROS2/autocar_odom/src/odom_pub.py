@@ -44,6 +44,7 @@ class odomPublisher(Node):
 		self.gps_vel_sub = self.create_subscription(TwistWithCovarianceStamped, '/ublox_gps/fix_velocity', self.gps_vel_callback, qos_profile)
 		self.imu_sub = self.create_subscription(QuaternionStamped, '/filter/quaternion', self.imu_callback, qos_profile)
 		self.imu_angularV_sub = self.create_subscription(Vector3Stamped, '/imu/angular_velocity', self.imu_angularV_callback, qos_profile)
+		self.encoder_sub = self.create_subscription(Odometry, '/data/encoder_vel', self.encoder_callback, 10)
 		self.mode_sub = self.create_subscription(LinkArray,'/autocar/mode', self.mode_callback, qos_profile )
 
 		self.gps_yaw = 0.0
@@ -56,7 +57,7 @@ class odomPublisher(Node):
 		self.yaw_offset_array = []
 		self.yaw_offset_av = 0.0
 		self.corr = None
-
+		self.encoder_vel = 0.0
 
 		self.gpose = Odometry()
 		self.gpose.header.stamp = self.get_clock().now().to_msg()
@@ -85,6 +86,9 @@ class odomPublisher(Node):
 			if param.name == 'yaw_init' and param.type_ == Parameter.Type.INTEGER:
 				self.yaw_init = param.value
 		return SetParametersResult(successful=True)
+
+	def encoder_callback(self, enc):
+		self.encoder_vel = enc.twist.twist.linear.x
 
 	def gps_callback(self, gps):
 
@@ -194,13 +198,12 @@ class odomPublisher(Node):
 
 	def odom_publish(self):
 
-		self.get_logger().info('vel : %f' % self.velocity)
+		self.get_logger().info(f'GPS_vel : {round(self.velocity*3.6, 1)} km/h\t ENC_vel : {round(self.encoder_vel*3.6, 1)} km/h')
 		# self.get_logger().info('gps yaw : %f' % self.gps_yaw)
 		# self.get_logger().info('imu yaw : %f' % self.imu_yaw)
 		#self.get_logger().info('yaw_offset_av: %s' % self.yaw_offset_array)
-		self.get_logger().info('yaw_offset_av: %f' % self.yaw_offset_av)
-		self.get_logger().info('yaw offset : %f' % (-self.yaw_offset/math.pi*180))
-		self.get_logger().info('yaw_init : %f' % self.yaw_init)
+
+		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}')
 		self.tf_publisher_dynamic()
 		self.odom_pub.publish(self.gpose)
 

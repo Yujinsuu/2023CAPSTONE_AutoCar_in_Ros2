@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import time
 import numpy as np
 import pandas as pd
 from scipy.interpolate import CubicSpline
@@ -83,7 +84,7 @@ class LocalPathPlanner(Node):
         self.x = 0.0
         self.y = 0.0
         self.yaw = 0.0
-
+        self.start = time.time()
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
         self.L = 1.3 # 차량 길이
@@ -374,6 +375,7 @@ class LocalPathPlanner(Node):
 
         self.local_planner_pub.publish(self.target_path)
         self.path_viz_pub.publish(self.viz_path)
+
 
 def main(args=None):
     rclpy.init(args=args)

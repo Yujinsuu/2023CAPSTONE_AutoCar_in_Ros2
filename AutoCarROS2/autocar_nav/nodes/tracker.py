@@ -89,12 +89,12 @@ class PathTracker(Node):
                   'delivery_B': {'Straight': 1.0, 'Curve': 1.0},
                   'finish'    : {'Straight': 1.0, 'Curve': 1.0}}
         self.ksoft = 0.1
-        self.kyaw = 1.0
+        self.kyaw = 0.8
 
         self.lock = threading.Lock()
         self.dt = 1 / self.frequency
         self.sigma = 0.0
-        self.filter = LowPassFilter(cutoff_freq=2.0, update_rate=10.0)
+        self.filter = LowPassFilter(cutoff_freq=4.3, update_rate=10.0)
 
         self.status = 'driving'
         self.mode = 'global'
