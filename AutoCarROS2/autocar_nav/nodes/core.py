@@ -254,7 +254,7 @@ class Core(Node):
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 3)
 
-                if not self.is_static:#self.obstacle == 'dynamic':
+                if self.obstacle == 'dynamic':
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 2:
@@ -268,7 +268,7 @@ class Core(Node):
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
-                if self.is_static:#self.obstacle == 'static':
+                if self.obstacle == 'static':
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 3:

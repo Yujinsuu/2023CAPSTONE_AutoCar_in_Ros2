@@ -6,7 +6,7 @@ from cv_bridge import CvBridge
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, String
 from sensor_msgs.msg import Image
 
 from ultrafastLaneDetector import UltrafastLaneDetector, ModelType
@@ -21,10 +21,8 @@ class LaneNet(Node):
         self.steer_pub = self.create_publisher(Float64MultiArray, "/lanenet_steer", 10)
         self.image_pub = self.create_publisher(Image, "/lanenet_image", 10)
 
-        # self.mode_sub = self.create_subscription(String, "/yolo_mode", self.mode_cb, 10)
         self.image_sub = self.create_subscription(Image, "/lane/image_raw", self.image_cb, 10)
 
-        self.mode = 'None'
         self.steer_angle = Float64MultiArray()
         self.K = 0.1
 
@@ -34,9 +32,6 @@ class LaneNet(Node):
 
         # Initialize lane detection model
         self.lane_detector = UltrafastLaneDetector(model_path, model_type, use_gpu)
-
-    def mode_cb(self, msg):
-        self.mode = msg.data
 
     def image_cb(self, img):
         bridge = CvBridge()
@@ -58,7 +53,7 @@ class LaneNet(Node):
         self.image_pub.publish(image_message)
 
         steer_angle = np.deg2rad(-steer_angle)
-        self.steer_angle.data = [check, self.K * steer_angle]
+        self.steer_angle.data = [float(check), self.K * steer_angle]
 
         self.steer_pub.publish(self.steer_angle)
 

@@ -91,7 +91,7 @@ class LocalPathPlanner(Node):
         self.W = 0.9 # 차량 폭
         self.obstacle_detected = False
         self.obstacle_info = 'None'
-        self.dist_thresh = 5 # 정적 및 동적 판단 기준 : 5m
+        self.dist_thresh = 6 # 정적 및 동적 판단 기준 : 6m
         self.queue = 0
         self.prev_dist = None
         self.is_fail = False
