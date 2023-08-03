@@ -265,6 +265,7 @@ class PathTracker(Node):
         car.header.frame_id = 'odom'
         car.header.stamp = self.get_clock().now().to_msg()
 
+        # car.drive.speed = 8/3.6
         car.drive.steering_angle = steer
 
         self.tracker_pub.publish(car)

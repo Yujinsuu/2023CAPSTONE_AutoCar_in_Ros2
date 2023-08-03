@@ -3,8 +3,7 @@
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile
-from std_msgs.msg import String, Int32, Float32, Float64MultiArray
+from std_msgs.msg import Float64MultiArray
 from ackermann_msgs.msg import AckermannDriveStamped
 #from geometry_msgs.msg import Twist
 
@@ -144,10 +143,11 @@ class erp42(Node):
 
 	def acker_callback(self, msg):
 		self.speed = msg.drive.speed
-		self.cmd_steer = np.rad2deg(msg.drive.steering_angle)
+		# self.cmd_steer = np.rad2deg(msg.drive.steering_angle)
 		# self.steer = self.real_steer(self.cmd_steer)
 		# self.steer = self.vision_steer
-		self.steer = self.cmd_steer
+		# self.steer = self.cmd_steer
+		self.steer = msg.drive.steering_angle
 		self.brake = int(msg.drive.jerk)
 		self.gear = int(msg.drive.acceleration)
 
@@ -157,7 +157,7 @@ class erp42(Node):
 	def timer_callback(self):
 		# steer=radians(float(input("steer_angle:")))
 
-		print("Speed :",round(self.speed*3.6, 1), "km/h\t Steer :", round(self.steer, 2), "deg\t Brake :",self.brake, "%\t Gear :", self.dir[self.gear])
+		print("Speed :",round(self.speed*3.6, 1), "km/h\t Steer :", round(np.rad2deg(self.steer), 2), "deg\t Brake :",self.brake, "%\t Gear :", self.dir[self.gear])
 		self.Send_to_ERP42(self.gear, self.speed, -self.steer, self.brake)
 
 def main(args=None):

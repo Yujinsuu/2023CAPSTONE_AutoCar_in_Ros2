@@ -34,7 +34,7 @@ class erp42(Node):
 		self.input_pub = self.create_publisher(Float32, '/input_steer', qos_profile)
 		self.output_pub = self.create_publisher(Float32, '/output_steer', qos_profile)
 
-		self.filter = LowPassFilter(cutoff_freq=4.3, update_rate=10.0)
+		self.filter = LowPassFilter(cutoff_freq=2.0, update_rate=10.0)
 		self.arrived = False
 		self.input_time = time.time()
 		self.arrival_time = time.time()
