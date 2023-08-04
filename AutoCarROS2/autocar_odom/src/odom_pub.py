@@ -67,10 +67,10 @@ class odomPublisher(Node):
 		self.gps_data.header.frame_id = 'odom'
 		self.imu_data = Imu()
 		self.imu_data.header.stamp = self.get_clock().now().to_msg()
-		self.imu_data.header.frame_id = 'odom'
+		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', 74.)
+		self.declare_parameter('yaw_init', 76)
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.add_on_set_parameters_callback(self.update_parameter)
 
@@ -198,7 +198,7 @@ class odomPublisher(Node):
 
 	def odom_publish(self):
 
-		self.get_logger().info(f'GPS_vel : {round(self.velocity*3.6, 1)} km/h\t ENC_vel : {round(self.encoder_vel*3.6, 1)} km/h')
+		# self.get_logger().info(f'GPS_vel : {round(self.velocity*3.6, 1)} km/h\t ENC_vel : {round(self.encoder_vel*3.6, 1)} km/h')
 		# self.get_logger().info('gps yaw : %f' % self.gps_yaw)
 		# self.get_logger().info('imu yaw : %f' % self.imu_yaw)
 		#self.get_logger().info('yaw_offset_av: %s' % self.yaw_offset_array)

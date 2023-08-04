@@ -240,7 +240,7 @@ class Core(Node):
                     self.brake = 0.0
                     self.t = 0
 
-                if self.traffic_stop_wp <= 0 or self.tunnel_state == 'exit':
+                if self.traffic_stop_wp <= 0:
                     self.status = 'complete'
                     self.brake = 0.0
                     self.t = 0
@@ -275,6 +275,34 @@ class Core(Node):
                     self.t = 0
 
 
+        elif self.mode == 'static':
+            if self.status == 'driving':
+                if self.obstacle_detected:
+                    self.avoid_count = time.time()
+                    self.status = 'avoid'
+                    self.t = 0
+
+            elif self.status == 'avoid':
+                self.cmd_speed = self.target_speed['static'] - 2
+
+                brake_force = 30
+                max_brake = 100
+                self.brake_control(brake_force, max_brake, 2)
+
+                if self.obstacle_detected:
+                    self.avoid_count = time.time()
+
+                if time.time() - self.avoid_count >= 2:
+                    self.status = 'complete'
+                    self.t = 0
+
+            else:
+                self.cmd_speed = self.target_speed['global']
+
+                if self.traffic_stop_wp <= 3:
+                    self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+
+
         elif self.mode == 'dynamic':
             if self.status == 'driving':
                 if self.obstacle_detected:
@@ -285,14 +313,14 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 150
+                brake_force = 400
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
                 if self.obstacle_detected:
                     self.avoid_count = time.time()
 
-                if time.time() - self.avoid_count >= 2:
+                if time.time() - self.avoid_count >= 1.5:
                     self.status = 'complete'
                     self.t = 0
 

@@ -8,6 +8,7 @@ import rclpy
 from rclpy.node import Node
 
 from nav_msgs.msg import Odometry
+from autocar_msgs.msg import State2D
 from geometry_msgs.msg import Quaternion
 from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker
@@ -25,7 +26,8 @@ class odom_viz(Node):
     self.viz_steer = self.create_publisher(Marker, '/rviz/viz_steer', 1)
     self.viz_yaw = self.create_publisher(Marker, '/rviz/viz_yaw', 1)
 
-    self.odom_sub=self.create_subscription(Odometry, "/autocar/odom", self.odometry_callback, 10)
+    # self.odom_sub=self.create_subscription(Odometry, "/autocar/odom", self.odometry_callback, 10)
+    self.state_sub=self.create_subscription(State2D, "/autocar/state2D", self.state_callback, 10)
     self.cmd_sub = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.visual_steer, 10)
 
     self.x = 0.0
@@ -56,6 +58,22 @@ class odom_viz(Node):
 
     self.msg_pub()
     self.visual_yaw()
+
+  def state_callback(self, state):
+    self.x = state.pose.x
+    self.y = state.pose.y
+    vx = state.twist.x
+    vy = state.twist.y
+    self.v = np.sqrt(vx**2+vy**2)
+
+    self.yaw = state.pose.theta
+
+    self.x = self.x + self.L * math.cos(self.yaw)
+    self.y = self.y + self.L * math.sin(self.yaw)
+
+    self.msg_pub()
+    self.visual_yaw()
+
 
   def msg_pub(self):
     self.quat = yaw_to_quaternion(self.yaw)

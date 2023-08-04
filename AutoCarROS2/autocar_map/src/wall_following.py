@@ -52,13 +52,47 @@ class WallFollower(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        self.timer = self.create_timer(0.1, self.scaned_publish)
-
     def mode_callback(self, msg):
         self.mode = msg.data
 
     def scan_callback(self, data):
         self.scan_data = data
+
+        angle_min = self.scan_data.angle_min
+        angle_max = self.scan_data.angle_max
+        angle_inc = self.scan_data.angle_increment
+
+        start_index = 50
+        end_index = 450
+
+        lidar_data = np.array(self.scan_data.ranges[start_index : end_index]) # 0- 897 0 - 450
+        start_angle = angle_min + start_index * angle_inc
+
+        angles = np.linspace(start_angle, start_angle + angle_inc * lidar_data.size, lidar_data.size)
+
+        # x = r cos(theta), y = r sin(theta)
+        x_coords_raw = np.multiply(lidar_data, np.cos(angles))
+        y_coords_raw = np.multiply(lidar_data, np.sin(angles))
+
+        wall_length = len(x_coords_raw)
+
+        # inf 값의 인덱스 탐색 및 제거
+        inf_indices = np.where(np.isinf(y_coords_raw))[0]
+        x_coords_raw = np.delete(x_coords_raw, inf_indices)
+        y_coords_raw = np.delete(y_coords_raw, inf_indices)
+
+        self.tunnel_check(inf_indices, wall_length)
+
+        # x raw 값의 범위 지정
+        x_indices = np.where((x_coords_raw < -10) | (x_coords_raw > 30))[0]
+        x_coords_raw = np.delete(x_coords_raw, x_indices)
+        y_coords_raw = np.delete(y_coords_raw, x_indices)
+        x_coords, y_coords = self.get_line_RANSAC(x_coords_raw, y_coords_raw)
+        self.slope = np.arctan2(y_coords[-1]-y_coords[0],x_coords[-1]-x_coords[0])
+
+        self.x_coords = x_coords
+        self.y_coords = y_coords
+
 
     def tunnel_check(self, inf_index, scan_range):
         if self.mode == 'tunnel':
@@ -151,41 +185,6 @@ class WallFollower(Node):
 
         return float(result[0, 3]), float(result[1, 3]), yaw  #, euler[2]
 
-    def find_wall(self):
-        angle_min = self.scan_data.angle_min
-        angle_max = self.scan_data.angle_max
-        angle_inc = self.scan_data.angle_increment
-
-        start_index = 50
-        end_index = 450
-
-        lidar_data = np.array(self.scan_data.ranges[start_index : end_index]) # 0- 897 0 - 450
-        start_angle = angle_min + start_index * angle_inc
-
-        angles = np.linspace(start_angle, start_angle + angle_inc * lidar_data.size, lidar_data.size)
-
-        # x = r cos(theta), y = r sin(theta)
-        x_coords_raw = np.multiply(lidar_data, np.cos(angles))
-        y_coords_raw = np.multiply(lidar_data, np.sin(angles))
-
-        wall_length = len(x_coords_raw)
-
-        # inf 값의 인덱스 탐색 및 제거
-        inf_indices = np.where(np.isinf(y_coords_raw))[0]
-        x_coords_raw = np.delete(x_coords_raw, inf_indices)
-        y_coords_raw = np.delete(y_coords_raw, inf_indices)
-
-        self.tunnel_check(inf_indices, wall_length)
-
-        # x raw 값의 범위 지정
-        x_indices = np.where((x_coords_raw < -10) | (x_coords_raw > 30))[0]
-        x_coords_raw = np.delete(x_coords_raw, x_indices)
-        y_coords_raw = np.delete(y_coords_raw, x_indices)
-        x_coords, y_coords = self.get_line_RANSAC(x_coords_raw, y_coords_raw)
-        self.slope = np.arctan2(y_coords[-1]-y_coords[0],x_coords[-1]-x_coords[0])
-
-        self.x_coords = x_coords
-        self.y_coords = y_coords
 
     def scaned_publish(self):
         if self.scan_data is not None:

@@ -106,8 +106,8 @@ class GlobalPathPlanner(Node):
 
         self.ax = []
         self.ay = []
-        self.saved_tx = []
-        self.saved_ty = []
+        self.tunnel_x = []
+        self.tunnel_y = []
 
         self.tunnel_state = 'entry'
         self.offset_x = 0.0
@@ -186,9 +186,11 @@ class GlobalPathPlanner(Node):
                     self.traffic_stop_wp = 1e3
 
         elif self.status == 'complete':
-            self.global_index += 1
-            closest_id = self.wp_behind
-            self.traffic_stop_wp = 1e3
+            if closest_id >= len(via_x) - self.wp_ahead:
+                if self.global_index < self.count['global'] - 1:
+                    self.global_index += 1
+                    closest_id = self.wp_behind
+                    self.traffic_stop_wp = 1e3
 
 
         self.mode = self.mode_list[self.global_index]
@@ -302,30 +304,13 @@ class GlobalPathPlanner(Node):
             self.parking_stop_wp = 1e3
 
             if self.mode == 'tunnel':
-                if self.tunnel_state == 'entry' and self.closest_wp > 20:
-                    self.tunnel_state = 'inside'
-
-                if self.tunnel_state == 'inside':
-                    if self.status == 'lanenet':
-                        self.offset_x, self.offset_y = line_offset(self.ax, self.ay, px, py)
-                    px = self.ax
-                    py = self.ay
-
                 if self.status == 'lanenet':
-                    self.saved_tx = px
-                    self.saved_ty = py
+                    self.tunnel_x = self.ax
+                    self.tunnel_y = self.ay
 
                 elif self.status in ['stop', 'avoid']:
-                    px = self.saved_tx
-                    py = self.saved_ty
-
-            else:
-                self.offset_x = 0.0
-                self.offset_y = 0.0
-
-        offset = Float64MultiArray()
-        offset.data = [self.offset_x, self.offset_y]
-        self.offset_pub.publish(offset)
+                    px = self.tunnel_x
+                    py = self.tunnel_y
 
         self.publish_goals(px, py)
 

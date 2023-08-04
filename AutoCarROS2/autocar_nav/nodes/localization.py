@@ -58,6 +58,7 @@ class Localization(Node):
 
         self.mode = 'global'
         self.mode_change = 0
+        self.odom_state = 'GPS Odometry'
 
         self.tx = deque([], 2000)
         self.ty = deque([], 2000)
@@ -70,25 +71,28 @@ class Localization(Node):
         self.state = msg
 
         if self.dr_state is not None:
-            # if self.mode == 'tunnel':
-            #     self.update_state(self.dr_state)
-            # else:
-            self.update_state(self.state)
+            if self.mode == 'tunnel' or self.odom_state == 'Dead_Reckoning':
+                self.update_state(self.dr_state)
+            else:
+                self.update_state(self.state)
+
 
     def dead_reckoning_cb(self, msg):
-        if self.mode == 'tunnel':
-            self.mode_change += 1
+        if self.state is not None:
+            if self.mode == 'tunnel':
+                self.mode_change += 1
 
-        if self.mode_change == 1:
-            self.offset_x = self.state.pose.pose.position.x
-            self.offset_y = self.state.pose.pose.position.y
-            self.init_x = msg.pose.pose.position.x
-            self.init_y = msg.pose.pose.position.y
+            if self.mode_change <= 5:
+                self.odom_state = 'Dead_Reckoning'
+                self.offset_x = self.state.pose.pose.position.x
+                self.offset_y = self.state.pose.pose.position.y
+                self.init_x = msg.pose.pose.position.x
+                self.init_y = msg.pose.pose.position.y
 
-        self.dr_state = msg
-        #offset filterd position
-        self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x
-        self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y
+            self.dr_state = msg
+            #offset filterd position
+            self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x
+            self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y
 
 
     def carto_cb(self, msg):

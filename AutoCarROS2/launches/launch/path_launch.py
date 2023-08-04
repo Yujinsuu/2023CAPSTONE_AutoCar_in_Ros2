@@ -23,13 +23,6 @@ def generate_launch_description():
 
         Node(
             package = navpkg,
-            name = 'localization',
-            executable = 'localization.py',
-            parameters = [navconfig]
-        ),
-
-        Node(
-            package = navpkg,
             name = 'global_planner',
             executable = 'globalplanner.py',
             parameters = [navconfig]
