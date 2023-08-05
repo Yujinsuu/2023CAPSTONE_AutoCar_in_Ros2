@@ -4,30 +4,25 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription([
         Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            arguments=['0', '0', '0', '0', '0', '0', 'car', 'velodyne'],
-            name='static_transform_publisher'
+            package = 'tf2_ros',
+            executable = 'static_transform_publisher',
+            arguments = ['0', '0', '0', '0', '0', '0', 'car', 'velodyne'],
+            name = 'static_transform_publisher'
         ),
         Node(
-            package='adaptive_clustering',
-            name='adaptive_clustering',
-            executable='adaptive_clustering'
+            package = 'adaptive_clustering',
+            name = 'adaptive_clustering',
+            executable = 'adaptive_clustering'
         ),
         Node(
-            package='autocar_map',
-            name='obstacle_pub',
-            executable='obstacle_pub.py'
+            package = 'autocar_map',
+            name = 'obstacle_pub',
+            executable = 'obstacle_pub.py'
         ),
         Node(
-            package='autocar_map',
-            name='obs_viz',
-            executable='obstacle_viz.py'
-        ),
-        Node(
-            package='autocar_map',
-            name='wall_follower',
-            executable='wall_following.py'
+            package = 'autocar_map',
+            name = 'obs_viz',
+            executable = 'obstacle_viz.py'
         )
     ])
 

@@ -27,6 +27,7 @@ class WallFollower(Node):
         self.create_rate(10)
         self.viz_pub = self.create_publisher(Marker, '/rviz/wall', 10)
         self.path_pub = self.create_publisher(Path2D, '/wall_path', 10)
+        self.lane_pub = self.create_publisher(Path2D, '/wall_lane', 10)
         self.state_pub = self.create_publisher(String, '/tunnel_check', 10)
 
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
@@ -34,11 +35,18 @@ class WallFollower(Node):
 
         # htech wall : 4.12m, kcity tunnel : 4.72m
         self.WalltoPath = 4.72
+        self.LaneWidth = 3.6
+        self.WalltoLane = [self.WalltoPath - 0.5 * self.LaneWidth, self.WalltoPath + 1.5 * self.LaneWidth]
         self.path_length = 30
 
         self.x_coords = None
         self.y_coords = None
         self.slope = None
+
+        self.x_lane1 = None
+        self.y_lane1 = None
+        self.x_lane2 = None
+        self.y_lane2 = None
 
         self.world_frame = "odom"
         self.detection_frame = "car"
@@ -90,11 +98,15 @@ class WallFollower(Node):
         x_indices = np.where((x_coords_raw < -10) | (x_coords_raw > 30))[0]
         x_coords_raw = np.delete(x_coords_raw, x_indices)
         y_coords_raw = np.delete(y_coords_raw, x_indices)
-        x_coords, y_coords = self.get_line_RANSAC(x_coords_raw, y_coords_raw)
+        x_coords, y_coords, x_lane1, y_lane1, x_lane2, y_lane2 = self.get_line_RANSAC(x_coords_raw, y_coords_raw)
         self.slope = np.arctan2(y_coords[-1]-y_coords[0],x_coords[-1]-x_coords[0])
 
         self.x_coords = x_coords
         self.y_coords = y_coords
+        self.x_lane1 = x_lane1
+        self.y_lane1 = y_lane1
+        self.x_lane2 = x_lane2
+        self.y_lane2 = y_lane2
 
 
     def tunnel_check(self, inf_index, scan_range):
@@ -126,19 +138,36 @@ class WallFollower(Node):
         # x_coords = x_coords[:num]
         y_coords = self.ransac.predict(x_coords)
 
+        x_lane1 = x_coords
+        x_lane2 = x_coords
+        y_lane1 = y_coords
+        y_lane2 = y_coords
+
         self.plot_line(x_coords, y_coords)
 
         if abs(slope) < 1e6:
             y_coords += self.WalltoPath
-        elif abs(slope) == np.inf:
+            y_lane1 += self.WalltoLane[0]
+            y_lane2 += self.WalltoLane[1]
+        elif abs(slope) > 2000000000:
             x_coords -= self.WalltoPath
+            x_lane1 -= self.WalltoLane[0]
+            x_lane2 -= self.WalltoLane[1]
         else:
             translation_vector = self.WalltoPath * np.array([-1 / slope, 1])
+            t1_vecotr = self.WalltoLane[0] * np.array([-1 / slope, 1])
+            t2_vecotr = self.WalltoLane[1] * np.array([-1 / slope, 1])
             moved_coords = np.column_stack((x_coords, y_coords)) - translation_vector
+            m1_coords = np.column_stack((x_lane1, y_lane1)) - t1_vecotr
+            m2_coords = np.column_stack((x_lane2, y_lane2)) - t2_vecotr
             x_coords = moved_coords[:, 0]
             y_coords = moved_coords[:, 1]
+            x_lane1 = m1_coords[:, 0]
+            y_lane1 = m1_coords[:, 1]
+            x_lane2 = m2_coords[:, 0]
+            y_lane2 = m2_coords[:, 1]
 
-        return x_coords, y_coords
+        return x_coords, y_coords, x_lane1, y_lane1, x_lane2, y_lane2
 
     def plot_line(self, x_coords, y_coords):
         line_marker = Marker()
@@ -191,17 +220,32 @@ class WallFollower(Node):
 
     def scaned_publish(self):
         wall_path = Path2D()
+        wall_lane = Path2D()
         if self.x_coords is not None:
             waypoints = min(len(self.x_coords), len(self.y_coords))
 
             for i in range(min(waypoints, self.path_length)) :
                 wx, wy, wyaw = self.change_frame(float(self.x_coords[i]), float(self.y_coords[i]), self.slope, self.world_frame, self.detection_frame)
+                l1x, l1y, l1yaw = self.change_frame(float(self.x_lane1[i]), float(self.y_lane1[i]), self.slope, self.world_frame, self.detection_frame)
+                l2x, l2y, l2yaw = self.change_frame(float(self.x_lane2[i]), float(self.y_lane2[i]), self.slope, self.world_frame, self.detection_frame)
 
                 path = Pose2D()
                 path.x = wx
                 path.y = wy
 
                 wall_path.poses.append(path)
+
+                lane1 = Pose2D()
+                lane1.x = l1x
+                lane1.y = l1y
+
+                wall_lane.poses.append(lane1)
+
+                lane2 = Pose2D()
+                lane2.x = l2x
+                lane2.y = l2y
+
+                wall_lane.poses.append(lane2)
 
         self.path_pub.publish(wall_path)
         self.state_pub.publish(self.state)

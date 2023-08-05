@@ -14,7 +14,7 @@ from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from ackermann_msgs.msg import AckermannDriveStamped
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 
 from autocar_nav.quaternion import yaw_to_quaternion
 
@@ -41,9 +41,8 @@ class Simulation(Node):
         # Initialise publishers
         self.localization_pub = self.create_publisher(State2D, '/autocar/state2D', 10)
         self.trajectory_pub = self.create_publisher(Path, '/rviz/trajectory', 10)
-        self.marker_pub = self.create_publisher(Marker, "/rviz/odom_marker", 10)
+        self.Car_pub = self.create_publisher(MarkerArray, "/rviz/gps_odometry_marker", 10)
         self.viz_steer = self.create_publisher(Marker, '/rviz/viz_steer', 10)
-        self.viz_yaw = self.create_publisher(Marker, '/rviz/viz_yaw', 10)
 
         # Initialise subscribers
         self.cmd_sub = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.vehicle_cb, 10)
@@ -57,12 +56,12 @@ class Simulation(Node):
         self.filter = LowPassFilter(cutoff_freq=4.3, update_rate=10.0)
 
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        df = pd.read_csv(file_path + '/boong/boong_track.csv')
+        df = pd.read_csv(file_path + '/kcity/qualifier.csv')
         map_x = df[df['Link']==0]['X-axis'][0:2]
         map_y = df[df['Link']==0]['Y-axis'][0:2]
         self.init_x = map_x[0]
         self.init_y = map_y[0]
-        self.init_yaw = np.arctan2((map_y[1] - self.init_y), (map_x[1] - self.init_x))+1
+        self.init_yaw = np.arctan2((map_y[1] - self.init_y), (map_x[1] - self.init_x))
 
 
         self.state2d = None
@@ -119,9 +118,15 @@ class Simulation(Node):
             self.state.twist.twist.linear.y = self.vel * np.sin(self.theta)
 
             self.update_state()
-            self.visual_car()
-            self.visual_yaw()
             self.visual_steer()
+
+            car =MarkerArray()
+            m1 = self.visual_car()
+            car.markers.append(m1)
+            m2 = self.visual_yaw()
+            car.markers.append(m2)
+
+            self.Car_pub.publish(car)
 
 
     # Gets vehicle position from Gazebo and publishes data
@@ -192,30 +197,32 @@ class Simulation(Node):
         m.color.g = 17 / 255.0
         m.color.b = 252 / 255.0
         m.color.a = 0.97
-        self.marker_pub.publish(m)
+
+        return m
 
     def visual_yaw(self):
-        marker = Marker()
-        marker.header.frame_id = 'odom'
-        marker.header.stamp = self.get_clock().now().to_msg()
-        marker.id = 1
-        marker.type = Marker.ARROW
-        marker.action = Marker.ADD
-        marker.pose.position.x = self.x + (self.L / 2) * math.cos(self.theta)
-        marker.pose.position.y = self.y + (self.L / 2) * math.sin(self.theta)
-        marker.pose.position.z = 0.3
-        marker.pose.orientation.x = 0.0
-        marker.pose.orientation.y = 0.0
-        marker.pose.orientation.z = np.sin(self.theta/2)
-        marker.pose.orientation.w = np.cos(self.theta/2)
-        marker.scale.x = 3.
-        marker.scale.y = 0.5
-        marker.scale.z = 0.1
-        marker.color.r = 17 / 255.0
-        marker.color.g = 17 / 255.0
-        marker.color.b = 252 / 255.0
-        marker.color.a = 0.97
-        self.viz_yaw.publish(marker)
+        m = Marker()
+        m.header.frame_id = 'odom'
+        m.header.stamp = self.get_clock().now().to_msg()
+        m.id = 2
+        m.type = Marker.ARROW
+        m.action = Marker.ADD
+        m.pose.position.x = self.x + (self.L / 2) * math.cos(self.theta)
+        m.pose.position.y = self.y + (self.L / 2) * math.sin(self.theta)
+        m.pose.position.z = 0.3
+        m.pose.orientation.x = 0.0
+        m.pose.orientation.y = 0.0
+        m.pose.orientation.z = np.sin(self.theta/2)
+        m.pose.orientation.w = np.cos(self.theta/2)
+        m.scale.x = 2.
+        m.scale.y = 0.3
+        m.scale.z = 0.1
+        m.color.r = 17 / 255.0
+        m.color.g = 17 / 255.0
+        m.color.b = 252 / 255.0
+        m.color.a = 0.97
+
+        return m
 
     def visual_steer(self):
         steer = self.sigma
@@ -225,7 +232,7 @@ class Simulation(Node):
         marker.header.frame_id = 'odom'
         marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = 'arrows'
-        marker.id = 0
+        marker.id = 1
         marker.type = Marker.ARROW
         marker.action = Marker.ADD
         marker.pose.position.x = self.x + (self.L / 2) * math.cos(self.theta)
@@ -235,8 +242,8 @@ class Simulation(Node):
         marker.pose.orientation.y = 0.0
         marker.pose.orientation.z = np.sin(theta/2)
         marker.pose.orientation.w = np.cos(theta/2)
-        marker.scale.x = 3.
-        marker.scale.y = 0.5
+        marker.scale.x = 2.
+        marker.scale.y = 0.3
         marker.scale.z = 0.1
         marker.color.r = 1.0
         marker.color.g = 0.0

@@ -66,6 +66,11 @@ def draw_polyfit_line(visualization_img, points, color):
 	slope = ransac.estimator_.coef_[0][0]
 	intercept = ransac.estimator_.intercept_[0]
 
+	if slope > 2000000000:
+		slope = 2000000000
+	elif slope < -2000000000:
+		slope = -2000000000
+
 	cv2.line(visualization_img, (int((590-intercept)/slope),590) , (int((295-intercept)/slope),295)  , color, 2)
 	return slope, intercept
 

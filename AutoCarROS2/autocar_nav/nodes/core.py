@@ -7,7 +7,7 @@ from collections import deque, Counter
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Int32MultiArray, Float64MultiArray, Float32, String
+from std_msgs.msg import Int32MultiArray, Float64MultiArray, Float64, Float32, String
 from autocar_msgs.msg import LinkArray, State2D, Obstacle
 from ackermann_msgs.msg import AckermannDriveStamped
 
@@ -27,6 +27,7 @@ class Core(Node):
         self.ackermann_sub = self.create_subscription(AckermannDriveStamped, '/autocar/ackermann_cmd', self.command_cb, 10)
         self.links_sub = self.create_subscription(LinkArray, '/autocar/mode', self.links_cb, 10)
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
+        self.cte_sub = self.create_subscription(Float64, '/autocar/cte_error', self.cte_cb, 10)
         self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
         self.obstacle_sub = self.create_subscription(Obstacle, '/autocar/obs_recog', self.obstacle_cb, 10)
         self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
@@ -50,13 +51,14 @@ class Core(Node):
         self.time = 0.0
 
         self.target_speed = {'global': 10/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 6/3.6,
-                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 2.0, 'tollgate':   6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 9/3.6, 'tollgate': 7.2/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
         self.cmd_speed = self.target_speed[self.mode]
         self.cmd_steer = 0.0
         self.gear = 0.0
+        self.cte_term = 0.0
 
         self.obstacle_detected = 0
         self.obstacle = 'None'
@@ -96,6 +98,9 @@ class Core(Node):
 
         self.autocar_control()
 
+
+    def cte_cb(self, msg):
+        self.cte_term = msg.data
 
     def links_cb(self, msg):
         self.waypoint = msg.closest_wp
@@ -210,7 +215,7 @@ class Core(Node):
         if self.mode == 'global':
             self.status = 'driving'
 
-            if self.direction == 'Curve' or abs(np.rad2deg(self.cmd_steer)) >= 15:
+            if self.direction == 'Curve' or abs(np.rad2deg(self.cmd_steer)) >= 15 or abs(self.cte_term) >= 20:
                 self.cmd_speed = self.target_speed['curve']
                 self.brake = 30.0
             else:
@@ -221,14 +226,19 @@ class Core(Node):
             else: self.t = 0
 
 
+        elif self.mode == 'tollgate':
+            if self.waypoint >= 10:
+                if self.lane_detected:
+                    self.cmd_steer = self.vision_steer
+
         elif self.mode == 'tunnel':
             if self.status == 'driving':
-                self.cmd_steer = self.vision_steer
-                if self.waypoint >= 10:
+                # self.cmd_steer = self.vision_steer
+                if self.waypoint >= 25:
                     self.status = 'lanenet'
 
             elif self.status == 'lanenet':
-                self.cmd_steer = self.vision_steer
+                # self.cmd_steer = self.vision_steer
 
                 if self.obstacle == 'dynamic':
                     self.avoid_count = time.time()
@@ -251,7 +261,7 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 400
+                brake_force = 450
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
@@ -272,7 +282,7 @@ class Core(Node):
                 if self.obstacle == 'static':
                     self.avoid_count = time.time()
 
-                if time.time() - self.avoid_count >= 3:
+                if time.time() - self.avoid_count >= 2.5:
                     self.status = 'lanenet'
                     self.t = 0
 
@@ -315,7 +325,7 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 400
+                brake_force = 450
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 

@@ -305,6 +305,8 @@ class GlobalPathPlanner(Node):
 
             if self.mode == 'tunnel':
                 if self.status == 'lanenet':
+                    px = self.ax
+                    py = self.ay
                     self.tunnel_x = self.ax
                     self.tunnel_y = self.ay
 

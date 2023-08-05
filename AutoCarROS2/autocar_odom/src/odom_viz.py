@@ -23,9 +23,9 @@ class odom_viz(Node):
 
     super().__init__('odom_viz')
 
-    self.GPS_Car_pub = self.create_publisher(MarkerArray, "/rviz/gps_odometry_marker", 1)
-    self.DR_Car_pub = self.create_publisher(MarkerArray, "/rviz/dead_reckoning_marker", 1)
-    self.viz_steer = self.create_publisher(Marker, '/rviz/viz_steer', 1)
+    self.GPS_Car_pub = self.create_publisher(MarkerArray, "/rviz/gps_odometry_marker", 10)
+    self.DR_Car_pub = self.create_publisher(MarkerArray, "/rviz/dead_reckoning_marker", 10)
+    self.viz_steer = self.create_publisher(Marker, '/rviz/viz_steer', 10)
 
     self.GPS_Odom_sub = self.create_subscription(Odometry, "/autocar/odom", self.gps_odometry_callback, 10)
     self.DR_Odom_sub = self.create_subscription(Odometry, "/odometry/filtered", self.dead_reckoning_callback, 10)
