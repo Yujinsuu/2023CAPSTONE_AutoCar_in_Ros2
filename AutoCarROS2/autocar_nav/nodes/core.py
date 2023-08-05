@@ -223,7 +223,9 @@ class Core(Node):
 
         elif self.mode == 'tunnel':
             if self.status == 'driving':
-                self.status = 'lanenet'
+                self.cmd_steer = self.vision_steer
+                if self.waypoint >= 10:
+                    self.status = 'lanenet'
 
             elif self.status == 'lanenet':
                 self.cmd_steer = self.vision_steer
@@ -240,7 +242,7 @@ class Core(Node):
                     self.brake = 0.0
                     self.t = 0
 
-                if self.traffic_stop_wp <= 0:
+                if self.traffic_stop_wp <= 20:
                     self.status = 'complete'
                     self.brake = 0.0
                     self.t = 0

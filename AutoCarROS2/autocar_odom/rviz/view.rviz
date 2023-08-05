@@ -6,10 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Autocar1/Topic1
-        - /DR_Odom1/Topic1
         - /Path1/Topic1
-        - /Image1
       Splitter Ratio: 0.5
     Tree Height: 427
   - Class: rviz_common/Selection
@@ -52,8 +49,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        car:
-          Value: true
         map:
           Value: true
         odom:
@@ -61,8 +56,6 @@ Visualization Manager:
         odom0:
           Value: true
         odom_footprint:
-          Value: true
-        velodyne:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -72,18 +65,15 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            car:
-              velodyne:
-                {}
             odom_footprint:
               {}
           odom0:
             {}
       Update Interval: 0
       Value: true
-    - Class: rviz_default_plugins/Marker
+    - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: Autocar
+      Name: GPS_CAR
       Namespaces:
         "": true
       Topic:
@@ -91,11 +81,11 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /rviz/gps_odom_marker
+        Value: /rviz/gps_odometry_marker
       Value: true
-    - Class: rviz_default_plugins/Marker
+    - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: DR_Odom
+      Name: DR_CAR
       Namespaces:
         "": true
       Topic:
@@ -103,25 +93,13 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /rviz/dr_odom_marker
-      Value: true
-    - Class: rviz_default_plugins/Marker
-      Enabled: true
-      Name: car_yaw
-      Namespaces:
-        "": true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /rviz/viz_yaw
+        Value: /rviz/dead_reckoning_marker
       Value: true
     - Class: rviz_default_plugins/Marker
       Enabled: true
       Name: car_steer
       Namespaces:
-        arrows: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -157,7 +135,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -196,7 +174,7 @@ Visualization Manager:
       Enabled: true
       Name: WallScan
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -235,7 +213,7 @@ Visualization Manager:
       Enabled: true
       Name: Obstacles
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -280,7 +258,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        adaptive_clustering_v1: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -378,16 +356,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 93.21493530273438
+      Distance: 63.933868408203125
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -305.67144775390625
-        Y: 525.5792236328125
-        Z: -6.370048522949219
+        X: -307.32818603515625
+        Y: 537.110107421875
+        Z: -6.359309673309326
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

@@ -6,6 +6,7 @@ from collections import deque
 import rclpy
 from rclpy.node import Node
 
+from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D, LinkArray
 from geometry_msgs.msg import PoseStamped
@@ -22,10 +23,10 @@ class Localization(Node):
         # Initialise publishers
         self.localization_pub = self.create_publisher(State2D, '/autocar/state2D', 10)
         self.trajectory_pub = self.create_publisher(Path, '/rviz/trajectory', 10)
+        self.offset_pub = self.create_publisher(Float64MultiArray, '/autocar/dr_offset', 10)
 
         # Initialise subscribers
         self.GPS_odom_sub = self.create_subscription(Odometry, '/autocar/odom', self.vehicle_state_cb, 10)
-        # self.CARTO_odom_sub = self.create_subscription(Odometry, '/cartographer/odom', self.carto_cb, 10)
         self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10)
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
 
@@ -71,9 +72,10 @@ class Localization(Node):
         self.state = msg
 
         if self.dr_state is not None:
-            if self.mode == 'tunnel' or self.odom_state == 'Dead_Reckoning':
+            if self.mode == 'tunnel':
                 self.update_state(self.dr_state)
             else:
+                self.odom_state = 'GPS_Odometry'
                 self.update_state(self.state)
 
 
@@ -82,7 +84,7 @@ class Localization(Node):
             if self.mode == 'tunnel':
                 self.mode_change += 1
 
-            if self.mode_change <= 5:
+            if 1 <= self.mode_change <= 5:
                 self.odom_state = 'Dead_Reckoning'
                 self.offset_x = self.state.pose.pose.position.x
                 self.offset_y = self.state.pose.pose.position.y
@@ -94,9 +96,10 @@ class Localization(Node):
             self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x
             self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y
 
+            offset = Float64MultiArray()
+            offset.data = [- self.init_x + self.offset_x, - self.init_y + self.offset_y]
+            self.offset_pub.publish(offset)
 
-    def carto_cb(self, msg):
-        self.dr_state = msg
 
     def mode_cb(self, msg):
         self.mode = msg.mode

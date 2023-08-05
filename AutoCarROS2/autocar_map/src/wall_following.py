@@ -52,6 +52,8 @@ class WallFollower(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
+        self.timer = self.create_timer(0.1, self.scaned_publish)
+
     def mode_callback(self, msg):
         self.mode = msg.data
 
@@ -187,9 +189,6 @@ class WallFollower(Node):
 
 
     def scaned_publish(self):
-        if self.scan_data is not None:
-            self.find_wall()
-
         wall_path = Path2D()
         if self.x_coords is not None:
             waypoints = min(len(self.x_coords), len(self.y_coords))

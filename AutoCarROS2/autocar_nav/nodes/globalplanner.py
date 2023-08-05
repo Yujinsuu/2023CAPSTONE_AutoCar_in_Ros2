@@ -308,7 +308,7 @@ class GlobalPathPlanner(Node):
                     self.tunnel_x = self.ax
                     self.tunnel_y = self.ay
 
-                elif self.status in ['stop', 'avoid']:
+                elif self.status in ['stop', 'avoid'] and len(self.tunnel_x) != 0:
                     px = self.tunnel_x
                     py = self.tunnel_y
 
