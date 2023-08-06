@@ -164,4 +164,4 @@ def htech():
 
 # use_map = test_track()
 use_map = qualifier()
-start_index = 0
+start_index = 5

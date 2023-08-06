@@ -10,9 +10,7 @@ def generate_launch_description():
 
     odom = 'autocar_odom'
     mappkg = 'autocar_map'
-    navpkg = 'autocar_nav'
 
-    navconfig = os.path.join(get_package_share_directory(navpkg), 'config', 'navigation_params.yaml')
     rviz = os.path.join(get_package_share_directory(odom), 'rviz', 'view.rviz')
     ekf = os.path.join(get_package_share_directory(odom), 'config', 'ekf.yaml')
 
@@ -56,13 +54,6 @@ def generate_launch_description():
         #     name = 'dead_reckoning',
         #     executable = 'dead_reckoning.py'
         # ),
-
-        Node(
-            package = navpkg,
-            name = 'localization',
-            executable = 'localization.py',
-            parameters = [navconfig]
-        ),
 
         Node(
             package = odom,

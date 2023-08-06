@@ -49,11 +49,13 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        car:
-          Value: true
         map:
           Value: true
         odom:
+          Value: true
+        odom0:
+          Value: true
+        odom_footprint:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -63,15 +65,17 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            car:
+            odom_footprint:
               {}
+          odom0:
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: GPS_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -83,7 +87,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -95,7 +99,7 @@ Visualization Manager:
       Enabled: true
       Name: car_steer
       Namespaces:
-        arrows: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -352,16 +356,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 239.583740234375
+      Distance: 139.1993408203125
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 39.63752746582031
-        Y: 31.953697204589844
-        Z: -6.758851528167725
+        X: 171.90890502929688
+        Y: -50.11314010620117
+        Z: -6.719787120819092
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -370,7 +374,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 4.453556537628174
+      Yaw: 0.5203775763511658
     Saved: ~
 Window Geometry:
   Displays:

@@ -35,6 +35,7 @@ install(PROGRAMS
   src/obstacle_pub.py
   src/obstacle_viz.py
   src/wall_following.py
+  src/wall_path_and_lane.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -234,11 +234,11 @@ class Core(Node):
         elif self.mode == 'tunnel':
             if self.status == 'driving':
                 # self.cmd_steer = self.vision_steer
-                if self.waypoint >= 25:
+                if self.waypoint >= 30:
                     self.status = 'lanenet'
 
             elif self.status == 'lanenet':
-                # self.cmd_steer = self.vision_steer
+                self.cmd_steer = self.vision_steer
 
                 if self.obstacle == 'dynamic':
                     self.avoid_count = time.time()
@@ -261,7 +261,7 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 450
+                brake_force = 500
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
@@ -275,7 +275,7 @@ class Core(Node):
             elif self.status == 'avoid':
                 self.cmd_speed = self.target_speed['static']
 
-                brake_force = 30
+                brake_force = 50
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 

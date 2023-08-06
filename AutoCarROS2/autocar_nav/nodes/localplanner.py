@@ -63,7 +63,7 @@ class LocalPathPlanner(Node):
 
         ##################### 회피주행시 넘으면 안되는 선의 위치정보 ##########################
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        df = pd.read_csv(file_path + '/kcity/tunnel.csv')
+        df = pd.read_csv(file_path + '/htech/tunnel_lane.csv')
         self.center_x = df['x'].tolist()
         self.center_y = df['y'].tolist()
         # self.center_x = [i - 2.5 for i in self.center_x]

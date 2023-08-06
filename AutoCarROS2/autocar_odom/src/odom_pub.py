@@ -70,7 +70,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', 76)
+		self.declare_parameter('yaw_init', -153)
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.add_on_set_parameters_callback(self.update_parameter)
 
@@ -96,7 +96,7 @@ class odomPublisher(Node):
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
 		x = b - self.gps_offset['kcity'][0]
-		y = a - self.gps_offset['kcity'][1]
+		y = a - self.gps_offset['kcity'][1]+1
 
 		self.gpose.pose.pose.position.x=x
 		self.gpose.pose.pose.position.y=y
@@ -181,7 +181,7 @@ class odomPublisher(Node):
 		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
 		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
 
-		self.final_imu_yaw = normalise_angle(self.imu_yaw - self.yaw_offset_av)
+		self.final_imu_yaw = normalise_angle(self.imu_yaw) #normalise_angle(self.imu_yaw - self.yaw_offset_av)
 		imu_quat = yaw_to_quaternion(self.final_imu_yaw)
 		self.gpose.pose.pose.orientation.x= imu_quat.x
 		self.gpose.pose.pose.orientation.y= imu_quat.y
