@@ -49,6 +49,10 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        car:
+          Value: true
+        imu_link:
+          Value: true
         map:
           Value: true
         odom:
@@ -56,6 +60,10 @@ Visualization Manager:
         odom0:
           Value: true
         odom_footprint:
+          Value: true
+        velodyne:
+          Value: true
+        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -213,7 +221,7 @@ Visualization Manager:
       Enabled: true
       Name: Obstacles
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -258,7 +266,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        {}
+        adaptive_clustering_v1: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -356,25 +364,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 139.1993408203125
+      Distance: 122.52603149414062
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 171.90890502929688
-        Y: -50.11314010620117
-        Z: -6.719787120819092
+        X: 12.072441101074219
+        Y: 45.02696228027344
+        Z: -16.742843627929688
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.484796404838562
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 0.5203775763511658
+      Yaw: 4.168567180633545
     Saved: ~
 Window Geometry:
   Displays:

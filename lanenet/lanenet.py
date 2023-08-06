@@ -39,12 +39,22 @@ class LaneNet(Node):
 
         width, height = cap.shape[1], cap.shape[0]
 
-        padding_size = 175
+        # padding_size = 330
 	    # 좌측에 흰색 이미지 추가
-        padding_image = np.zeros((height, padding_size, 3), dtype=np.uint8) * 255  # 흰색 이미지 생성
+        # padding_image = np.zeros((height, padding_size, 3), dtype=np.uint8) * 255  # 흰색 이미지 생성
+        # # frame 좌우로 확장
+        # cap = np.concatenate((padding_image, cap), axis=1)
+        # cap = np.concatenate((cap, padding_image), axis=1)
+        
+        
+        l_padding = 310
+        r_padding = 350
+	    # 좌측에 흰색 이미지 추가
+        l_padding_image = np.zeros((height, l_padding, 3), dtype=np.uint8) * 255  # 흰색 이미지 생성
+        r_padding_image = np.zeros((height, r_padding, 3), dtype=np.uint8) * 255  # 흰색 이미지 생성
         # frame 좌우로 확장
-        cap = np.concatenate((padding_image, cap), axis=1)
-        cap = np.concatenate((cap, padding_image), axis=1)
+        cap = np.concatenate((l_padding_image, cap), axis=1)
+        cap = np.concatenate((cap, r_padding_image), axis=1)
 
         check, result, steer_angle = self.lane_detector.detect_lanes(cap)
         image_message = bridge.cv2_to_imgmsg(result, encoding="bgr8")

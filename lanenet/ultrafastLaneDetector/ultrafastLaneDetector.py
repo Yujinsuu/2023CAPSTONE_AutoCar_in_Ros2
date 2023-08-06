@@ -28,11 +28,11 @@ def process_lane(lane_index, lanes_points, visualization_img):
 	var = np.mean(dev**2)
 	#print("L{}_dev".format(lane_index), dev, "L{}_var".format(lane_index), var)
 
-	if var > 300 :
+	if var > 100 :
 		cross_x = 820
 		pass
 		#draw_polyfit_line(visualization_img, lanes_points[lane_index], (0, 0, 255))
-	elif var > 200 :
+	elif var > 50 :
 		lanes_points[lane_index] = remove_outlier(lanes_points[lane_index], dev)
 		slope, intercept = draw_polyfit_line(visualization_img, lanes_points[lane_index], (0, 0, 255))
 		cross_x = find_point_over_dcsion_line(slope, intercept, 430)
@@ -44,7 +44,7 @@ def process_lane(lane_index, lanes_points, visualization_img):
 def remove_outlier(lanes_points, data):
     data_mean = np.mean(np.abs(data))
     outlier_index = np.where(np.abs(data)< data_mean)
-    print(outlier_index)
+    # print(outlier_index)
     cleaned_lanes_points = np.delete(lanes_points, outlier_index, axis=0)
     return cleaned_lanes_points
 
@@ -289,7 +289,7 @@ class UltrafastLaneDetector():
 			if not lanes_detected[2] :
 				ct_error= int(( L1_x + 1106 ) / 2) - center_x
 				filtered_angle = int(filtered_angle*0.9 + ct_error * 0.1)
-				print(filtered_angle)
+				# print(filtered_angle)
 
 		if lanes_detected[2]: # 오른쪽만 잡혔을 때
 			L2_x = process_lane(2, lanes_points, visualization_img)
@@ -297,7 +297,7 @@ class UltrafastLaneDetector():
 			if not lanes_detected[1] :
 				ct_error = int(( 552 + L2_x ) / 2) - center_x
 				filtered_angle = int(filtered_angle*0.9 + ct_error * 0.1)
-				print(filtered_angle)
+				# print(filtered_angle)
 
 		check = False
 		if lanes_detected[1]  and lanes_detected[2] :

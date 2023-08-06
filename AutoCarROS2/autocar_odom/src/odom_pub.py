@@ -70,7 +70,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', -153)
+		self.declare_parameter('yaw_init', 62)
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.add_on_set_parameters_callback(self.update_parameter)
 
