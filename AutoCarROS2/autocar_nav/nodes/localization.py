@@ -6,7 +6,7 @@ from collections import deque
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, String
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D, LinkArray
 from geometry_msgs.msg import PoseStamped
@@ -29,6 +29,7 @@ class Localization(Node):
         self.GPS_odom_sub = self.create_subscription(Odometry, '/autocar/odom', self.vehicle_state_cb, 10)
         self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10)
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
+        self.status_sub = self.create_subscription(String , '/autocar/mission_status', self.status_cb, 10)
 
         # Load parameters
         try:
@@ -58,6 +59,7 @@ class Localization(Node):
         self.init_y = 0.0
 
         self.mode = 'global'
+        self.status = 'driving'
         self.mode_change = 0
         self.odom_state = 'GPS Odometry'
 
@@ -84,7 +86,8 @@ class Localization(Node):
             if self.mode == 'tunnel':
                 self.mode_change += 1
 
-            if 1 <= self.mode_change <= 5:
+
+            if 1 <= self.mode_change <= 3:
                 self.odom_state = 'Dead_Reckoning'
                 self.offset_x = self.state.pose.pose.position.x
                 self.offset_y = self.state.pose.pose.position.y
@@ -103,6 +106,9 @@ class Localization(Node):
 
     def mode_cb(self, msg):
         self.mode = msg.mode
+
+    def status_cb(self, msg):
+        self.status = msg.data
 
     # Gets vehicle position from Gazebo and publishes data
     def update_state(self, state):

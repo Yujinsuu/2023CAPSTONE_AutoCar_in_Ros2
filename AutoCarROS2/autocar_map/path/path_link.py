@@ -161,7 +161,20 @@ def htech():
 
     return htech
 
+def kcity():
+    base_file = file_path + '/KC_base.csv'
+    global_file = file_path + '/kcity/track.csv'
+    global_file = file_path + '/kcity/kcity_parking.csv'
+    parking_file = None
+    revpark_file = None
+    kcity = Path(base_file, global_file, parking_file, revpark_file)
+    # htech.car_mode[1] = 'tunnel'
+    # htech.car_mode[4] = 'tunnel'
+    # htech.car_mode[0] = 'delivery_A'
+    # htech.car_mode[3] = 'delivery_B'
+
+    return kcity
 
 # use_map = test_track()
 use_map = qualifier()
-start_index = 5
+start_index = 0
