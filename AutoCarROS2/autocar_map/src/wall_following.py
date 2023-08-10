@@ -27,10 +27,10 @@ class WallFollower(Node):
         self.create_rate(10)
         self.viz_pub = self.create_publisher(Marker, '/rviz/wall', 10)
         self.path_pub = self.create_publisher(Path2D, '/wall_path', 10)
-        self.state_pub = self.create_publisher(String, '/tunnel_check', 10)
+        # self.state_pub = self.create_publisher(String, '/tunnel_check', 10)
 
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
-        self.mode_sub = self.create_subscription(String, '/yolo_mode', self.mode_callback, 10)
+        # self.mode_sub = self.create_subscription(String, '/yolo_mode', self.mode_callback, 10)
 
         # htech wall : 4.12m, kcity tunnel : 4.72m
         self.WalltoPath = 4.72
@@ -84,7 +84,7 @@ class WallFollower(Node):
         x_coords_raw = np.delete(x_coords_raw, inf_indices)
         y_coords_raw = np.delete(y_coords_raw, inf_indices)
 
-        self.tunnel_check(inf_indices, wall_length)
+        # self.tunnel_check(inf_indices, wall_length)
 
         # x raw 값의 범위 지정
         x_indices = np.where((x_coords_raw < -10) | (x_coords_raw > 30))[0]
@@ -204,7 +204,7 @@ class WallFollower(Node):
                 wall_path.poses.append(path)
 
         self.path_pub.publish(wall_path)
-        self.state_pub.publish(self.state)
+        # self.state_pub.publish(self.state)
 
 
 def main(args=None):

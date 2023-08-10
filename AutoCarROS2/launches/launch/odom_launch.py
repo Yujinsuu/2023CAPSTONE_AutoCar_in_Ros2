@@ -30,11 +30,11 @@ def generate_launch_description():
             executable = 'odom_pub.py'
         ),
 
-        Node(
-            package = odom,
-            name = 'pub_encoder_tic',
-            executable = 'get_encoder.py'
-        ),
+        # Node(
+        #     package = odom,
+        #     name = 'pub_encoder_tic',
+        #     executable = 'get_encoder.py'
+        # ),
 
         Node(
             package = odom,
@@ -73,7 +73,7 @@ def generate_launch_description():
             package = mappkg,
             name = 'mapviz',
             executable = 'link_visualizer.py'
-        ),
+        )
     ])
 
 def main():

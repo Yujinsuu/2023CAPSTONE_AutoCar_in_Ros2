@@ -96,26 +96,26 @@ class LocalPathPlanner(Node):
         self.prev_dist = None
         self.is_fail = False
 
-        self.timer = self.create_timer(0.1, self.timer_cb)
+        # self.timer = self.create_timer(0.1, self.timer_cb)
 
-        self.tf_broadcaster = StaticTransformBroadcaster(self)
+        # self.tf_broadcaster = StaticTransformBroadcaster(self)
 
-    def timer_cb(self):
-        # create car frame
-        transform = TransformStamped()
-        transform.header.frame_id = 'odom'
-        transform.child_frame_id = 'car'
-        transform.transform.translation.x = self.x + self.GtoL * np.cos(self.yaw)
-        transform.transform.translation.y = self.y + self.GtoL * np.sin(self.yaw)
-        transform.transform.rotation.x = 0.0
-        transform.transform.rotation.y = 0.0
-        transform.transform.rotation.z = np.sin(self.yaw / 2)
-        transform.transform.rotation.w = np.cos(self.yaw / 2)
+    # def timer_cb(self):
+    #     # create car frame
+    #     transform = TransformStamped()
+    #     transform.header.frame_id = 'odom'
+    #     transform.child_frame_id = 'car'
+    #     transform.transform.translation.x = self.x + self.GtoL * np.cos(self.yaw)
+    #     transform.transform.translation.y = self.y + self.GtoL * np.sin(self.yaw)
+    #     transform.transform.rotation.x = 0.0
+    #     transform.transform.rotation.y = 0.0
+    #     transform.transform.rotation.z = np.sin(self.yaw / 2)
+    #     transform.transform.rotation.w = np.cos(self.yaw / 2)
 
-        # Broadcast the transform as a static transform
-        self.tf_broadcaster.sendTransform(transform)
+    #     # Broadcast the transform as a static transform
+    #     self.tf_broadcaster.sendTransform(transform)
 
-        self.find_path()
+    #     self.find_path()
 
     def goals_cb(self, msg):
         '''
@@ -137,6 +137,7 @@ class LocalPathPlanner(Node):
         self.x = msg.pose.x
         self.y = msg.pose.y
         self.yaw = msg.pose.theta
+        self.find_path()
 
     def mode_cb(self, msg):
         self.waypoint = msg.closest_wp

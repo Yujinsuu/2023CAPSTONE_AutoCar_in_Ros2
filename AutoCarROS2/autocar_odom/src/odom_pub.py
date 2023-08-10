@@ -96,7 +96,7 @@ class odomPublisher(Node):
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
 		x = b - self.gps_offset['kcity'][0]
-		y = a - self.gps_offset['kcity'][1]+1
+		y = a - self.gps_offset['kcity'][1]
 
 		self.gpose.pose.pose.position.x=x
 		self.gpose.pose.pose.position.y=y

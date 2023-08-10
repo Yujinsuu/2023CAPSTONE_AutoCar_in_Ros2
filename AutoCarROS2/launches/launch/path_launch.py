@@ -8,7 +8,7 @@ from launch.actions import SetEnvironmentVariable
 def generate_launch_description():
 
     navpkg = 'autocar_nav'
-    mappkg = 'autocar_map'
+    odom = 'autocar_odom'
 
     navconfig = os.path.join(get_package_share_directory(navpkg), 'config', 'navigation_params.yaml')
 
@@ -27,6 +27,11 @@ def generate_launch_description():
             name = 'localization',
             executable = 'localization.py',
             parameters = [navconfig]
+        ),
+        Node(
+            package = odom,
+            name = 'tf_pub',
+            executable = 'tf_pub.py'
         ),
 
         Node(
@@ -47,12 +52,6 @@ def generate_launch_description():
             name = 'local_planner',
             executable = 'localplanner.py',
             parameters = [navconfig]
-        ),
-
-        Node(
-            package = mappkg,
-            name = 'wall_follower',
-            executable = 'wall_following.py'
         ),
 
         Node(

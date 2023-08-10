@@ -21,16 +21,16 @@ class Core(Node):
         # Initialise publishers
         self.autocar_pub = self.create_publisher(AckermannDriveStamped, '/autocar/autocar_cmd', 10)
         self.mission_status_pub = self.create_publisher(String, '/autocar/mission_status', 10)
-        self.sign_angle_pub = self.create_publisher(Float32, '/sign_angle', 10)
+        # self.sign_angle_pub = self.create_publisher(Float32, '/sign_angle', 10)
 
         # Initialise subscribers
         self.ackermann_sub = self.create_subscription(AckermannDriveStamped, '/autocar/ackermann_cmd', self.command_cb, 10)
         self.links_sub = self.create_subscription(LinkArray, '/autocar/mode', self.links_cb, 10)
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
         self.cte_sub = self.create_subscription(Float64, '/autocar/cte_error', self.cte_cb, 10)
-        self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
+        # self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
         self.obstacle_sub = self.create_subscription(Obstacle, '/autocar/obs_recog', self.obstacle_cb, 10)
-        self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
+        # self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
         self.traffic_sub = self.create_subscription(String, '/traffic_sign', self.traffic_cb, 10)
         self.delivery_sub = self.create_subscription(Int32MultiArray, '/delivery_sign', self.delivery_cb, 10)
         self.delivery_stop_sub = self.create_subscription(Float32, '/delivery_stop', self.delivery_stop_cb, 10)
@@ -160,7 +160,7 @@ class Core(Node):
             self.sign_pose = 0
             angle.data = 0.0
 
-        self.sign_angle_pub.publish(angle)
+        # self.sign_angle_pub.publish(angle)
 
 
     def identify_traffic_light(self, path, wp):

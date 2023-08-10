@@ -32,14 +32,14 @@ class GlobalPathPlanner(Node):
         self.goals_pub = self.create_publisher(Path2D, '/autocar/goals', 10)
         self.links_pub = self.create_publisher(LinkArray, '/autocar/mode', 10)
         self.mode_pub = self.create_publisher(String, '/yolo_mode', 10)
-        self.offset_pub = self.create_publisher(Float64MultiArray, '/autocar/tunnel_offset', 10)
+        # self.offset_pub = self.create_publisher(Float64MultiArray, '/autocar/tunnel_offset', 10)
 
         # Initialise suscriber(s)
         self.localization_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10)
         self.parking_path_sub = self.create_subscription(Int32, '/autocar/parking_path', self.parking_path_cb, 10)
         self.mission_status_sub = self.create_subscription(String,'/autocar/mission_status', self.mission_status_cb, 10)
         self.walls_sub = self.create_subscription(Path2D, '/wall_path', self.walls_cb, 10)
-        self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
+        # self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
 
         # Load parameters
         try:

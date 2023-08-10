@@ -10,6 +10,11 @@ def generate_launch_description():
             name = 'static_transform_publisher'
         ),
         Node(
+            package = 'autocar_map',
+            name = 'wall_follower',
+            executable = 'wall_following.py'
+        ),
+        Node(
             package = 'adaptive_clustering',
             name = 'adaptive_clustering',
             executable = 'adaptive_clustering'
