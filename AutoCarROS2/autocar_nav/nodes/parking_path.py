@@ -90,7 +90,7 @@ class ParkingPath(Node):
         self.mode = msg.mode
 
         if self.mode == 'parking':
-            if not self.path_check and wp >= self.P[0] + self.P[1]*4:
+            if not self.path_check and wp >= self.P[0] + self.P[1]*0:
                 path = max(min(int((wp - self.P[0]) / self.P[1]), self.parking_num), 0)
                 if path != self.prev_path:
                     queue_size = 9

@@ -70,7 +70,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', -152)
+		self.declare_parameter('yaw_init', -10.57)
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.add_on_set_parameters_callback(self.update_parameter)
 
@@ -95,8 +95,8 @@ class odomPublisher(Node):
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['kcity'][0]
-		y = a - self.gps_offset['kcity'][1]
+		x = b - self.gps_offset['seoul'][0]
+		y = a - self.gps_offset['seoul'][1]
 
 		self.gpose.pose.pose.position.x=x
 		self.gpose.pose.pose.position.y=y
@@ -149,7 +149,7 @@ class odomPublisher(Node):
 
 		if self.velocity > 7/3.6:
 			self.gps_yaw = euler_from_quaternion(0.0, 0.0, gps_qz, gps_qw)
-			self.yaw_offset = normalise_angle(self.imu_yaw) - self.gps_yaw
+			self.yaw_offset = normalise_angle(self.final_imu_yaw - self.gps_yaw)
 
 		i = i + 1
 
@@ -164,24 +164,26 @@ class odomPublisher(Node):
 
 	def mode_callback(self, msg):
 
-		# apply average yaw_offset when Straigt > Curve_0
+		# apply average yaw_offset when Straigt > Curve
 		if msg.direction == 'Straight' and self.velocity > 7/3.6:
-			self.corr = True
 			self.yaw_offset_array.append(self.yaw_offset)
+			if len(self.yaw_offset_array) > 20:
+				self.corr = True
 
 		elif msg.direction == 'Curve':
 			if self.corr == True:
 				self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
 				self.yaw_offset_array.clear()
+				self.yaw_init -= self.yaw_offset_av
 			self.corr = False
 
 
 	def imu_callback(self, imu):
 
 		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
-		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
+		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정
 
-		self.final_imu_yaw = normalise_angle(self.imu_yaw) #normalise_angle(self.imu_yaw - self.yaw_offset_av)
+		self.final_imu_yaw = normalise_angle(self.imu_yaw)
 		imu_quat = yaw_to_quaternion(self.final_imu_yaw)
 		self.gpose.pose.pose.orientation.x= imu_quat.x
 		self.gpose.pose.pose.orientation.y= imu_quat.y

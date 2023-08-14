@@ -51,7 +51,7 @@ class Core(Node):
         self.status = 'driving'
         self.time = 0.0
 
-        self.target_speed = {'global': 10/3.6,   'curve': 8/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 4/3.6,      'uturn': 6/3.6,
+        self.target_speed = {'global': 15/3.6,   'curve': 10/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 6/3.6,      'uturn': 6/3.6,
                              'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 9/3.6, 'tollgate': 7.2/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
@@ -404,6 +404,10 @@ class Core(Node):
             elif self.status == 'parking':
                 self.brake_stop = True
                 self.gear = 2.0
+                if self.parking_stop_wp <=12:
+                    self.cmd_steer = np.rad2deg(30)
+                elif self.parking_stop_wp <=20:
+                    self.cmd_steer = np.deg2rad(-30)
 
                 if self.traffic_stop_wp <= 11:
                     self.cmd_speed = self.target_speed['rush']
@@ -424,7 +428,7 @@ class Core(Node):
                     self.brake = 0.0
 
             elif self.status == 'return':
-                if self.parking_stop_wp <= 4:
+                if self.parking_stop_wp <= 5:
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150

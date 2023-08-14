@@ -149,7 +149,7 @@ def qualifier():
 
 def htech():
     base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/tunnel.csv'
+    global_file = file_path + '/htech/htech_track.csv'
     # global_file = file_path + '/htech/delivery.csv'
     parking_file = None
     revpark_file = None
@@ -182,5 +182,5 @@ def revpark():
     return revpark
 
 
-use_map = boong()
+use_map = revpark()
 start_index = 0
