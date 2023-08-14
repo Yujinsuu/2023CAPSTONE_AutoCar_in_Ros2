@@ -32,6 +32,12 @@ def generate_launch_description():
         ),
 
         Node(
+            package = odom,
+            name = 'tf_pub',
+            executable = 'tf_pub.py'
+        ),
+
+        Node(
             package='rviz2',
             executable='rviz2',
             name='rviz2',

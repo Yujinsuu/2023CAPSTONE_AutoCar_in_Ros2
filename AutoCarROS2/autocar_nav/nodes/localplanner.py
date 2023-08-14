@@ -9,6 +9,7 @@ from scipy.interpolate import CubicSpline
 import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
+from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
 from nav_msgs.msg import Path
@@ -37,8 +38,9 @@ class LocalPathPlanner(Node):
 
         # Initialise subscribers
         self.goals_sub = self.create_subscription(Path2D, '/autocar/goals', self.goals_cb, 10)
-        self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10)
-        self.offset_sub = self.create_subscription(Float64MultiArray, '/autocar/tunnel_offset', self.offset_cb, 10)
+        self.lanes_sub = self.create_subscription(Path2D, '/autocar/tunnel_lane', self.lanes_cb, 10)
+        self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10, callback_group=ReentrantCallbackGroup())
+        # self.offset_sub = self.create_subscription(Float64MultiArray, '/autocar/tunnel_offset', self.offset_cb, 10)
         self.obstacle_sub = self.create_subscription(ObjectArray, '/obstacles', self.obstacle_cb, 10)
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
 
@@ -87,35 +89,14 @@ class LocalPathPlanner(Node):
         self.start = time.time()
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
-        self.L = 1.3 # 차량 길이
-        self.W = 0.9 # 차량 폭
+        self.L = 1.04/2+1.6/2 # 차량 길이
+        self.W = 1.2 # 차량 폭
         self.obstacle_detected = False
         self.obstacle_info = 'None'
         self.dist_thresh = 6 # 정적 및 동적 판단 기준 : 6m
         self.queue = 0
         self.prev_dist = None
         self.is_fail = False
-
-        # self.timer = self.create_timer(0.1, self.timer_cb)
-
-        # self.tf_broadcaster = StaticTransformBroadcaster(self)
-
-    # def timer_cb(self):
-    #     # create car frame
-    #     transform = TransformStamped()
-    #     transform.header.frame_id = 'odom'
-    #     transform.child_frame_id = 'car'
-    #     transform.transform.translation.x = self.x + self.GtoL * np.cos(self.yaw)
-    #     transform.transform.translation.y = self.y + self.GtoL * np.sin(self.yaw)
-    #     transform.transform.rotation.x = 0.0
-    #     transform.transform.rotation.y = 0.0
-    #     transform.transform.rotation.z = np.sin(self.yaw / 2)
-    #     transform.transform.rotation.w = np.cos(self.yaw / 2)
-
-    #     # Broadcast the transform as a static transform
-    #     self.tf_broadcaster.sendTransform(transform)
-
-    #     self.find_path()
 
     def goals_cb(self, msg):
         '''
@@ -129,6 +110,17 @@ class LocalPathPlanner(Node):
             self.ax.append(px)
             self.ay.append(py)
 
+    def lanes_cb(self, msg):
+        self.center_x = []
+        self.center_y = []
+        self.center_yaw = []
+        for i in range(len(msg.poses)):
+            px = msg.poses[i].x
+            py = msg.poses[i].y
+            pyaw = msg.poses[i].theta
+            self.center_x.append(px)
+            self.center_y.append(py)
+            self.center_yaw.append(pyaw)
 
     def vehicle_state_cb(self, msg):
         '''
@@ -153,11 +145,11 @@ class LocalPathPlanner(Node):
     def obstacle_cb(self, msg):
         self.obstacles = [(o.x, o.y, o.yaw, o.length, o.width) for o in msg.object_list]
         # 차선정보 넣기
-        if self.mode in ['tunnel', 'static', 'dynamic']:
+        if self.mode in ['tunnel', 'static']:
             path_lane = []
             for i in range(len(self.center_x)):
                 # length는 waypoint 간격만큼, width는 차선의 폭 (가능하면 최대한 작게)
-                path_lane.append((self.center_x[i] - self.offset_x, self.center_y[i] - self.offset_y, self.center_yaw[i], 2.0, 1.0))
+                path_lane.append((self.center_x[i] - self.offset_x, self.center_y[i] - self.offset_y, self.center_yaw[i], 1.0, 0.5))
             self.obstacles += path_lane
 
         self.viz_path_lane()

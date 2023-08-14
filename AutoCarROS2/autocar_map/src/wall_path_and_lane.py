@@ -28,14 +28,13 @@ class WallFollower(Node):
         self.viz_pub = self.create_publisher(Marker, '/rviz/wall', 10)
         self.path_pub = self.create_publisher(Path2D, '/wall_path', 10)
         self.lane_pub = self.create_publisher(Path2D, '/wall_lane', 10)
-        self.state_pub = self.create_publisher(String, '/tunnel_check', 10)
 
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
         self.mode_sub = self.create_subscription(String, '/yolo_mode', self.mode_callback, 10)
 
-        # htech wall : 4.12m, kcity tunnel : 4.72m
+        # htech wall : 4.12m, kcity tunnel : 4.72m, tunnel lane : 3.38m
         self.WalltoPath = 4.72
-        self.LaneWidth = 3.38
+        self.LaneWidth = 3.68 #3.38
         self.WalltoLane = [self.WalltoPath - 0.5 * self.LaneWidth, self.WalltoPath + 1.5 * self.LaneWidth]
         self.path_length = 30
 
@@ -53,8 +52,6 @@ class WallFollower(Node):
 
         self.scan_data = None
         self.mode = 'None'
-        self.state = String()
-        self.state.data = 'entry'
 
         self.ransac = RANSACRegressor()
 
@@ -85,14 +82,10 @@ class WallFollower(Node):
         x_coords_raw = np.multiply(lidar_data, np.cos(angles))
         y_coords_raw = np.multiply(lidar_data, np.sin(angles))
 
-        wall_length = len(x_coords_raw)
-
         # inf 값의 인덱스 탐색 및 제거
         inf_indices = np.where(np.isinf(y_coords_raw))[0]
         x_coords_raw = np.delete(x_coords_raw, inf_indices)
         y_coords_raw = np.delete(y_coords_raw, inf_indices)
-
-        self.tunnel_check(inf_indices, wall_length)
 
         # x raw 값의 범위 지정
         x_indices = np.where((x_coords_raw < -10) | (x_coords_raw > 30))[0]
@@ -107,20 +100,6 @@ class WallFollower(Node):
         self.y_lane1 = y_lane1
         self.x_lane2 = x_lane2
         self.y_lane2 = y_lane2
-
-
-    def tunnel_check(self, inf_index, scan_range):
-        if self.mode == 'tunnel':
-            f_inf = len(inf_index[inf_index > 0.6 * scan_range])
-            r_inf = len(inf_index[inf_index < 0.4 * scan_range])
-            threshold = 0.2 * scan_range
-
-            if self.state.data == 'entry':
-                if (f_inf <= threshold <= r_inf) or (f_inf < threshold and r_inf < threshold):
-                    self.state.data = 'inside'
-            elif self.state.data == 'inside':
-                if (f_inf >= threshold >= r_inf) or (f_inf > threshold and r_inf > threshold):
-                    self.state.data = 'exit'
 
 
     def get_line_RANSAC(self, x_coords_raw, y_coords_raw) :
@@ -138,34 +117,14 @@ class WallFollower(Node):
         # x_coords = x_coords[:num]
         y_coords = self.ransac.predict(x_coords)
 
-        x_lane1 = x_coords
-        x_lane2 = x_coords
-        y_lane1 = y_coords
-        y_lane2 = y_coords
 
         self.plot_line(x_coords, y_coords)
 
-        if abs(slope) < 1e6:
-            y_coords += self.WalltoPath
-            y_lane1 += self.WalltoLane[0]
-            y_lane2 += self.WalltoLane[1]
-        elif abs(slope) > 2000000000:
-            x_coords -= self.WalltoPath
-            x_lane1 -= self.WalltoLane[0]
-            x_lane2 -= self.WalltoLane[1]
-        else:
-            translation_vector = self.WalltoPath * np.array([-1 / slope, 1])
-            t1_vecotr = self.WalltoLane[0] * np.array([-1 / slope, 1])
-            t2_vecotr = self.WalltoLane[1] * np.array([-1 / slope, 1])
-            moved_coords = np.column_stack((x_coords, y_coords)) - translation_vector
-            m1_coords = np.column_stack((x_lane1, y_lane1)) - t1_vecotr
-            m2_coords = np.column_stack((x_lane2, y_lane2)) - t2_vecotr
-            x_coords = moved_coords[:, 0]
-            y_coords = moved_coords[:, 1]
-            x_lane1 = m1_coords[:, 0]
-            y_lane1 = m1_coords[:, 1]
-            x_lane2 = m2_coords[:, 0]
-            y_lane2 = m2_coords[:, 1]
+        x_lane1 = x_coords
+        x_lane2 = x_coords
+        y_lane1 = y_coords + self.WalltoLane[0]
+        y_lane2 = y_coords + self.WalltoLane[1]
+        y_coords += self.WalltoPath
 
         return x_coords, y_coords, x_lane1, y_lane1, x_lane2, y_lane2
 
@@ -202,7 +161,7 @@ class WallFollower(Node):
             now = rclpy.time.Time()
             t = self.tf_buffer.lookup_transform(world_frame, detection_frame, now)# Duration(seconds=1))
         except:
-            self.get_logger().info("can't transform")
+            # self.get_logger().info("can't transform")
             t = TransformStamped()
 
         tf_matrix = transform_to_matrix(t)
@@ -248,7 +207,7 @@ class WallFollower(Node):
                 wall_lane.poses.append(lane2)
 
         self.path_pub.publish(wall_path)
-        self.state_pub.publish(self.state)
+        self.lane_pub.publish(wall_lane)
 
 
 def main(args=None):

@@ -83,12 +83,7 @@ class Localization(Node):
 
     def dead_reckoning_cb(self, msg):
         if self.state is not None:
-            if self.mode == 'tunnel':
-                self.mode_change += 1
-
-
-            if 1 <= self.mode_change <= 3:
-                self.odom_state = 'Dead_Reckoning'
+            if self.mode != 'tunnel':
                 self.offset_x = self.state.pose.pose.position.x
                 self.offset_y = self.state.pose.pose.position.y
                 self.init_x = msg.pose.pose.position.x

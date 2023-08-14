@@ -128,15 +128,7 @@ class WallFollower(Node):
 
         self.plot_line(x_coords, y_coords)
 
-        if abs(slope) < 1e6:
-            y_coords += self.WalltoPath
-        elif abs(slope) == np.inf:
-            x_coords -= self.WalltoPath
-        else:
-            translation_vector = self.WalltoPath * np.array([-1 / slope, 1])
-            moved_coords = np.column_stack((x_coords, y_coords)) - translation_vector
-            x_coords = moved_coords[:, 0]
-            y_coords = moved_coords[:, 1]
+        y_coords += self.WalltoPath
 
         return x_coords, y_coords
 
@@ -173,7 +165,7 @@ class WallFollower(Node):
             now = rclpy.time.Time()
             t = self.tf_buffer.lookup_transform(world_frame, detection_frame, now)# Duration(seconds=1))
         except:
-            self.get_logger().info("can't transform")
+            # self.get_logger().info("can't transform")
             t = TransformStamped()
 
         tf_matrix = transform_to_matrix(t)

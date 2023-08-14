@@ -6,6 +6,7 @@ from collections import deque, Counter
 
 import rclpy
 from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup
 
 from std_msgs.msg import Int32MultiArray, Float64MultiArray, Float64, Float32, String
 from autocar_msgs.msg import LinkArray, State2D, Obstacle
@@ -24,7 +25,7 @@ class Core(Node):
         # self.sign_angle_pub = self.create_publisher(Float32, '/sign_angle', 10)
 
         # Initialise subscribers
-        self.ackermann_sub = self.create_subscription(AckermannDriveStamped, '/autocar/ackermann_cmd', self.command_cb, 10)
+        self.ackermann_sub = self.create_subscription(AckermannDriveStamped, '/autocar/ackermann_cmd', self.command_cb, 10, callback_group=ReentrantCallbackGroup())
         self.links_sub = self.create_subscription(LinkArray, '/autocar/mode', self.links_cb, 10)
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
         self.cte_sub = self.create_subscription(Float64, '/autocar/cte_error', self.cte_cb, 10)
@@ -226,15 +227,15 @@ class Core(Node):
             else: self.t = 0
 
 
-        elif self.mode == 'tollgate':
-            if self.waypoint >= 10:
-                if self.lane_detected:
-                    self.cmd_steer = self.vision_steer
+        # elif self.mode == 'tollgate':
+        #     if self.waypoint >= 10:
+        #         if self.lane_detected:
+        #             self.cmd_steer = self.vision_steer
 
         elif self.mode == 'tunnel':
             if self.status == 'driving':
                 # self.cmd_steer = self.vision_steer
-                if self.waypoint >= 25:
+                if self.waypoint >= 40:
                     self.status = 'lanenet'
 
             elif self.status == 'lanenet':
@@ -252,7 +253,7 @@ class Core(Node):
                     self.brake = 0.0
                     self.t = 0
 
-                if self.traffic_stop_wp <= 30:
+                if self.traffic_stop_wp <= 40:
                     self.status = 'complete'
                     self.brake = 0.0
                     self.t = 0
@@ -349,7 +350,7 @@ class Core(Node):
                 self.status = 'parking'
 
             elif self.status == 'parking':
-                if self.traffic_stop_wp <= 10:
+                if self.waypoint > 40:
                     self.status = 'complete'
 
                 elif self.parking_stop_wp <= 2:
@@ -371,7 +372,7 @@ class Core(Node):
                     self.brake = 20.0
                     self.t = 0
 
-                elif self.parking_stop_wp >= 12:
+                elif self.parking_stop_wp >= 13:
                     self.gear = 0.0
 
                     brake_force = 150
@@ -395,14 +396,16 @@ class Core(Node):
         elif self.mode == 'revpark':
             if self.status == 'driving':
                 self.t = 0
-                if self.traffic_stop_wp <= 15:
+                if self.traffic_stop_wp <= 10:
                     self.status = 'parking'
+                if self.waypoint >= 32:
+                    self.status = 'complete'
 
             elif self.status == 'parking':
                 self.brake_stop = True
                 self.gear = 2.0
 
-                if self.traffic_stop_wp <= 16:
+                if self.traffic_stop_wp <= 11:
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150
@@ -412,7 +415,7 @@ class Core(Node):
                 elif self.traffic_stop_wp <= 18:
                     self.brake = 20.0
 
-                elif self.parking_stop_wp <= 2:
+                elif self.parking_stop_wp <= 3:
                     self.t = 0
                     self.gear = 0.0
                     self.status = 'return'
@@ -421,20 +424,19 @@ class Core(Node):
                     self.brake = 0.0
 
             elif self.status == 'return':
-                if self.parking_stop_wp <= 3:
+                if self.parking_stop_wp <= 4:
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150
                     max_brake = 100
                     self.brake_control(brake_force, max_brake, 3)
 
-                    if self.t >= 3:
-                        self.brake_stop = False
-
-                elif self.parking_stop_wp <= 5:
+                elif self.parking_stop_wp <= 6:
+                    self.brake_stop = False
                     self.brake = 20.0
+                    self.t = 0
 
-                elif self.parking_stop_wp >= 15:
+                elif self.parking_stop_wp >= 17:
                     self.status = 'complete'
                     self.brake_stop = False
 

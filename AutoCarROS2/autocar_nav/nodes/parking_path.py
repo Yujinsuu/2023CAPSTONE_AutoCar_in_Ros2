@@ -3,6 +3,7 @@
 import os
 import sys
 import numpy as np
+from collections import deque, Counter
 from scipy.interpolate import CubicSpline
 
 import rclpy
@@ -54,24 +55,22 @@ class ParkingPath(Node):
 
         self.parking_num = len(self.parking_x) - 1
         self.revpark_num = len(self.revpark_x) - 1
+        # self.P = [9, 3] # kcity
+        self.P = [9, 4] # boong
+        # self.R = [10, 5] # kcity
+        self.R = [4, 7] # htech
 
         self.path_check = False
         self.path = -1
+        self.prev_path = -1
+
+        queue_size = 9
+        init_queue = [0 for _ in range(queue_size)]
+        self.queue = deque(init_queue, maxlen = queue_size)
 
         self.mode = 'global'
 
         self.car_width = 1.2
-        self.obs_list = {'0':[-238.0, 518.0, 3.0],
-                         '1':[-235.0, 516.0, 3.0],
-                         '2':[-231.0, 531.0, 3.0],
-                         '3':[32.0, 85.0, 3.0],
-                         '4':[39.0, 88.3, 3.0],
-                         '5':[35.0, 90.0, 3.0],
-                         '6':[37.0, 93.0, 3.0],
-                         '7':[-99.0, 620.0, 3.0],
-                         '8':[-102.0, 623.0, 3.0],
-                         '9':[-105.0, 623.0, 3.0],
-                         }
         self.obstacles = []
 
         self.timer = self.create_timer(0.1, self.park_path_publish)
@@ -91,22 +90,53 @@ class ParkingPath(Node):
         self.mode = msg.mode
 
         if self.mode == 'parking':
-            if not self.path_check and wp >= 7 + 4*0:
-                path = max(min(int((wp - 7) / 4), self.parking_num), 0)
+            if not self.path_check and wp >= self.P[0] + self.P[1]*4:
+                path = max(min(int((wp - self.P[0]) / self.P[1]), self.parking_num), 0)
+                if path != self.prev_path:
+                    queue_size = 9
+                    init_queue = [0 for _ in range(queue_size)]
+                    self.queue = deque(init_queue, maxlen = queue_size)
+
                 if not self.parking_collision_check(self.parking_x[str(path)], self.parking_y[str(path)]):
+                    self.queue.append(1)
+                else:
+                    self.queue.append(0)
+
+                counter = Counter(self.queue)
+                value, count = counter.most_common(1)[0]
+
+                if value == 1:
                     self.path_check = True
                     self.path = path
 
+                self.prev_path = path
+
         elif self.mode == 'revpark':
-            if not self.path_check and wp >= 15 + 9*0:
-                path = max(min(int((wp - 15) / 9), self.revpark_num), 0)
+            if not self.path_check and wp >= self.R[0] + self.R[1]*0:
+                path = max(min(int((wp - self.R[0]) / self.R[1]), self.revpark_num), 0)
+                if path != self.prev_path:
+                    queue_size = 13
+                    init_queue = [0 for _ in range(queue_size)]
+                    self.queue = deque(init_queue, maxlen = queue_size)
+
                 if not self.parking_collision_check(self.revpark_x[str(path)], self.revpark_y[str(path)]):
+                    self.queue.append(1)
+                else:
+                    self.queue.append(0)
+
+                counter = Counter(self.queue)
+                value, count = counter.most_common(1)[0]
+
+                if value == 1:
                     self.path_check = True
                     self.path = path
+
+                self.prev_path = path
 
         else:
             self.path_check = False
             self.path = -1
+            self.prev_path = -1
 
     def obstacle_cb(self, msg):
         self.obstacles = [(o.x, o.y, o.yaw, o.length, o.width) for o in msg.object_list]
@@ -138,10 +168,10 @@ class ParkingPath(Node):
         path_idx = Int32()
         # path_idx.data = self.path_num
 
-        if self.mode == 'parking' and self.path >= self.parking_num:
+        if self.mode == 'parking' and self.path > self.parking_num:
             path_idx.data = -1
 
-        elif self.mode == 'revpark' and self.path >= self.revpark_num:
+        elif self.mode == 'revpark' and self.path > self.revpark_num:
             path_idx.data = -1
 
         else:

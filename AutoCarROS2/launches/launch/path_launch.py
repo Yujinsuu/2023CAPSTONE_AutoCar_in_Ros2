@@ -28,6 +28,7 @@ def generate_launch_description():
             executable = 'localization.py',
             parameters = [navconfig]
         ),
+
         Node(
             package = odom,
             name = 'tf_pub',

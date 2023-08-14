@@ -36,11 +36,11 @@ def generate_launch_description():
         #     executable = 'get_encoder.py'
         # ),
 
-        Node(
-            package = odom,
-            name = 'pub_enc_vel',
-            executable = 'encoder_vel.py'
-        ),
+        # Node(
+        #     package = odom,
+        #     name = 'pub_enc_vel',
+        #     executable = 'encoder_vel.py'
+        # ),
 
         Node(
             package = 'robot_localization',

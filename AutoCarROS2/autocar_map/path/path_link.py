@@ -103,17 +103,17 @@ def test_track():
 def boong():
     base_file = file_path + '/ST_base.csv'
     global_file = file_path + '/boong/boong_track.csv'
-    parking_file = file_path + '/boong/boong_parking.csv'
+    parking_file = file_path + '/boong/parking.csv'
     revpark_file = file_path + '/boong/boong_revpark.csv'
     boong = Path(base_file, global_file, parking_file, revpark_file)
-    # boong.car_mode[1] = 'parking'
-    # boong.car_mode[3] = 'dynamic'
-    # boong.car_mode[5] = 'static'
-    # boong.car_mode[7] = 'delivery_A'
-    # boong.car_mode[8] = 'uturn'
-    # boong.car_mode[9] = 'delivery_B'
-    # boong.car_mode[11] = 'tunnel'
-    # boong.car_mode[14] = 'revpark'
+    boong.car_mode[1] = 'parking'
+    boong.car_mode[3] = 'dynamic'
+    boong.car_mode[5] = 'static'
+    boong.car_mode[7] = 'delivery_A'
+    boong.car_mode[8] = 'uturn'
+    boong.car_mode[9] = 'delivery_B'
+    boong.car_mode[11] = 'tunnel'
+    boong.car_mode[14] = 'revpark'
 
     left = [7,8,9,11]
     right = [1,3,5]
@@ -131,7 +131,7 @@ def boong():
 def qualifier():
     base_file = file_path + '/KC_base.csv'
     global_file = file_path + '/kcity/qualifier.csv'
-    parking_file = file_path + '/kcity/kcity_parking.csv'
+    parking_file = file_path + '/kcity/parking.csv'
     revpark_file = None
     qualifier = Path(base_file, global_file, parking_file, revpark_file)
     qualifier.car_mode[1] = 'parking'
@@ -149,7 +149,7 @@ def qualifier():
 
 def htech():
     base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/htech_ccw.csv'
+    global_file = file_path + '/htech/tunnel.csv'
     # global_file = file_path + '/htech/delivery.csv'
     parking_file = None
     revpark_file = None
@@ -164,17 +164,23 @@ def htech():
 def kcity():
     base_file = file_path + '/KC_base.csv'
     global_file = file_path + '/kcity/track.csv'
-    global_file = file_path + '/kcity/kcity_parking.csv'
-    parking_file = None
-    revpark_file = None
+    parking_file = file_path + '/kcity/parking.csv'
+    revpark_file = file_path + '/kcity/revpark.csv'
     kcity = Path(base_file, global_file, parking_file, revpark_file)
-    # htech.car_mode[1] = 'tunnel'
-    # htech.car_mode[4] = 'tunnel'
-    # htech.car_mode[0] = 'delivery_A'
-    # htech.car_mode[3] = 'delivery_B'
+    kcity.car_mode[18] = 'revpark'
 
     return kcity
 
-# use_map = test_track()
-use_map = qualifier()
-start_index = 5
+def revpark():
+    base_file = file_path + '/ST_base.csv'
+    global_file = file_path + '/htech/rev_global.csv'
+    parking_file = None
+    revpark_file = file_path + '/htech/revpark.csv'
+    revpark = Path(base_file, global_file, parking_file, revpark_file)
+    revpark.car_mode[0] = 'revpark'
+
+    return revpark
+
+
+use_map = boong()
+start_index = 0

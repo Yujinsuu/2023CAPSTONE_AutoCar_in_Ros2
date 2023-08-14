@@ -2,11 +2,13 @@
 
 import os
 import sys
+import time
 import math
 import numpy as np
 
 import rclpy
 from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
 from std_msgs.msg import Float64MultiArray, Int32, String
@@ -30,16 +32,17 @@ class GlobalPathPlanner(Node):
 
         # Initialise publisher(s)
         self.goals_pub = self.create_publisher(Path2D, '/autocar/goals', 10)
+        self.lanes_pub = self.create_publisher(Path2D, '/autocar/tunnel_lane', 10)
         self.links_pub = self.create_publisher(LinkArray, '/autocar/mode', 10)
         self.mode_pub = self.create_publisher(String, '/yolo_mode', 10)
         # self.offset_pub = self.create_publisher(Float64MultiArray, '/autocar/tunnel_offset', 10)
 
         # Initialise suscriber(s)
-        self.localization_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10)
+        self.localization_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10, callback_group=ReentrantCallbackGroup())
         self.parking_path_sub = self.create_subscription(Int32, '/autocar/parking_path', self.parking_path_cb, 10)
         self.mission_status_sub = self.create_subscription(String,'/autocar/mission_status', self.mission_status_cb, 10)
         self.walls_sub = self.create_subscription(Path2D, '/wall_path', self.walls_cb, 10)
-        # self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
+        self.lanes_sub = self.create_subscription(Path2D, '/wall_lane', self.lanes_cb, 10)
 
         # Load parameters
         try:
@@ -104,12 +107,15 @@ class GlobalPathPlanner(Node):
 
         self.parking_path_num = -1
 
-        self.ax = []
-        self.ay = []
+        self.tx = []
+        self.ty = []
+        self.lx = []
+        self.ly = []
         self.tunnel_x = []
         self.tunnel_y = []
+        self.lane_x = []
+        self.lane_y = []
 
-        self.tunnel_state = 'entry'
         self.offset_x = 0.0
         self.offset_y = 0.0
 
@@ -123,19 +129,23 @@ class GlobalPathPlanner(Node):
     def mission_status_cb(self, msg):
         self.status = msg.data
 
-
-    def tunnel_check(self, msg):
-        self.tunnel_state = msg.data
-
     def walls_cb(self, msg):
-        self.ax = []
-        self.ay = []
+        self.tx = []
+        self.ty = []
         for i in range(len(msg.poses)):
             wx = msg.poses[i].x
             wy = msg.poses[i].y
-            self.ax.append(wx)
-            self.ay.append(wy)
+            self.tx.append(wx)
+            self.ty.append(wy)
 
+    def lanes_cb(self, msg):
+        self.lx = []
+        self.ly = []
+        for i in range(len(msg.poses)):
+            wx = msg.poses[i].x
+            wy = msg.poses[i].y
+            self.lx.append(wx)
+            self.ly.append(wy)
 
     def vehicle_state_cb(self, msg):
         '''
@@ -174,23 +184,17 @@ class GlobalPathPlanner(Node):
         transform = self.frame_transform(via_x[closest_id], via_y[closest_id], fx, fy, self.theta)
 
         if self.mode == 'revpark' and self.parking_path_num != -1:
-            wp_num = 55 + 10 * self.parking_path_num
-
+            # wp_num = 45 + 5 * self.parking_path_num # kcity
+            wp_num = 40 + 7 * self.parking_path_num # test
+        self.get_logger().info(str(wp_num))
         self.traffic_stop_wp = wp_num - self.wp_ahead - closest_id
 
-        if self.mode != 'tunnel':
-            if closest_id >= len(via_x) - self.wp_ahead:
-                if self.global_index < self.count['global'] - 1:
-                    self.global_index += 1
-                    closest_id = self.wp_behind
-                    self.traffic_stop_wp = 1e3
 
-        elif self.status == 'complete':
-            if closest_id >= len(via_x) - self.wp_ahead:
-                if self.global_index < self.count['global'] - 1:
-                    self.global_index += 1
-                    closest_id = self.wp_behind
-                    self.traffic_stop_wp = 1e3
+        if closest_id >= len(via_x) - self.wp_ahead:
+            if self.global_index < self.count['global'] - 1:
+                self.global_index += 1
+                closest_id = self.wp_behind
+                self.traffic_stop_wp = 1e3
 
 
         self.mode = self.mode_list[self.global_index]
@@ -267,9 +271,9 @@ class GlobalPathPlanner(Node):
             px = px[::-1]
             py = py[::-1]
 
-            if len(px) > 20:
-                px = px[:20]
-                py = py[:20]
+            if len(px) > 30:
+                px = px[:30]
+                py = py[:30]
 
 
         else: # Global and else
@@ -304,15 +308,29 @@ class GlobalPathPlanner(Node):
             self.parking_stop_wp = 1e3
 
             if self.mode == 'tunnel':
-                if self.status == 'lanenet':
-                    px = self.ax
-                    py = self.ay
-                    self.tunnel_x = self.ax
-                    self.tunnel_y = self.ay
+                lx,ly,lyaw = [1e6],[1e6],0.0
+                if self.status == 'lanenet' and len(self.tx) != 0:
+                    px = self.tx
+                    py = self.ty
+                    self.tunnel_x = self.tx
+                    self.tunnel_y = self.ty
+                    self.lane_x = self.lx
+                    self.lane_y = self.ly
 
-                elif self.status in ['stop', 'avoid'] and len(self.tunnel_x) != 0:
+                elif self.status == 'avoid' and len(self.tunnel_x) != 0:
                     px = self.tunnel_x
                     py = self.tunnel_y
+                    lx = self.lane_x
+                    ly = self.lane_y
+                    lyaw = np.arctan2((py[-1]-py[0]),(px[-1]-px[0]))
+
+                else:
+                    self.tunnel_x = []
+                    self.tunnel_y = []
+                    self.lane_x = []
+                    self.lane_y = []
+
+                self.publish_lanes(lx,ly,lyaw)
 
         self.publish_goals(px, py)
 
@@ -349,6 +367,22 @@ class GlobalPathPlanner(Node):
 
         return x_values, y_values
 
+    def publish_lanes(self, lx, ly, lyaw):
+
+        waypoints = min(len(lx), len(ly))
+
+        lanes = Path2D()
+
+        for i in range(waypoints):
+            # Appending to Target Goals
+            lane = Pose2D()
+            lane.x = lx[i]
+            lane.y = ly[i]
+            lane.theta = lyaw
+
+            lanes.poses.append(lane)
+
+        if waypoints != 0: self.lanes_pub.publish(lanes)
 
     def publish_goals(self, px, py):
 
