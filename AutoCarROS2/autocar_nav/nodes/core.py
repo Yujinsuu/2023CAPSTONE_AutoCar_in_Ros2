@@ -22,7 +22,7 @@ class Core(Node):
         # Initialise publishers
         self.autocar_pub = self.create_publisher(AckermannDriveStamped, '/autocar/autocar_cmd', 10)
         self.mission_status_pub = self.create_publisher(String, '/autocar/mission_status', 10)
-        # self.sign_angle_pub = self.create_publisher(Float32, '/sign_angle', 10)
+        self.sign_angle_pub = self.create_publisher(Float32, '/sign_angle', 10)
 
         # Initialise subscribers
         self.ackermann_sub = self.create_subscription(AckermannDriveStamped, '/autocar/ackermann_cmd', self.command_cb, 10, callback_group=ReentrantCallbackGroup())
@@ -51,7 +51,7 @@ class Core(Node):
         self.status = 'driving'
         self.time = 0.0
 
-        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 4/3.6,     'rush': 6.5/3.6,    'revpark': 6/3.6,      'uturn': 6/3.6,
+        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':   7/3.6,    'revpark': 6/3.6,      'uturn': 6/3.6,
                              'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 9/3.6, 'tollgate': 7.2/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
@@ -150,7 +150,7 @@ class Core(Node):
 
             if not self.A_check and self.mode == 'delivery_B':
                 self.sign_pose = msg.data[4]
-
+            
             if self.sign_pose <= 100:
                 angle.data = 0.0
             else:
@@ -161,7 +161,7 @@ class Core(Node):
             self.sign_pose = 0
             angle.data = 0.0
 
-        # self.sign_angle_pub.publish(angle)
+        self.sign_angle_pub.publish(angle)
 
 
     def identify_traffic_light(self, path, wp):
@@ -352,7 +352,7 @@ class Core(Node):
                 if self.waypoint > 40:
                     self.status = 'complete'
 
-                elif self.parking_stop_wp <= 6:
+                elif self.parking_stop_wp <= 9:
                     self.status = 'return'
 
             elif self.status == 'return':
@@ -360,18 +360,18 @@ class Core(Node):
                 self.gear = 2.0
                 self.cmd_speed = self.target_speed['parking']
 
-                if self.parking_stop_wp <= 7:
+                if self.parking_stop_wp <= 10:
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150
                     max_brake = 100
                     self.brake_control(brake_force, max_brake, 3)
 
-                elif self.parking_stop_wp <= 9:
+                elif self.parking_stop_wp <= 12:
                     self.brake = 20.0
                     self.t = 0
 
-                elif self.parking_stop_wp >= 17:
+                elif self.parking_stop_wp >= 16:
                     self.gear = 0.0
 
                     brake_force = 150
@@ -411,10 +411,10 @@ class Core(Node):
                     max_brake = 100
                     self.brake_control(brake_force, max_brake, 2)
 
-                elif self.traffic_stop_wp <= 18:
+                elif self.traffic_stop_wp <= 12:
                     self.brake = 20.0
 
-                elif self.parking_stop_wp <= 9:
+                elif self.parking_stop_wp <= 10:
                     self.t = 0
                     self.gear = 0.0
                     self.status = 'return'
@@ -423,14 +423,14 @@ class Core(Node):
                     self.brake = 0.0
 
             elif self.status == 'return':
-                if self.parking_stop_wp <= 11:
+                if self.parking_stop_wp <= 14:
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150
                     max_brake = 100
                     self.brake_control(brake_force, max_brake, 3)
 
-                elif self.parking_stop_wp <= 12:
+                elif self.parking_stop_wp <= 15:
                     self.brake_stop = False
                     self.brake = 20.0
                     self.t = 0
@@ -453,15 +453,16 @@ class Core(Node):
         elif self.mode in ['delivery_A', 'delivery_B']:
             if self.status == 'driving':
                 if self.distance != -1:
-                    self.stop_wp = self.waypoint + int(self.distance)
+                    self.stop_wp = self.waypoint + int(self.distance) -3
                     self.t = 0
-                    self.status = 'check'
+                    self.status = 'check'  
 
-                if self.sign_pose >= 415:
+                if self.sign_pose >= 500:
                     self.t = 0
                     self.status = 'stop'
 
             elif self.status == 'check':
+                    
                 if self.stop_wp - self.waypoint <= 0:
                     self.status = 'stop'
 
@@ -484,7 +485,7 @@ class Core(Node):
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
         elif self.mode == 'finish':
-            if self.waypoint >= 15:
+            if self.waypoint >= 20:
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 

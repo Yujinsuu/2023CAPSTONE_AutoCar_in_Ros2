@@ -345,9 +345,9 @@ class AdaptiveClustering : public rclcpp::Node
           pose_array_pub_->publish(pose_array);
         }
 
-        if(marker_array.markers.size()) {
+        // if(marker_array.markers.size()) {
           marker_array_pub_->publish(marker_array);
-        }
+        // }
 
         if(print_fps_)if(++frames>10){std::cerr<<"[adaptive_clustering_v1] fps = "<<float(frames)/(float(clock()-start_time)/CLOCKS_PER_SEC)<<", timestamp = "<<clock()/CLOCKS_PER_SEC<<std::endl;reset = true;}//fps
       }

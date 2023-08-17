@@ -137,7 +137,6 @@ class ObstaclePub(Node):
 
         else:
             sign.data = -1.0
-
         self.delivery_stop_pub.publish(sign)
         self.obs_pub.publish(msg)
 

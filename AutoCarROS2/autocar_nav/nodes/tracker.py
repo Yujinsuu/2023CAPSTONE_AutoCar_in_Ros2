@@ -77,9 +77,9 @@ class PathTracker(Node):
         self.target_idx = None
         self.heading_error = 0.0
         self.crosstrack_error = 0.0
-        self.k = {'global'    : {'Straight': 1.0, 'Curve': 2.0},
+        self.k = {'global'    : {'Straight': 1.0, 'Curve': 1.0},
                   'parking'   : {'Straight': 1.5, 'Curve': 1.5},
-                  'revpark'   : {'Straight': 2.0, 'Curve': 2.0},
+                  'revpark'   : {'Straight': 1.5, 'Curve': 1.5},
                   'uturn'     : {'Straight': 2.0, 'Curve': 2.0},
                   'static'    : {'Straight': 1.0, 'Curve': 1.0},
                   'dynamic'   : {'Straight': 1.0, 'Curve': 1.0},
@@ -133,7 +133,7 @@ class PathTracker(Node):
                 self.target_index_calculator_backward()
 
             else:
-                d = 2 if self.mode == 'global' else 1
+                d = 1 #if self.mode == 'global' else 1
                 self.x = self.x + d * np.cos(self.yaw)
                 self.y = self.y + d * np.sin(self.yaw)
 

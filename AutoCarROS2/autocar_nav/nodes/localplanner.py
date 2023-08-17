@@ -68,7 +68,7 @@ class LocalPathPlanner(Node):
         df = pd.read_csv(file_path + '/htech/tunnel_lane.csv')
         self.center_x = df['x'].tolist()
         self.center_y = df['y'].tolist()
-        # self.center_x = [i - 2.5 for i in self.center_x]
+        self.center_x = [i - 1.2 for i in self.center_x]
         # self.center_y = [i + 1.0 for i in self.center_y]
         self.center_yaw = df['yaw'].tolist()
         self.offset_x = 0.0
@@ -89,8 +89,8 @@ class LocalPathPlanner(Node):
         self.start = time.time()
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
-        self.L = 1.04/2+1.6/2 # 차량 길이
-        self.W = 1.2 # 차량 폭
+        self.L = 1.6 #1.04/2+1.6/2 # 차량 길이
+        self.W = 1.45 # 차량 폭
         self.obstacle_detected = False
         self.obstacle_info = 'None'
         self.dist_thresh = 6 # 정적 및 동적 판단 기준 : 6m
@@ -224,7 +224,7 @@ class LocalPathPlanner(Node):
         return cx, cy, cyaw
 
     def collision_reroute(self, cx, cy, cyaw, obstacle_colliding):
-        step = 45
+        step = 55
         # step_region = 15
         obs_first = obstacle_colliding[-1]
         obs_end = obstacle_colliding[0]
@@ -272,15 +272,15 @@ class LocalPathPlanner(Node):
         end_yaw = cyaw[target_idx_e + step]
         end = (end_x, end_y,  np.rad2deg(end_yaw))
 
-        region1_x = cx[target_idx_e] - 10
-        region1_y = cy[target_idx_e] - 10
-        region2_x = cx[target_idx_e] + 10
-        region2_y = cy[target_idx_e] + 10
+        region1_x = cx[target_idx_e] - 15
+        region1_y = cy[target_idx_e] - 15
+        region2_x = cx[target_idx_e] + 15
+        region2_y = cy[target_idx_e] + 15
 
         hy_a_star = hybrid_a_star(region1_x, region2_x,
                                   region1_y, region2_y,
                                   obstacle = self.obstacles,
-                                  resolution = 0.5,
+                                  resolution = 0.7,
                                   length = self.L, width = self.W)
         reroute_path = hy_a_star.find_path(start, end)
 
