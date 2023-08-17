@@ -113,7 +113,7 @@ def boong():
     boong.car_mode[8] = 'uturn'
     boong.car_mode[9] = 'delivery_B'
     boong.car_mode[11] = 'tunnel'
-    boong.car_mode[14] = 'revpark'
+    # boong.car_mode[14] = 'revpark'
 
     left = [7,8,9,11]
     right = [1,3,5]
@@ -149,15 +149,15 @@ def qualifier():
 
 def htech():
     base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/htech_track.csv'
-    # global_file = file_path + '/htech/delivery.csv'
+    # global_file = file_path + '/htech/htech_track.csv'
+    global_file = file_path + '/htech/delivery.csv'
     parking_file = None
     revpark_file = None
     htech = Path(base_file, global_file, parking_file, revpark_file)
     # htech.car_mode[1] = 'tunnel'
     # htech.car_mode[4] = 'tunnel'
-    # htech.car_mode[0] = 'delivery_A'
-    # htech.car_mode[3] = 'delivery_B'
+    htech.car_mode[0] = 'delivery_A'
+    htech.car_mode[3] = 'delivery_B'
 
     return htech
 
@@ -174,13 +174,13 @@ def kcity():
 def revpark():
     base_file = file_path + '/ST_base.csv'
     global_file = file_path + '/htech/rev_global.csv'
-    parking_file = None
+    parking_file = file_path + '/boong/parking.csv'
     revpark_file = file_path + '/htech/revpark.csv'
     revpark = Path(base_file, global_file, parking_file, revpark_file)
-    revpark.car_mode[0] = 'revpark'
+    # revpark.car_mode[0] = 'revpark'
 
     return revpark
 
 
-use_map = revpark()
+use_map = boong()
 start_index = 0

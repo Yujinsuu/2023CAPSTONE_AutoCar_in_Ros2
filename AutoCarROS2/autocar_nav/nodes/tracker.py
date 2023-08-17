@@ -77,9 +77,9 @@ class PathTracker(Node):
         self.target_idx = None
         self.heading_error = 0.0
         self.crosstrack_error = 0.0
-        self.k = {'global'    : {'Straight': 0.5, 'Curve': 2.0},
+        self.k = {'global'    : {'Straight': 1.0, 'Curve': 2.0},
                   'parking'   : {'Straight': 1.5, 'Curve': 1.5},
-                  'revpark'   : {'Straight': 1.0, 'Curve': 1.0},
+                  'revpark'   : {'Straight': 2.0, 'Curve': 2.0},
                   'uturn'     : {'Straight': 2.0, 'Curve': 2.0},
                   'static'    : {'Straight': 1.0, 'Curve': 1.0},
                   'dynamic'   : {'Straight': 1.0, 'Curve': 1.0},
@@ -122,14 +122,18 @@ class PathTracker(Node):
 
 
         if self.cyaw:
-            if self.mode == 'parking' and self.status == 'return':
-                self.target_index_calculator_backward()
+            if (self.mode == 'parking' and self.status == 'return') or (self.mode == 'revpark' and self.status == 'parking'):
+                d = -1
+                self.x = self.x + d * np.cos(self.yaw)
+                self.y = self.y + d * np.sin(self.yaw)
 
-            elif self.mode == 'revpark' and self.status == 'parking':
+                d_yaw = d * np.tan(self.sigma) / self.L
+                self.yaw = self.yaw + d_yaw
+
                 self.target_index_calculator_backward()
 
             else:
-                d = 2#self.vel * self.dt
+                d = 2 if self.mode == 'global' else 1
                 self.x = self.x + d * np.cos(self.yaw)
                 self.y = self.y + d * np.sin(self.yaw)
 
@@ -218,14 +222,14 @@ class PathTracker(Node):
         self.crosstrack_error = np.dot([dx[target_idx], dy[target_idx]], backward_vec)
 
         # Calculate position of the rear axle
-        # rx = self.x - (self.L - self.FL) * np.cos(self.yaw) # rear axle
-        # ry = self.y - (self.L - self.FL) * np.sin(self.yaw)
+        rx = self.x - (self.L - self.FL) * np.cos(self.yaw) # rear axle
+        ry = self.y - (self.L - self.FL) * np.sin(self.yaw)
 
-        # dx = [rx - icx for icx in self.cx[::-1]]
-        # dy = [ry - icy for icy in self.cy[::-1]]
+        dx = [rx - icx for icx in self.cx[::-1]]
+        dy = [ry - icy for icy in self.cy[::-1]]
 
-        # d = np.hypot(dx, dy)
-        # target_idx = np.argmin(d)
+        d = np.hypot(dx, dy)
+        target_idx = np.argmin(d)
 
         # Heading error
         self.heading_error = normalise_angle(self.yaw - self.cyaw[::-1][target_idx]) # waypoints 순서를 반대로 뒤집은 후, yaw과 비교
@@ -239,11 +243,13 @@ class PathTracker(Node):
 
         cte = Float64()
         cte.data = np.rad2deg(crosstrack_term)
-        if abs(cte.data) > 30: cte.data = 30 * cte.data / cte.data
+        if cte.data > 30: cte.data = 30.0
+        elif cte.data < -30: cte.data = -30.0
         self.ct_error_pub.publish(cte)
         he = Float64()
         he.data = np.rad2deg(heading_term)
-        if abs(he.data) > 30: he.data = 30 * he.data / he.data
+        if he.data > 30: he.data = 30.0
+        elif he.data < -30: he.data = -30.0
         self.h_error_pub.publish(he)
 
         sigma_t = crosstrack_term + heading_term

@@ -51,17 +51,9 @@ Visualization Manager:
         All Enabled: true
         car:
           Value: true
-        imu_link:
-          Value: true
         map:
           Value: true
         odom:
-          Value: true
-        odom0:
-          Value: true
-        odom_footprint:
-          Value: true
-        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -73,10 +65,6 @@ Visualization Manager:
           odom:
             car:
               {}
-            odom_footprint:
-              {}
-          odom0:
-            {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
@@ -95,7 +83,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -378,16 +366,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 94.8409194946289
+      Distance: 67.32310485839844
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -305.97674560546875
-        Y: 585.22216796875
-        Z: -24.412723541259766
+        X: -111.63118743896484
+        Y: 631.4009399414062
+        Z: -24.31914520263672
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

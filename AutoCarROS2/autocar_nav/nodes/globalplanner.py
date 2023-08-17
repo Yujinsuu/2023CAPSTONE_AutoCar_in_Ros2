@@ -185,8 +185,7 @@ class GlobalPathPlanner(Node):
 
         if self.mode == 'revpark' and self.parking_path_num != -1:
             # wp_num = 45 + 5 * self.parking_path_num # kcity
-            wp_num = 40 + 7 * self.parking_path_num # test
-        self.get_logger().info(str(wp_num))
+            wp_num = 56 + 7 * self.parking_path_num # test
         self.traffic_stop_wp = wp_num - self.wp_ahead - closest_id
 
 

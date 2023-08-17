@@ -4,6 +4,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
+from autocar_msgs.msg import State2D
 from ackermann_msgs.msg import AckermannDriveStamped
 #from geometry_msgs.msg import Twist
 
@@ -39,9 +40,11 @@ class erp42(Node):
 	def __init__(self):
 		super().__init__('erp42')
 		self.ackermann_subscriber = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.acker_callback, 10)
-		self.lanenet_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
+		self.lanenet_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_callback, 10)
+		self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_callback, 10)
 		self.ser = serial.serial_for_url("/dev/ttyERP", baudrate=115200, timeout=1)
 
+		self.velocity = 0.0
 		self.speed = 0.0
 		self.cmd_steer = 0.0
 		self.vision_steer = 0.0
@@ -141,17 +144,24 @@ class erp42(Node):
 
 		return np.deg2rad(output_steer)
 
+	def vehicle_callback(self, msg):
+		self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
+
 	def acker_callback(self, msg):
 		self.speed = msg.drive.speed
-		# self.cmd_steer = np.rad2deg(msg.drive.steering_angle)
-		# self.steer = self.real_steer(self.cmd_steer)
+		# self.steer = msg.drive.steering_angle
+		cmd_steer = np.rad2deg(msg.drive.steering_angle)
+		self.steer = self.real_steer(cmd_steer)
 		# self.steer = self.vision_steer
-		# self.steer = self.cmd_steer
-		self.steer = msg.drive.steering_angle
-		self.brake = int(msg.drive.jerk)
+
 		self.gear = int(msg.drive.acceleration)
 
-	def vision_cb(self, msg):
+		if self.velocity > self.speed - 1:
+			self.brake = int(msg.drive.jerk)
+		else:
+			self.brake = 0
+
+	def vision_callback(self, msg):
 		self.vision_steer = msg.data[1]
 
 	def timer_callback(self):

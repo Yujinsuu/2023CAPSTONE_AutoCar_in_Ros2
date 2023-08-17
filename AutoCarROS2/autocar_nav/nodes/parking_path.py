@@ -46,19 +46,20 @@ class ParkingPath(Node):
             key1 = keys.split('_')[1]
 
             if key0 == 'parking':
-                self.parking_x[key1] = use_map.ax[keys]
-                self.parking_y[key1] = use_map.ay[keys]
+                self.parking_x[key1] = use_map.ax[keys][:-6]
+                self.parking_y[key1] = use_map.ay[keys][:-6]
 
             elif key0 == 'revpark':
-                self.revpark_x[key1] = use_map.ax[keys]
-                self.revpark_y[key1] = use_map.ay[keys]
+                self.revpark_x[key1] = use_map.ax[keys][:-8]
+                self.revpark_y[key1] = use_map.ay[keys][:-8]
 
         self.parking_num = len(self.parking_x) - 1
         self.revpark_num = len(self.revpark_x) - 1
         # self.P = [9, 3] # kcity
         self.P = [9, 4] # boong
         # self.R = [10, 5] # kcity
-        self.R = [4, 7] # htech
+        # self.R = [4, 7] # htech
+        self.R = [22, 7]
 
         self.path_check = False
         self.path = -1
