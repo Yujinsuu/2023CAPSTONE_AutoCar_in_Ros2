@@ -55,7 +55,7 @@ class ParkingPath(Node):
 
         self.parking_num = len(self.parking_x) - 1
         self.revpark_num = len(self.revpark_x) - 1
-        self.P = [9, 3] # kcity
+        self.P = [14, 3] # kcity
         # self.P = [5, 4] # htech
         # self.P = [9, 4] # boong
         self.R = [10, 5] # kcity
@@ -133,7 +133,7 @@ class ParkingPath(Node):
                     queue_size = 13
                     init_queue = [0 for _ in range(queue_size)]
                     self.queue = deque(init_queue, maxlen = queue_size)
-                    
+
                 counter = Counter(self.queue)
                 value, count = counter.most_common(1)[0]
 

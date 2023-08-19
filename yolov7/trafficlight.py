@@ -28,7 +28,7 @@ IOU_THRES = 0.45
 CLASSES = None
 AGNOSTIC_NMS = False
 
-QUEUE_SIZE = 13
+QUEUE_SIZE = 23
 CLASS_MAP = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
 
 # Initialize

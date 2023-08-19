@@ -81,13 +81,14 @@ class Localization(Node):
                     self.update_state(self.dr_state)
                 else:
                     self.update_state(self.state)
-                    
+
             else:
                 self.odom_state = 'GPS-Odometry'
                 self.update_state(self.state)
 
 
     def dead_reckoning_cb(self, msg):
+        # offset => 터널 후반 waypoint 비교해서 가까운 waypoint(x,y) #판단은 mission_status로
         if self.state is not None:
             if 2 <= self.mode_change < 5:
                 self.odom_state = 'Dead-Reckoning'

@@ -144,17 +144,33 @@ class erp42(Node):
 
 		return np.deg2rad(output_steer)
 
+	def faster_motor_control(self, target_speed, gps_vel):
+			if self.brake:
+				return target_speed
+
+			else:
+				if ( target_speed >= gps_vel + 0.5 ):
+					speed = 5.0
+				else :
+					speed = target_speed
+				#print("target_speed", speed)
+
+				return speed
+
 	def vehicle_callback(self, msg):
 		self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
 
 	def acker_callback(self, msg):
-		self.speed = msg.drive.speed
+		# self.speed = msg.drive.speed
+		self.speed = self.faster_motor_control(msg.drive.speed, self.velocity)
+
 		# self.steer = msg.drive.steering_angle
 		cmd_steer = np.rad2deg(msg.drive.steering_angle)
 		self.steer = self.real_steer(cmd_steer)
 		# self.steer = self.vision_steer
 
 		self.gear = int(msg.drive.acceleration)
+
 
 		if self.velocity > self.speed - 1:
 			self.brake = int(msg.drive.jerk)

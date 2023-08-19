@@ -82,7 +82,7 @@ class Core(Node):
         self.Camera_angle = 78
         self.Image_size = 640
 
-        queue_size = 29
+        queue_size = 35
         init_queue = ['global' for _ in range(queue_size)]
         self.queue = deque(init_queue, maxlen = queue_size)
 
@@ -150,7 +150,7 @@ class Core(Node):
 
             if not self.A_check and self.mode == 'delivery_B':
                 self.sign_pose = msg.data[4]
-            
+
             if self.sign_pose <= 100:
                 angle.data = 0.0
             else:
@@ -181,7 +181,7 @@ class Core(Node):
 
         if self.yolo_light not in tf_light:
             self.traffic_stop = True
-            brake_force = (4 - wp) * 50
+            brake_force = (4 - wp) * 250
             max_brake = 100
             self.brake_control(brake_force, max_brake, 3)
 
@@ -455,14 +455,14 @@ class Core(Node):
                 if self.distance != -1:
                     self.stop_wp = self.waypoint + int(self.distance) -3
                     self.t = 0
-                    self.status = 'check'  
+                    self.status = 'check'
 
                 if self.sign_pose >= 500:
                     self.t = 0
                     self.status = 'stop'
 
             elif self.status == 'check':
-                    
+
                 if self.stop_wp - self.waypoint <= 0:
                     self.status = 'stop'
 
