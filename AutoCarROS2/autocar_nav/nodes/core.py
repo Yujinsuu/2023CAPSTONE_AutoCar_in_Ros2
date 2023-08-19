@@ -51,8 +51,8 @@ class Core(Node):
         self.status = 'driving'
         self.time = 0.0
 
-        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':   7/3.6,    'revpark': 6/3.6,      'uturn': 6/3.6,
-                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 9/3.6, 'tollgate': 7.2/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':   7/3.6,    'revpark': 6/3.6,      'uturn': 8/3.6,
+                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 9/3.6, 'tollgate': 10/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
@@ -262,7 +262,7 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 500
+                brake_force = 1000
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 
@@ -325,7 +325,7 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 500
+                brake_force = 1000
                 max_brake = 100
                 self.brake_control(brake_force, max_brake, 2)
 

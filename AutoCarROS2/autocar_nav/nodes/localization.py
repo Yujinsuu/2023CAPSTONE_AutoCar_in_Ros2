@@ -5,6 +5,7 @@ from collections import deque
 
 import rclpy
 from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup
 
 from std_msgs.msg import Float64MultiArray, String
 from nav_msgs.msg import Path, Odometry
@@ -27,7 +28,7 @@ class Localization(Node):
 
         # Initialise subscribers
         self.GPS_odom_sub = self.create_subscription(Odometry, '/autocar/odom', self.vehicle_state_cb, 10)
-        self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10)
+        self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10, callback_group=ReentrantCallbackGroup())
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
         self.status_sub = self.create_subscription(String , '/autocar/mission_status', self.status_cb, 10)
 
@@ -61,11 +62,11 @@ class Localization(Node):
         self.mode = 'global'
         self.status = 'driving'
         self.mode_change = 0
-        self.odom_state = 'GPS Odometry'
+        self.odom_state = 'GPS-Odometry'
 
-        self.tx = deque([], 2000)
-        self.ty = deque([], 2000)
-        self.tw = deque([], 2000)
+        self.tx = deque([], 2500)
+        self.ty = deque([], 2500)
+        self.tw = deque([], 2500)
 
         self.ds = 1 / self.frequency
         self.timer = self.create_timer(self.ds, self.trajectory)
@@ -75,15 +76,21 @@ class Localization(Node):
 
         if self.dr_state is not None:
             if self.mode == 'tunnel':
-                self.update_state(self.dr_state)
+                self.mode_change += 1
+                if self.odom_state == 'Dead-Reckoning':
+                    self.update_state(self.dr_state)
+                else:
+                    self.update_state(self.state)
+                    
             else:
-                self.odom_state = 'GPS_Odometry'
+                self.odom_state = 'GPS-Odometry'
                 self.update_state(self.state)
 
 
     def dead_reckoning_cb(self, msg):
         if self.state is not None:
-            if self.mode != 'tunnel':
+            if 2 <= self.mode_change < 5:
+                self.odom_state = 'Dead-Reckoning'
                 self.offset_x = self.state.pose.pose.position.x
                 self.offset_y = self.state.pose.pose.position.y
                 self.init_x = msg.pose.pose.position.x

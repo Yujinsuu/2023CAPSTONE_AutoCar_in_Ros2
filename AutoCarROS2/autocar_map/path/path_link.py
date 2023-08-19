@@ -134,7 +134,7 @@ def qualifier():
     parking_file = file_path + '/kcity/parking.csv'
     revpark_file = None
     qualifier = Path(base_file, global_file, parking_file, revpark_file)
-    qualifier.car_mode[1] = 'parking'
+    # qualifier.car_mode[1] = 'parking'
     qualifier.car_mode[4] = 'uturn'
     qualifier.car_mode[6] = 'tollgate'
     qualifier.car_mode[8] = 'tunnel'
@@ -182,5 +182,5 @@ def revpark():
     return revpark
 
 
-use_map = revpark()
-start_index = 0
+use_map = qualifier()
+start_index = 5

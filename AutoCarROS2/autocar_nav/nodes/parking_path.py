@@ -55,11 +55,11 @@ class ParkingPath(Node):
 
         self.parking_num = len(self.parking_x) - 1
         self.revpark_num = len(self.revpark_x) - 1
-		# self.P = [9, 3] # kcity
-        self.P = [5, 4] # htech
+        self.P = [9, 3] # kcity
+        # self.P = [5, 4] # htech
         # self.P = [9, 4] # boong
-        # self.R = [10, 5] # kcity
-        self.R = [7, 7] # htech
+        self.R = [10, 5] # kcity
+        # self.R = [7, 7] # htech
         # self.R = [22, 7] # boong
 
         self.path_check = False

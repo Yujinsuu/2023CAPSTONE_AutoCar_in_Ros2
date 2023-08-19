@@ -52,8 +52,6 @@ Visualization Manager:
         All Enabled: true
         car:
           Value: true
-        imu_link:
-          Value: true
         map:
           Value: true
         odom:
@@ -61,10 +59,6 @@ Visualization Manager:
         odom0:
           Value: true
         odom_footprint:
-          Value: true
-        velodyne:
-          Value: true
-        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -75,8 +69,7 @@ Visualization Manager:
         map:
           odom:
             car:
-              velodyne:
-                {}
+              {}
             odom_footprint:
               {}
           odom0:
@@ -96,17 +89,17 @@ Visualization Manager:
         Value: /rviz/gps_odometry_marker
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/dead_reckoning_marker
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/Marker
       Enabled: true
       Name: car_steer
@@ -147,7 +140,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -186,7 +179,7 @@ Visualization Manager:
       Enabled: true
       Name: WallScan
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -225,7 +218,7 @@ Visualization Manager:
       Enabled: true
       Name: Obstacles
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -248,9 +241,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 74
+      Max Intensity: -999999
       Min Color: 0; 0; 0
-      Min Intensity: 3
+      Min Intensity: 999999
       Name: PointCloud2
       Position Transformer: XYZ
       Selectable: true
@@ -270,7 +263,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        adaptive_clustering_v1: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -337,11 +330,11 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /delivery_detected_image
+        Value: /lane/image_raw
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 136; 138; 133
+    Background Color: 0; 0; 0
     Fixed Frame: odom
     Frame Rate: 30
   Name: root
@@ -382,16 +375,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 64.70948791503906
+      Distance: 139.29026794433594
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -252.36184692382812
-        Y: 527.4905395507812
-        Z: -24.455331802368164
+        X: 194.89930725097656
+        Y: 213.32208251953125
+        Z: -24.99288558959961
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -400,7 +393,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 4.463554859161377
+      Yaw: 0.8403710126876831
     Saved: ~
 Window Geometry:
   Displays:

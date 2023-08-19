@@ -57,6 +57,7 @@ class odomPublisher(Node):
 		self.yaw_offset_array = []
 		self.yaw_offset_av = 0.0
 		self.corr = None
+		self.last_corr = False
 		self.encoder_vel = 0.0
 
 		self.gpose = Odometry()
@@ -70,7 +71,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', -17)
+		self.declare_parameter('yaw_init', 0)
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.add_on_set_parameters_callback(self.update_parameter)
 
@@ -95,8 +96,9 @@ class odomPublisher(Node):
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['seoul'][0]-4.8
-		y = a - self.gps_offset['seoul'][1]-14.5
+		x = b - self.gps_offset['kcity'][0]
+		y = a - self.gps_offset['kcity'][1]
+
 
 		self.gpose.pose.pose.position.x=x
 		self.gpose.pose.pose.position.y=y
@@ -163,19 +165,29 @@ class odomPublisher(Node):
 
 
 	def mode_callback(self, msg):
-
-		# apply average yaw_offset when Straigt > Curve
-		if msg.direction == 'Straight' and self.velocity > 7/3.6:
-			self.yaw_offset_array.append(self.yaw_offset)
-			if len(self.yaw_offset_array) > 20:
-				self.corr = True
-
-		elif msg.direction == 'Curve':
-			if self.corr == True:
-				self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+		if not self.last_corr:
+			if msg.mode == 'tollgate':
+				if self.corr == True:
+					self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+					self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+				self.corr = False
 				self.yaw_offset_array.clear()
-				self.yaw_init -= self.yaw_offset_av
-			self.corr = False
+    
+			# apply average yaw_offset when Straigt > Curve
+			elif msg.direction == 'Straight' and self.velocity > 7/3.6:
+				self.yaw_offset_array.append(self.yaw_offset)
+				if len(self.yaw_offset_array) > 20:
+					self.corr = True
+
+			elif msg.direction == 'Curve':
+				if self.corr == True:
+					self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+					self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+				self.corr = False
+				self.yaw_offset_array.clear()
+
+		if msg.mode == 'tollgate':
+			self.last_corr = True
 
 
 	def imu_callback(self, imu):
