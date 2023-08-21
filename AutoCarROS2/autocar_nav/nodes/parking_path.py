@@ -58,7 +58,7 @@ class ParkingPath(Node):
         self.P = [14, 3] # kcity
         # self.P = [5, 4] # htech
         # self.P = [9, 4] # boong
-        self.R = [10, 5] # kcity
+        self.R = [20, 5] # kcity
         # self.R = [7, 7] # htech
         # self.R = [22, 7] # boong
 

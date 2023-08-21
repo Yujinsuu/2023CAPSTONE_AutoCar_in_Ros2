@@ -6,8 +6,8 @@ localization:
 global_planner:
     ros__parameters:
         update_frequency: 10.0
-        waypoints_ahead: 10
-        waypoints_behind: 5
+        waypoints_ahead: 20
+        waypoints_behind: 10
         passed_threshold: 0.25
         centreofgravity_to_frontaxle: 1.04
         

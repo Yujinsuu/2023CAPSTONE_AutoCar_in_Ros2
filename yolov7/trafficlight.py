@@ -23,7 +23,7 @@ WEIGHTS = 'weights/trafficlight.pt'
 IMG_SIZE = 640
 DEVICE = ''
 AUGMENT = False
-CONF_THRES = 0.70
+CONF_THRES = 0.60
 IOU_THRES = 0.45
 CLASSES = None
 AGNOSTIC_NMS = False
@@ -60,7 +60,7 @@ class YOLOv7(Node):
         self.traffic_pub = self.create_publisher(String, "/traffic_sign", 10)
 
         self.mode_sub = self.create_subscription(String, "/yolo_mode", self.mode_cb, 10)
-        self.image_sub = self.create_subscription(Image, "/image_raw", self.image_cb, 10)
+        self.image_sub = self.create_subscription(Image, "/front/image_raw", self.image_cb, 10)
 
         self.mode = 'None'
 
@@ -168,6 +168,7 @@ class YOLOv7(Node):
         # queue voting
         final_id = self.hard_vote(queue_list)
         final_check.data = CLASS_MAP[final_id]
+        print(CLASS_MAP[final_id])
 
         self.traffic_pub.publish(final_check)
 

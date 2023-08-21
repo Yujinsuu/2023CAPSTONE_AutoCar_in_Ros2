@@ -42,9 +42,9 @@ class Converter(Node):
             r = random.random()
             g = random.random()
             b = random.random()
-            self.red.append(r)
-            self.green.append(g)
-            self.blue.append(b)
+            self.red.append((135*r+120)/255)
+            self.green.append((135*g+120)/255)
+            self.blue.append((135*b+120)/255)
 
         self.base_pub = self.create_publisher(MarkerArray, '/rviz/base_links', 10)
         self.link_pub = self.create_publisher(MarkerArray, '/rviz/global_links', 10)

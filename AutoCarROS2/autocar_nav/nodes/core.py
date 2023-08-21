@@ -181,9 +181,6 @@ class Core(Node):
 
         if self.yolo_light not in tf_light:
             self.traffic_stop = True
-            brake_force = (4 - wp) * 250
-            max_brake = 100
-            self.brake_control(brake_force, max_brake, 3)
 
         else:
             self.traffic_stop = False
@@ -222,9 +219,11 @@ class Core(Node):
             else:
                 self.brake = 0.0
 
-            if self.traffic_stop_wp <= 3:
+            if self.traffic_stop_wp <= 5:
                 self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-            else: self.t = 0
+            else: 
+                self.traffic_stop = False
+                self.t = 0
 
 
         # elif self.mode == 'tollgate':
@@ -506,16 +505,17 @@ class Core(Node):
         car.header.frame_id = 'odom'
         car.header.stamp = self.get_clock().now().to_msg()
 
+        car.drive.acceleration = self.gear
+        car.drive.jerk = float(self.brake)
+        
         if self.traffic_stop:
+            car.drive.jerk = 200.0
             car.drive.steering_angle = 0.0
             car.drive.speed = 0.0
         else:
             car.drive.steering_angle = self.cmd_steer
             self.time+=self.dt
             car.drive.speed = self.cmd_speed
-
-        car.drive.acceleration = self.gear
-        car.drive.jerk = float(self.brake)
 
         self.autocar_pub.publish(car)
 

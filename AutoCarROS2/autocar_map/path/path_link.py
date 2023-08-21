@@ -167,9 +167,20 @@ def kcity():
     parking_file = file_path + '/kcity/parking.csv'
     revpark_file = file_path + '/kcity/revpark.csv'
     kcity = Path(base_file, global_file, parking_file, revpark_file)
-    kcity.car_mode[1] = 'parking'
+    # kcity.car_mode[1] = 'parking'
+    kcity.car_mode[7] = 'static'
     kcity.car_mode[18] = 'revpark'
 
+    left = [2,4]
+    right = [6]
+    none = [0,3,17]
+    for i in left:
+        kcity.next_path[i] = 'left'
+    for i in right:
+        kcity.next_path[i] = 'right'
+    for i in none:
+        kcity.next_path[i] = 'none'
+        
     return kcity
 
 def revpark():
@@ -184,4 +195,4 @@ def revpark():
 
 
 use_map = kcity()
-start_index = 0
+start_index = 17
