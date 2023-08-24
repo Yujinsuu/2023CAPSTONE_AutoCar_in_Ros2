@@ -26,7 +26,7 @@ class ParkingPath(Node):
 
         ''' Class constructor to initialise the class '''
 
-        super().__init__('parking_path')
+        super().__init__('parking_map')
 
         # Initialise publisher(s)
         self.park_path_pub = self.create_publisher(Int32, '/autocar/parking_path', 10)

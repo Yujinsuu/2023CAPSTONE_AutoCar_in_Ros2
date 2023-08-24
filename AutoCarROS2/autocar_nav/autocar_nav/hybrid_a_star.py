@@ -5,6 +5,7 @@ import heapq as hq
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from autocar_nav.separation_axis_theorem import separating_axis_theorem, get_vertice_rect
 
 # total cost f(n) = actual cost g(n) + heuristic cost h(n)
 #                   노드간의 거리         노드에서 목적지까지 추정거리
@@ -67,7 +68,7 @@ class hybrid_a_star:
     def find_path(self, start, end, max_steer = 30):
         # max steering
         steering_inputs = [0, -max_steer, max_steer]
-        cost_steering_inputs= [0,0.2,0.2]
+        cost_steering_inputs= [0, 0.3, 0.3]
 
         speed_inputs = [self.resolution,-self.resolution]
         cost_speed_inputs = [0,1]
@@ -82,8 +83,6 @@ class hybrid_a_star:
         open_diction={} #  element of this is like node_d:(cost,node_c,(parent_d,parent_c)) --> (cost,node_c,parent_c)
 
         visited_diction={} #  element of this is like node_d:(cost,node_c,(parent_d,parent_c)) --> (cost,node_c,parent_c)
-
-        obstacles = set(self.obstacle)
         cost_to_neighbour_from_start = 0
 
         hq.heappush(open_heap,(cost_to_neighbour_from_start + self.euc_dist(start, end), start))
@@ -134,8 +133,9 @@ class hybrid_a_star:
 
                     neighbour_theta_cts=math.degrees(neighbour_theta_cts)
                     neighbour = ((neighbour_x_cts,neighbour_y_cts,neighbour_theta_cts))
-
-                    if (all(not self.point_inside_obstacle_rectangle((neighbour_x_cts, neighbour_y_cts), obstacle)for obstacle in obstacles) and \
+                    car = [neighbour_x_cts, neighbour_y_cts, np.deg2rad(neighbour_theta_cts), self.vehicle_length, self.width]
+                    # car_vertices = get_vertice_rect(car)
+                    if (all(not separating_axis_theorem(get_vertice_rect(car), get_vertice_rect(obs)) for obs in self.obstacle) and \
                             (neighbour_x_cts >= self.min_x) and (neighbour_x_cts <= self.max_x) and \
                             (neighbour_y_cts >= self.min_y) and (neighbour_y_cts <= self.max_y)):
 
@@ -178,7 +178,7 @@ def main():
 
     #create obstacles
     # obstacle = [(-0.8,-0.4,math.pi/4,0.4,0.7),(0.8,0.4,math.pi/4,0.4,0.7)]
-    obstacle = [(-1,0,0,0.5,0.5), (2,0.5,0,0.5,0.5),(0,-1,0,10.0,0.5),(0,3,0,10.0,0.5)]
+    obstacle = [(-1,0,0,0.5,0.5), (2.3,1.0,0,0.5,0.5),(0,-1,0,10.0,0.5)]#,(0,3,0,10.0,0.5)]
 
     ox, oy = [], []
     for obs in obstacle:
@@ -198,7 +198,7 @@ def main():
     plt.axis("equal")
 
     hy_a_star = hybrid_a_star(-5.0, 5.0,-5.0, 5.0, obstacle=obstacle, \
-        resolution=0.4, length=1.5, width= 1.0)
+        resolution=1.0, length=1.5, width= 1.0)
     path = hy_a_star.find_path((sx,sy,stheta), (gx,gy,gtheta))
 
     rx, ry = [], []

@@ -100,8 +100,9 @@ class Simulation(Node):
             self.y = self.init_y
             self.theta = self.init_yaw
 
-        input_steer = msg.drive.steering_angle
-        sigma = self.filter.update(input_steer)
+        # input_steer = msg.drive.steering_angle
+        # sigma = self.filter.update(input_steer)
+        sigma = msg.drive.steering_angle
         self.vel = msg.drive.speed
 
         rev = -1 if msg.drive.acceleration == 2.0 else 1

@@ -33,6 +33,12 @@ def generate_launch_description():
             package = 'autocar_map',
             name = 'obs_viz',
             executable = 'obstacle_viz.py'
+        ),
+
+        Node(
+            package = 'autocar_nav',
+            name = 'guidance_path',
+            executable = 'guidance_path.py'
         )
     ])
 

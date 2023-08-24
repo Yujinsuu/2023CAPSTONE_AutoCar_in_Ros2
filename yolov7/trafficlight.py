@@ -56,7 +56,7 @@ class YOLOv7(Node):
 
         super().__init__('forward')
 
-        self.detected_pub = self.create_publisher(Image, "/traffic_detected_image", 10)
+        self.detected_pub = self.create_publisher(Image, "/yolo/trafficlight", 10)
         self.traffic_pub = self.create_publisher(String, "/traffic_sign", 10)
 
         self.mode_sub = self.create_subscription(String, "/yolo_mode", self.mode_cb, 10)
@@ -168,7 +168,8 @@ class YOLOv7(Node):
         # queue voting
         final_id = self.hard_vote(queue_list)
         final_check.data = CLASS_MAP[final_id]
-        print(CLASS_MAP[final_id])
+
+        print('Traffic Light : ', CLASS_MAP[final_id])
 
         self.traffic_pub.publish(final_check)
 

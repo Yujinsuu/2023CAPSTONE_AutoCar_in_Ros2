@@ -38,7 +38,7 @@ install(PROGRAMS
   nodes/simulation.py
   nodes/localization.py
   nodes/globalplanner.py
-  nodes/parking_path.py
+  nodes/guidance_path.py
   nodes/localplanner.py
   nodes/tracker.py
   nodes/core.py

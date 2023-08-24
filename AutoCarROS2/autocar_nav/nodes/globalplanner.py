@@ -58,8 +58,6 @@ class GlobalPathPlanner(Node):
                 ]
             )
 
-            self.wp_ahead = int(self.get_parameter("waypoints_ahead").value)
-            self.wp_behind = int(self.get_parameter("waypoints_behind").value)
             self.passed_threshold = float(self.get_parameter("passed_threshold").value)
             self.FL = float(self.get_parameter("centreofgravity_to_frontaxle").value)
             self.frequency = float(self.get_parameter("update_frequency").value)
@@ -98,6 +96,8 @@ class GlobalPathPlanner(Node):
             self.count[key] += 1
 
         # Class constants
+        self.wp_ahead = 10
+        self.wp_behind = 5
         self.wp_published = self.wp_ahead + self.wp_behind
         self.wp_num = len(self.mx[self.link])
         self.closest_wp = 0
@@ -174,6 +174,8 @@ class GlobalPathPlanner(Node):
         via_y = self.my[self.link]
 
         wp_num = len(via_x)
+        wp_ahead = 10
+        wp_behind = 5
 
         dx = [fx - icx for icx in via_x] # Find the x-axis of the front axle relative to the path_num
         dy = [fy - icy for icy in via_y] # Find the y-axis of the front axle relative to the path_num
@@ -184,15 +186,15 @@ class GlobalPathPlanner(Node):
         transform = self.frame_transform(via_x[closest_id], via_y[closest_id], fx, fy, self.theta)
 
         if self.mode == 'revpark' and self.parking_path_num != -1:
-            wp_num = 55 + 5 * self.parking_path_num # kcity
+            wp_num = 50 + 5 * self.parking_path_num # kcity
             # wp_num = 45-10 + 7 * self.parking_path_num # test
-        self.traffic_stop_wp = wp_num - self.wp_ahead - closest_id
+        self.traffic_stop_wp = wp_num - wp_ahead - closest_id
 
 
-        if closest_id >= len(via_x) - self.wp_ahead:
+        if closest_id >= len(via_x) - wp_ahead:
             if self.global_index < self.count['global'] - 1:
                 self.global_index += 1
-                closest_id = self.wp_behind
+                closest_id = wp_behind
                 self.traffic_stop_wp = 1e3
 
 
@@ -220,6 +222,14 @@ class GlobalPathPlanner(Node):
 
         closest_id, transform = self.get_closest_waypoints()
 
+        if self.mode in ['tunnel', 'static']:
+            self.wp_ahead = 20
+            self.wp_behind = 10
+        else:
+            self.wp_ahead = 10
+            self.wp_behind = 5
+
+
         if self.mode == 'parking' and self.parking_path_num != -1:
             # 주차 맵 첫 부분과 현재 글로벌 맵의 첫 부분을 잇는 path를 다시 형성
             self.get_logger().info('Parking path number : {} '.format(self.parking_path_num))
@@ -245,6 +255,7 @@ class GlobalPathPlanner(Node):
                 py = py[-20:]
 
             self.parking_stop_wp = self.get_parking_stop_wp(px, py)
+            self.direction = 'Straight'
 
         elif self.mode == 'revpark' and self.parking_path_num != -1 and self.status != 'driving':
             self.get_logger().info('Parking path number : {} '.format(self.parking_path_num))
@@ -266,6 +277,7 @@ class GlobalPathPlanner(Node):
                 py.append(self.my[self.link][i])
 
             self.parking_stop_wp = self.get_parking_stop_wp(px, py)
+            self.direction = 'Straight'
 
             px = px[::-1]
             py = py[::-1]
@@ -309,25 +321,19 @@ class GlobalPathPlanner(Node):
             if self.mode == 'tunnel':
                 lx,ly,lyaw = [1e6],[1e6],0.0
                 if self.status == 'lanenet' and len(self.tx) != 0:
-                    px = self.tx
-                    py = self.ty
                     self.tunnel_x = self.tx
                     self.tunnel_y = self.ty
                     self.lane_x = self.lx
                     self.lane_y = self.ly
 
-                elif self.status == 'avoid' and len(self.tunnel_x) != 0:
-                    px = self.tunnel_x
-                    py = self.tunnel_y
+                elif self.status == 'avoid':
                     lx = self.lane_x
                     ly = self.lane_y
                     lyaw = np.arctan2((py[-1]-py[0]),(px[-1]-px[0]))
 
-                else:
-                    self.tunnel_x = []
-                    self.tunnel_y = []
-                    self.lane_x = []
-                    self.lane_y = []
+                if self.status not in ['driving', 'complete']:
+                    px = self.tunnel_x
+                    py = self.tunnel_y
 
                 self.publish_lanes(lx,ly,lyaw)
 
@@ -401,6 +407,7 @@ class GlobalPathPlanner(Node):
 
         links = LinkArray()
 
+        links.link_num = self.global_index
         links.closest_wp = self.closest_wp
         links.mode = self.mode
         links.traffic_stop_wp = int(self.traffic_stop_wp)
@@ -415,12 +422,12 @@ class GlobalPathPlanner(Node):
             to_yolo.data = 'tunnel'
 
         # 정지선 15m 전부터 신호등 인식을 위한 YOLO 모델 활성화
-        elif self.traffic_stop_wp <= 15:
+        elif self.traffic_stop_wp <= 20:
             to_yolo.data = 'traffic'
 
         elif self.mode in ['delivery_A', 'delivery_B']:
             to_yolo.data = 'delivery'
-            if self.traffic_stop_wp <= 15/0.2:
+            if self.traffic_stop_wp <= 20/0.2:
                 to_yolo.data = 'traffic'
 
         else:

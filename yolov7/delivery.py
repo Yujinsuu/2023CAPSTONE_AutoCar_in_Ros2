@@ -64,13 +64,15 @@ class YOLOv7(Node):
 
         super().__init__('side')
 
-        self.detected_pub = self.create_publisher(Image, "/delivery_detected_image", 10)
+        self.detected_pub = self.create_publisher(Image, "/yolo/delivery", 10)
         self.delivery_pub = self.create_publisher(Int32MultiArray, "/delivery_sign", 10)
 
         self.mode_sub = self.create_subscription(String, "/yolo_mode", self.mode_cb, 10)
         self.image_sub = self.create_subscription(Image, "/side/image_raw", self.image_cb, 10)
 
+        self.img_width = 640
         self.mode = 'None'
+        self.sign = 0
 
         # [[A queue], [B1 queue], [B2 queue], ...]
         self.queue_list = [[-1 for i in range(QUEUE_SIZE)] for j in range(len(CLASS_MAP))]
@@ -84,6 +86,7 @@ class YOLOv7(Node):
         self.mode = msg.data
 
     def image_cb(self, img):
+        self.img_width = img.width
         check_requirements(exclude=('pycocotools', 'thop'))
         with torch.no_grad():
             bridge = CvBridge()
@@ -150,7 +153,7 @@ class YOLOv7(Node):
 
                 xmean = (xmin + xmax) / 2
 
-                if xmean > 50 and xmean < IMG_SIZE - 50:
+                if xmean > 50 and xmean < self.img_width - 50:
                     self.id_to_queue_list[id + 3].append(int(xmean))
                     if id in (0, 1, 2):
                         self.id_to_queue_list[0].append(id)
@@ -205,6 +208,14 @@ class YOLOv7(Node):
                 final_check.data.append(self.hard_vote(queue_list[idx]))
             else:
                 final_check.data.append(self.delivery_vote(queue_list[idx]))
+
+        if final_check.data[0] != -1:
+            self.sign = final_check.data[0] + 1
+
+        if self.sign:
+            print(f'Delivery Sign : A{self.sign}, B{self.sign}')
+        else:
+            print('Not Detected yet')
 
         self.delivery_pub.publish(final_check)
 

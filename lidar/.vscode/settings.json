@@ -1,0 +1,18 @@
+{
+  "python.autoComplete.extraPaths": [
+    "/home/jinsu/robot_ws/build/erp_control",
+    "/home/jinsu/robot_ws/install/erp_control/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/av_toolkit_custom_msgs/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/autocar_nav/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/autocar_msgs/lib/python3.8/site-packages",
+    "/opt/ros/foxy/lib/python3.8/site-packages"
+  ],
+  "python.analysis.extraPaths": [
+    "/home/jinsu/robot_ws/build/erp_control",
+    "/home/jinsu/robot_ws/install/erp_control/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/av_toolkit_custom_msgs/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/autocar_nav/lib/python3.8/site-packages",
+    "/home/jinsu/robot_ws/install/autocar_msgs/lib/python3.8/site-packages",
+    "/opt/ros/foxy/lib/python3.8/site-packages"
+  ]
+}

@@ -149,7 +149,7 @@ class erp42(Node):
 				return target_speed
 
 			else:
-				if ( target_speed >= gps_vel + 0.5 ):
+				if ( gps_vel >= 0.5 ):
 					speed = 5.0
 				else :
 					speed = target_speed

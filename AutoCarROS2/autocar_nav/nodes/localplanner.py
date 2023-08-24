@@ -65,10 +65,10 @@ class LocalPathPlanner(Node):
 
         ##################### 회피주행시 넘으면 안되는 선의 위치정보 ##########################
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        df = pd.read_csv(file_path + '/htech/tunnel_lane.csv')
+        df = pd.read_csv(file_path + '/kcity/track_lane.csv')
         self.center_x = df['x'].tolist()
         self.center_y = df['y'].tolist()
-        self.center_x = [i - 1.2 for i in self.center_x]
+        # self.center_x = [i - 1.2 for i in self.center_x]
         # self.center_y = [i + 1.0 for i in self.center_y]
         self.center_yaw = df['yaw'].tolist()
         self.offset_x = 0.0
@@ -111,16 +111,17 @@ class LocalPathPlanner(Node):
             self.ay.append(py)
 
     def lanes_cb(self, msg):
-        self.center_x = []
-        self.center_y = []
-        self.center_yaw = []
-        for i in range(len(msg.poses)):
-            px = msg.poses[i].x
-            py = msg.poses[i].y
-            pyaw = msg.poses[i].theta
-            self.center_x.append(px)
-            self.center_y.append(py)
-            self.center_yaw.append(pyaw)
+        if self.mode == 'tunnel':
+            self.center_x = []
+            self.center_y = []
+            self.center_yaw = []
+            for i in range(len(msg.poses)):
+                px = msg.poses[i].x
+                py = msg.poses[i].y
+                pyaw = msg.poses[i].theta
+                self.center_x.append(px)
+                self.center_y.append(py)
+                self.center_yaw.append(pyaw)
 
     def vehicle_state_cb(self, msg):
         '''

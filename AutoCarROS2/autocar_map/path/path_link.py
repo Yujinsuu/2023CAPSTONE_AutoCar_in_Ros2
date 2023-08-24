@@ -36,9 +36,9 @@ class Path(Node):
 
                 var_name = 'global_' + str(link)
 
-                data = df[df['Link'] == link]
-                before = df[df['Link'] == max(0,link-1)].iloc[-5:]
-                after = df[df['Link'] == link+1].iloc[:14]
+                data   = df[df['Link'] == link]
+                before = df[df['Link'] == link-1].iloc[-5:]
+                after  = df[df['Link'] == link+1].iloc[:10]
 
                 if link == 0: link_data = pd.concat([data, after])
                 else: link_data = pd.concat([before, data, after])
@@ -51,7 +51,7 @@ class Path(Node):
 
             self.car_mode = ['global' for _ in range(link+1)]
             self.car_mode[-1] = 'finish'
-            self.next_path = ['straight' for _ in range(link+1)]
+            self.next_path = ['right' for _ in range(link+1)]
 
         if pf_ is not None:
             df = pd.read_csv(pf_)
@@ -131,19 +131,12 @@ def boong():
 def qualifier():
     base_file = file_path + '/KC_base.csv'
     global_file = file_path + '/kcity/qualifier.csv'
-    parking_file = file_path + '/kcity/parking.csv'
+    parking_file = None
     revpark_file = None
     qualifier = Path(base_file, global_file, parking_file, revpark_file)
-    qualifier.car_mode[1] = 'parking'
-    qualifier.car_mode[4] = 'uturn'
-    qualifier.car_mode[6] = 'tollgate'
-    qualifier.car_mode[8] = 'tunnel'
-
-    for i in range(len(qualifier.next_path)):
-        qualifier.next_path[i] = 'none'
-    right = [1,4]
-    for i in right:
-        qualifier.next_path[i] = 'right'
+    qualifier.car_mode[1] = 'uturn'
+    qualifier.car_mode[2] = 'tollgate'
+    qualifier.car_mode[3] = 'tunnel'
 
     return qualifier
 
@@ -164,23 +157,25 @@ def htech():
 def kcity():
     base_file = file_path + '/KC_base.csv'
     global_file = file_path + '/kcity/track.csv'
-    parking_file = file_path + '/kcity/parking.csv'
+    parking_file = None
     revpark_file = file_path + '/kcity/revpark.csv'
     kcity = Path(base_file, global_file, parking_file, revpark_file)
-    # kcity.car_mode[1] = 'parking'
-    kcity.car_mode[7] = 'static'
-    kcity.car_mode[18] = 'revpark'
+    kcity.car_mode[1] = 'delivery_A'
+    kcity.car_mode[2] = 'static'
+    kcity.car_mode[5] = 'static'
+    kcity.car_mode[6] = 'delivery_B'
+    kcity.car_mode[12] = 'revpark'
 
-    left = [2,4]
-    right = [6]
-    none = [0,3,17]
-    for i in left:
-        kcity.next_path[i] = 'left'
-    for i in right:
-        kcity.next_path[i] = 'right'
-    for i in none:
-        kcity.next_path[i] = 'none'
-        
+    # straight = [4,5,9,10]
+    # left = [3,7]
+    # right = [8]
+    # for i in straight:
+    #     kcity.next_path[i] = 'straight'
+    # for i in left:
+    #     kcity.next_path[i] = 'left'
+    # for i in right:
+    #     kcity.next_path[i] = 'right'
+
     return kcity
 
 def revpark():
@@ -193,6 +188,15 @@ def revpark():
 
     return revpark
 
+def uturn():
+    base_file = file_path + '/ST_base.csv'
+    global_file = file_path + '/htech/uturn.csv'
+    parking_file = None
+    revpark_file = None
+    uturn = Path(base_file, global_file, parking_file, revpark_file)
+    uturn.car_mode[0] = 'uturn'
+
+    return uturn
 
 use_map = kcity()
-start_index = 17
+start_index = 0

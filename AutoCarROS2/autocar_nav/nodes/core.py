@@ -42,17 +42,18 @@ class Core(Node):
         self.dt = 0.1
         self.brake = 0.0
 
+        self.link_num = 0
         self.waypoint = 0
         self.mode = 'global'
         self.traffic_stop_wp = 1e3
         self.parking_stop_wp = 1e3
-        self.direction = 'Straight'
+        self.direction = 'None'
         self.next_path = 'straight'
         self.status = 'driving'
         self.time = 0.0
 
-        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':   7/3.6,    'revpark': 6/3.6,      'uturn': 8/3.6,
-                             'static':  6/3.6, 'dynamic': 6/3.6,  'tunnel': 9/3.6, 'tollgate': 10/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':  7/3.6,    'revpark': 6/3.6,      'uturn':   1.5,
+                             'static':  6/3.6, 'dynamic': 7/3.6,  'tunnel': 9/3.6, 'tollgate': 10/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
@@ -75,7 +76,7 @@ class Core(Node):
         self.A_check = False
         self.A_num = 0
         self.sign_pose = 0
-        self.distance = 0.0
+        self.distance = -1.0
         self.stop_wp = 1e3
 
         self.Mount_angle = 30
@@ -83,8 +84,10 @@ class Core(Node):
         self.Image_size = 640
 
         queue_size = 35
+        init_queue = [0 for _ in range(queue_size)]
+        self.link_change = deque(init_queue, maxlen = queue_size)
         init_queue = ['global' for _ in range(queue_size)]
-        self.queue = deque(init_queue, maxlen = queue_size)
+        self.mode_change = deque(init_queue, maxlen = queue_size)
 
 
     def state_cb(self,msg):
@@ -104,6 +107,7 @@ class Core(Node):
         self.cte_term = msg.data
 
     def links_cb(self, msg):
+        self.link_num = msg.link_num
         self.waypoint = msg.closest_wp
         self.mode = msg.mode
         self.traffic_stop_wp = msg.traffic_stop_wp
@@ -111,8 +115,9 @@ class Core(Node):
         self.direction = msg.direction
         self.next_path = msg.next_path
 
-        # mode change check
-        self.queue.append(self.mode)
+        # link change check
+        self.link_change.append(self.link_num)
+        self.mode_change.append(self.link_num)
 
     def obstacle_cb(self, msg):
         self.obstacle_detected = msg.detected
@@ -165,8 +170,6 @@ class Core(Node):
 
 
     def identify_traffic_light(self, path, wp):
-        if path != 'right': self.pause = 0.0
-
         if path == 'straight': tf_light = ['Green', 'Straightleft']
         elif path == 'left': tf_light = ['Left', 'Straightleft']
         elif path == 'right':
@@ -200,15 +203,20 @@ class Core(Node):
 
     def autocar_control(self):
 
-        counter = Counter(self.queue)
+        counter = Counter(self.link_change)
         value, count = counter.most_common(1)[0]
 
-        if self.mode != 'global':
-            if value != self.mode:
-                self.status = 'driving'
-                self.brake = 100 * (self.target_speed['global'] - self.target_speed[self.mode]) / self.target_speed['global']
+        if value != self.link_num:
+            self.status = 'driving'
+            self.pause = 0.0
+
+            counter = Counter(self.mode_change)
+            value, count = counter.most_common(1)[0]
+            if value == 'global':
+                self.brake = 150 * (self.target_speed['global'] - self.target_speed[self.mode]) / self.target_speed['global']
                 if self.brake < 0: self.brake = 0
-            else: self.brake = 0
+
+        else: self.brake = 0
 
         if self.mode == 'global':
             self.status = 'driving'
@@ -221,7 +229,7 @@ class Core(Node):
 
             if self.traffic_stop_wp <= 5:
                 self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-            else: 
+            else:
                 self.traffic_stop = False
                 self.t = 0
 
@@ -252,7 +260,7 @@ class Core(Node):
                     self.brake = 0.0
                     self.t = 0
 
-                if self.traffic_stop_wp <= 40:
+                if self.traffic_stop_wp <= 50:
                     self.status = 'complete'
                     self.brake = 0.0
                     self.t = 0
@@ -261,8 +269,8 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 1000
-                max_brake = 100
+                brake_force = 500
+                max_brake = 200
                 self.brake_control(brake_force, max_brake, 2)
 
                 if self.obstacle == 'dynamic':
@@ -289,8 +297,11 @@ class Core(Node):
 
         elif self.mode == 'static':
             if self.status == 'driving':
-                self.cmd_speed += 2/3.6
-                if self.obstacle_detected:
+                self.cmd_speed = self.target_speed['curve']
+                if self.traffic_stop_wp <= 10:
+                    self.status = 'complete'
+
+                elif self.obstacle_detected:
                     self.avoid_count = time.time()
                     self.status = 'avoid'
                     self.t = 0
@@ -304,19 +315,25 @@ class Core(Node):
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 2:
-                    self.status = 'complete'
+                    self.status = 'driving'
                     self.t = 0
 
             else:
                 self.cmd_speed = self.target_speed['global']
 
-                if self.traffic_stop_wp <= 3:
+                if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                else:
+                    self.traffic_stop = False
+                    self.t = 0
 
 
         elif self.mode == 'dynamic':
             if self.status == 'driving':
-                if self.obstacle_detected:
+                if self.traffic_stop_wp <= 10:
+                    self.status = 'complete'
+
+                elif self.obstacle_detected:
                     self.avoid_count = time.time()
                     self.status = 'stop'
 
@@ -324,22 +341,25 @@ class Core(Node):
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
-                brake_force = 1000
-                max_brake = 100
+                brake_force = 500
+                max_brake = 200
                 self.brake_control(brake_force, max_brake, 2)
 
                 if self.obstacle_detected:
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 1.5:
-                    self.status = 'complete'
+                    self.status = 'driving'
                     self.t = 0
 
             else:
                 self.cmd_speed = self.target_speed['global']
 
-                if self.traffic_stop_wp <= 3:
+                if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                else:
+                    self.traffic_stop = False
+                    self.t = 0
 
 
         elif self.mode == 'parking':
@@ -363,7 +383,7 @@ class Core(Node):
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150
-                    max_brake = 100
+                    max_brake = 200
                     self.brake_control(brake_force, max_brake, 3)
 
                 elif self.parking_stop_wp <= 12:
@@ -374,7 +394,7 @@ class Core(Node):
                     self.gear = 0.0
 
                     brake_force = 150
-                    max_brake = 100
+                    max_brake = 200
                     self.brake_control(brake_force, max_brake, 2)
 
                     if self.t >= 2:
@@ -388,16 +408,19 @@ class Core(Node):
             else:
                 self.cmd_speed = self.target_speed['global']
 
-                if self.traffic_stop_wp <= 3:
+                if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                else:
+                    self.traffic_stop = False
+                    self.t = 0
 
         elif self.mode == 'revpark':
             if self.status == 'driving':
                 self.t = 0
                 if self.traffic_stop_wp <= 10:
                     self.status = 'parking'
-                # if self.waypoint >= 32:
-                #     self.status = 'complete'
+                if self.waypoint >= 60:
+                    self.status = 'complete'
 
             elif self.status == 'parking':
                 self.brake_stop = True
@@ -407,7 +430,7 @@ class Core(Node):
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150
-                    max_brake = 100
+                    max_brake = 200
                     self.brake_control(brake_force, max_brake, 2)
 
                 elif self.traffic_stop_wp <= 12:
@@ -426,7 +449,7 @@ class Core(Node):
                     self.cmd_speed = self.target_speed['rush']
 
                     brake_force = 150
-                    max_brake = 100
+                    max_brake = 200
                     self.brake_control(brake_force, max_brake, 3)
 
                 elif self.parking_stop_wp <= 15:
@@ -445,8 +468,11 @@ class Core(Node):
             else:
                 self.cmd_speed = self.target_speed['global']
 
-                if self.traffic_stop_wp <= 3:
+                if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                else:
+                    self.traffic_stop = False
+                    self.t = 0
 
 
         elif self.mode in ['delivery_A', 'delivery_B']:
@@ -470,26 +496,29 @@ class Core(Node):
                 self.cmd_steer = 0.0
 
                 brake_force = 150
-                max_brake = 100
+                max_brake = 200
                 self.brake_control(brake_force, max_brake, 2)
 
-                if self.t > 2:
+                if self.t > 5:
                     self.status = 'complete'
                     self.t = 0
 
             else:
                 self.cmd_speed = self.target_speed['global']
 
-                if self.traffic_stop_wp <= 3/0.2:
+                if self.traffic_stop_wp <= 5/0.2:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                else:
+                    self.traffic_stop = False
+                    self.t = 0
 
         elif self.mode == 'finish':
-            if self.waypoint >= 20:
+            if self.waypoint >= 50:
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
                 brake_force = 150
-                max_brake = 100
+                max_brake = 200
                 self.brake_control(brake_force, max_brake, 2)
 
         self.publish_autocar_command()
@@ -507,7 +536,7 @@ class Core(Node):
 
         car.drive.acceleration = self.gear
         car.drive.jerk = float(self.brake)
-        
+
         if self.traffic_stop:
             car.drive.jerk = 200.0
             car.drive.steering_angle = 0.0

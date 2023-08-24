@@ -7,6 +7,7 @@ from launch.actions import SetEnvironmentVariable
 
 def generate_launch_description():
 
+    mappkg = 'autocar_map'
     navpkg = 'autocar_nav'
     odom = 'autocar_odom'
 
@@ -43,9 +44,9 @@ def generate_launch_description():
         ),
 
         Node(
-            package = navpkg,
-            name = 'parking_path',
-            executable = 'parking_path.py'
+            package = mappkg,
+            name = 'parking_map',
+            executable = 'parking_map.py'
         ),
 
         Node(

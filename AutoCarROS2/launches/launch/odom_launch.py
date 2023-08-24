@@ -32,7 +32,7 @@ def generate_launch_description():
 
         Node(
             package = odom,
-            name = 'pub_encoder_tic',
+            name = 'pub_enc_tic',
             executable = 'get_encoder.py'
         ),
 
