@@ -93,6 +93,7 @@ class LocalPathPlanner(Node):
         self.W = 1.45 # 차량 폭
         self.obstacle_detected = False
         self.obstacle_info = 'None'
+        self.obstacle_dist = float(1e3)
         self.dist_thresh = 6 # 정적 및 동적 판단 기준 : 6m
         self.queue = 0
         self.prev_dist = None
@@ -192,6 +193,7 @@ class LocalPathPlanner(Node):
     def determine_path(self, cx, cy, cyaw):
         self.obstacle_detected = False
         self.obstacle_info = 'None'
+
         obstacle_colliding = []
         car_msg = []
         for i in range(0,len(cyaw),10):
@@ -210,11 +212,21 @@ class LocalPathPlanner(Node):
         # 모드에 따라 reroute할것인지 급정거 할 것인지 설정
         if len(obstacle_colliding) != 0:
             self.queue = 0
+            o = obstacle_colliding[0]
             if self.mode in ['static', 'tunnel']:
                 cx, cy, cyaw = self.collision_reroute(cx, cy, cyaw, obstacle_colliding)
                 self.obstacle_detected = True
-            if self.mode == 'dynamic':
+                self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
+
+            elif self.mode == 'dynamic':
                 self.obstacle_detected = True
+                self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
+
+            elif self.mode == 'uturn':
+                self.obstacle_detected = True
+                self.obstacle_info = 'rubber_cone'
+                self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
+
         ## 최근에 장애물 검출이 안된다면 prev_dist를 None으로 변경
         else:
             self.queue += 1
@@ -281,7 +293,7 @@ class LocalPathPlanner(Node):
         hy_a_star = hybrid_a_star(region1_x, region2_x,
                                   region1_y, region2_y,
                                   obstacle = self.obstacles,
-                                  resolution = 0.7,
+                                  resolution = 1.0,
                                   length = self.L, width = self.W)
         reroute_path = hy_a_star.find_path(start, end)
 
@@ -331,7 +343,7 @@ class LocalPathPlanner(Node):
         cx = dx[:-1]
         cy = dy[:-1]
 
-        if self.mode in ['dynamic', 'static', 'tunnel']:
+        if self.mode in ['dynamic', 'static', 'tunnel', 'uturn']:
             cx, cy, cyaw = self.determine_path(cx, cy, cyaw)
         if self.is_fail == True:
             return
@@ -339,6 +351,7 @@ class LocalPathPlanner(Node):
         obs = Obstacle()
         obs.detected = self.obstacle_detected
         obs.obstacle = self.obstacle_info
+        obs.distance = self.obstacle_dist
         self.obs_recog_pub.publish(obs)
 
         path_length = min(len(cx), len(cy), len(cyaw))

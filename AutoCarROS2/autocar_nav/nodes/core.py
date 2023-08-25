@@ -30,6 +30,7 @@ class Core(Node):
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
         self.cte_sub = self.create_subscription(Float64, '/autocar/cte_error', self.cte_cb, 10)
         # self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
+        self.track_sub = self.create_subscription(Float64, '/autocar/track_steer', self.track_cb, 10)
         self.obstacle_sub = self.create_subscription(Obstacle, '/autocar/obs_recog', self.obstacle_cb, 10)
         # self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
         self.traffic_sub = self.create_subscription(String, '/traffic_sign', self.traffic_cb, 10)
@@ -64,8 +65,10 @@ class Core(Node):
 
         self.obstacle_detected = 0
         self.obstacle = 'None'
+        self.obs_distance = float(1e3)
         self.lane_detected = False
         self.vision_steer = 0.0
+        self.track_steer = 0.0
         self.avoid_count = 0
         self.tunnel_state = 'entry'
 
@@ -122,10 +125,14 @@ class Core(Node):
     def obstacle_cb(self, msg):
         self.obstacle_detected = msg.detected
         self.obstacle = msg.obstacle
+        self.obs_distance = msg.distance
 
     def vision_cb(self, msg):
         self.lane_detected = bool(msg.data[0])
         self.vision_steer = msg.data[1]
+
+    def track_cb(self, msg):
+        self.track_steer = msg.data
 
     def tunnel_check(self, msg):
         self.tunnel_state = msg.data
@@ -238,6 +245,28 @@ class Core(Node):
         #     if self.waypoint >= 10:
         #         if self.lane_detected:
         #             self.cmd_steer = self.vision_steer
+
+        elif self.mode == 'uturn':
+            if self.status == 'driving':
+                if self.obs_distance <= 2:
+                    self.avoid_count = time.time()
+                    self.status = 'track'
+                    self.brake = 0.0
+                    self.t = 0
+
+            elif self.status == 'track':
+                self.cmd_steer = self.track_steer
+
+                if self.traffic_stop_wp <= 20:
+                    if self.obstacle == 'rubber_cone':
+                        self.avoid_count = time.time()
+
+                    elif time.time() - self.avoid_count >= 2:
+                        self.status = 'complete'
+
+            else:
+                self.cmd_speed = self.target_speed['tollgate']
+
 
         elif self.mode == 'tunnel':
             if self.status == 'driving':

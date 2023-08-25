@@ -31,6 +31,7 @@ class ObstaclePub(Node):
         self.mode_sub = self.create_subscription(String, '/yolo_mode', self.mode_cb, 10)
         self.angle_sub = self.create_subscription(Float32, '/sign_angle', self.delivery_cb, 10)
 
+        self.GtoL = 1.29 # gps to lidar distance
         self.msg = MarkerArray()
         self.cam_x = -1.39
         self.cam_y = -0.20
@@ -92,15 +93,15 @@ class ObstaclePub(Node):
         ymax = obs.points[4].y
 
         # object length, width
-        o.length = abs(obs.points[0].x - obs.points[1].x)
-        o.width = abs(obs.points[4].y - obs.points[3].y)
-        if o.length * o.width <= 0.7:
-            o.length += 0.3
-            o.width += 0.3
+        o.length = abs(xmax - xmin)
+        o.width  = abs(ymax - ymin)
+        if o.length * o.width <= 1:
+            if o.length < 1: o.length = 1.0
+            if o.width  < 1: o.width  = 1.0
 
         # object x, y, yaw
-        x = (obs.points[0].x + obs.points[1].x)/2
-        y = (obs.points[4].y + obs.points[3].y)/2
+        x = (xmin + xmax)/2
+        y = (ymin + ymax)/2
         yaw = 0.0
 
         # Compare Slope

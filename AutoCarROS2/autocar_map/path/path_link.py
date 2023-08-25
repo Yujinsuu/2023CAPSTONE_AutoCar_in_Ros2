@@ -51,7 +51,7 @@ class Path(Node):
 
             self.car_mode = ['global' for _ in range(link+1)]
             self.car_mode[-1] = 'finish'
-            self.next_path = ['right' for _ in range(link+1)]
+            self.next_path = ['none' for _ in range(link+1)]
 
         if pf_ is not None:
             df = pd.read_csv(pf_)
@@ -128,18 +128,6 @@ def boong():
     return boong
 
 
-def qualifier():
-    base_file = file_path + '/KC_base.csv'
-    global_file = file_path + '/kcity/qualifier.csv'
-    parking_file = None
-    revpark_file = None
-    qualifier = Path(base_file, global_file, parking_file, revpark_file)
-    qualifier.car_mode[1] = 'uturn'
-    qualifier.car_mode[2] = 'tollgate'
-    qualifier.car_mode[3] = 'tunnel'
-
-    return qualifier
-
 def htech():
     base_file = file_path + '/ST_base.csv'
     # global_file = file_path + '/htech/htech_track.csv'
@@ -153,30 +141,6 @@ def htech():
     htech.car_mode[3] = 'delivery_B'
 
     return htech
-
-def kcity():
-    base_file = file_path + '/KC_base.csv'
-    global_file = file_path + '/kcity/track.csv'
-    parking_file = None
-    revpark_file = file_path + '/kcity/revpark.csv'
-    kcity = Path(base_file, global_file, parking_file, revpark_file)
-    kcity.car_mode[1] = 'delivery_A'
-    kcity.car_mode[2] = 'static'
-    kcity.car_mode[5] = 'static'
-    kcity.car_mode[6] = 'delivery_B'
-    kcity.car_mode[12] = 'revpark'
-
-    # straight = [4,5,9,10]
-    # left = [3,7]
-    # right = [8]
-    # for i in straight:
-    #     kcity.next_path[i] = 'straight'
-    # for i in left:
-    #     kcity.next_path[i] = 'left'
-    # for i in right:
-    #     kcity.next_path[i] = 'right'
-
-    return kcity
 
 def revpark():
     base_file = file_path + '/ST_base.csv'
@@ -194,9 +158,46 @@ def uturn():
     parking_file = None
     revpark_file = None
     uturn = Path(base_file, global_file, parking_file, revpark_file)
-    uturn.car_mode[0] = 'uturn'
+    uturn.car_mode[1] = 'uturn'
+    uturn.car_mode[2] = 'tollgate'
 
     return uturn
 
-use_map = kcity()
+def kcity():
+    base_file = file_path + '/KC_base.csv'
+    global_file = file_path + '/kcity/track.csv'
+    parking_file = None
+    revpark_file = file_path + '/kcity/revpark.csv'
+    kcity = Path(base_file, global_file, parking_file, revpark_file)
+    kcity.car_mode[1] = 'delivery_A'
+    kcity.car_mode[2] = 'static'
+    kcity.car_mode[5] = 'static'
+    kcity.car_mode[6] = 'delivery_B'
+    kcity.car_mode[12] = 'revpark'
+
+    straight = [4,5,9,10]
+    left = [3,7]
+    right = [8]
+    for i in straight:
+        kcity.next_path[i] = 'straight'
+    for i in left:
+        kcity.next_path[i] = 'left'
+    for i in right:
+        kcity.next_path[i] = 'right'
+
+    return kcity
+
+def qualifier():
+    base_file = file_path + '/KC_base.csv'
+    global_file = file_path + '/kcity/qualifier.csv'
+    parking_file = None
+    revpark_file = None
+    qualifier = Path(base_file, global_file, parking_file, revpark_file)
+    qualifier.car_mode[1] = 'uturn'
+    qualifier.car_mode[2] = 'tollgate'
+    qualifier.car_mode[3] = 'tunnel'
+
+    return qualifier
+
+use_map = uturn()
 start_index = 0
