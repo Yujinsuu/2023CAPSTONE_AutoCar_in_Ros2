@@ -542,7 +542,8 @@ class Core(Node):
                     self.t = 0
 
         elif self.mode == 'finish':
-            if self.waypoint >= 50:
+            if self.waypoint >= 10:
+                self.status = 'complete'
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
