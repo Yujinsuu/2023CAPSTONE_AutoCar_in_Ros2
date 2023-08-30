@@ -30,11 +30,11 @@ def generate_launch_description():
             parameters = [navconfig]
         ),
 
-        Node(
-            package = odom,
-            name = 'tf_pub',
-            executable = 'tf_pub.py'
-        ),
+        # Node(
+        #     package = odom,
+        #     name = 'tf_pub',
+        #     executable = 'tf_pub.py'
+        # ),
 
         Node(
             package = navpkg,

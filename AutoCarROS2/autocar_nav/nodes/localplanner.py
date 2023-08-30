@@ -15,14 +15,12 @@ from ament_index_python.packages import get_package_share_directory
 from nav_msgs.msg import Path
 from std_msgs.msg import Float64MultiArray
 from autocar_msgs.msg import Path2D, State2D, ObjectArray, LinkArray, Obstacle
-from geometry_msgs.msg import Pose2D, PoseStamped, TransformStamped
+from geometry_msgs.msg import Pose2D, PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
 
 from autocar_nav.quaternion import yaw_to_quaternion
 from autocar_nav.hybrid_a_star import hybrid_a_star
 from autocar_nav.separation_axis_theorem import separating_axis_theorem, get_vertice_rect
-
-from tf2_ros import StaticTransformBroadcaster
 
 
 class LocalPathPlanner(Node):

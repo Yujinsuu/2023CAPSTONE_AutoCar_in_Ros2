@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /Path1/Topic1
         - /Image1
+        - /Image2
       Splitter Ratio: 0.5
     Tree Height: 533
   - Class: rviz_common/Selection
@@ -56,8 +57,6 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
-        velodyne:
-          Value: true
       Marker Scale: 0.800000011920929
       Name: TF
       Show Arrows: true
@@ -67,8 +66,7 @@ Visualization Manager:
         map:
           odom:
             car:
-              velodyne:
-                {}
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
@@ -135,7 +133,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -174,7 +172,7 @@ Visualization Manager:
       Enabled: true
       Name: WallScan
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -258,7 +256,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        adaptive_clustering_v1: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -303,7 +301,7 @@ Visualization Manager:
       Enabled: true
       Name: Rubber_cone
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -339,7 +337,7 @@ Visualization Manager:
         Value: /rviz/track_path
       Value: true
     - Class: rviz_default_plugins/Image
-      Enabled: true
+      Enabled: false
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -351,7 +349,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /yolo/delivery
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/Image
       Enabled: true
       Max Value: 1
@@ -364,7 +362,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /traffic_detected_image
+        Value: /yolo/trafficlight
       Value: true
   Enabled: true
   Global Options:
@@ -409,16 +407,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 105.86994934082031
+      Distance: 215.168701171875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -263.8714599609375
-        Y: 546.3629760742188
-        Z: -62.26805114746094
+        X: -305.77978515625
+        Y: 535.0405883789062
+        Z: -62.297889709472656
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

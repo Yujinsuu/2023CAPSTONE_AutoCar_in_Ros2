@@ -332,8 +332,9 @@ class GlobalPathPlanner(Node):
                     lyaw = np.arctan2((py[-1]-py[0]),(px[-1]-px[0]))
 
                 if self.status not in ['driving', 'complete']:
-                    px = self.tunnel_x
-                    py = self.tunnel_y
+                    if len(self.tunnel_x) != 0:
+                        px = self.tunnel_x
+                        py = self.tunnel_y
 
                 self.publish_lanes(lx,ly,lyaw)
 

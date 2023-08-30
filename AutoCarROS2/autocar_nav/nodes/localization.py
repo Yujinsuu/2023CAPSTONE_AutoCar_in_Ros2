@@ -5,15 +5,17 @@ import time
 import numpy as np
 import pandas as pd
 from collections import deque
+from tf2_ros import StaticTransformBroadcaster
 
 import rclpy
 from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
 from std_msgs.msg import Float64MultiArray
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D, LinkArray
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
 
 from autocar_nav.quaternion import yaw_to_quaternion
 
@@ -31,7 +33,7 @@ class Localization(Node):
 
         # Initialise subscribers
         self.GPS_odom_sub = self.create_subscription(Odometry, '/autocar/odom', self.vehicle_state_cb, 10)
-        self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10)
+        self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10, callback_group=ReentrantCallbackGroup())
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
 
         # Load parameters
@@ -51,9 +53,9 @@ class Localization(Node):
             raise Exception("Missing ROS parameters. Check the configuration file.")
 
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        df = pd.read_csv(file_path + '/kcity/tunnel_map.csv')
-        self.tunnel_x = df['X-axis'].tolist()
-        self.tunnel_y = df['Y-axis'].tolist()
+        df = pd.read_csv(file_path + '/htech/tunnel_map.csv')
+        self.tunnel_x = df['X'].tolist()
+        self.tunnel_y = df['Y'].tolist()
 
         # Class constants
         self.state2d = None
@@ -65,6 +67,9 @@ class Localization(Node):
         self.offset_y = 0.0
         self.init_x = 0.0
         self.init_y = 0.0
+
+        self.cov1 =0.0
+        self.cov2 =0.0
 
         self.gp = []
         self.dp = []
@@ -83,15 +88,14 @@ class Localization(Node):
         self.waypoint = 0
         self.odom_state = 'GPS Odometry'
 
+        self.tf_broadcaster = StaticTransformBroadcaster(self)
+
         self.tx = deque([], 2000)
         self.ty = deque([], 2000)
         self.tw = deque([], 2000)
 
         self.ds = 1 / self.frequency
         self.timer = self.create_timer(self.ds, self.trajectory)
-
-        self.cov1 =0.0
-        self.cov2 =0.0
 
     def vehicle_state_cb(self, msg):
         zz = 3
@@ -143,9 +147,11 @@ class Localization(Node):
             self.offset_y = self.dgy + (self.init_y - self.dDy)
             self.get_offset = True
 
-        elif (self.dr_mode == True) and (self.get_offset == True) and (150 <= self.waypoint <= 155):
-            self.offset_x = self.tunnel_x[self.tunnel_x['WP'] == self.waypoint]
-            self.offset_y = self.tunnel_y[self.tunnel_y['WP'] == self.waypoint]
+        # elif (self.dr_mode == True) and (self.get_offset == True) and (145 <= self.waypoint <= 150): # kcity
+        elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
+            index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
+            self.offset_x = self.tunnel_x[index]
+            self.offset_y = self.tunnel_y[index]
             self.init_x = msg.pose.pose.position.x
             self.init_y = msg.pose.pose.position.y
 
@@ -215,6 +221,18 @@ class Localization(Node):
                 break
 
 
+    def get_lateral_error(self, x, y):
+        wp_num = len(self.tunnel_x)
+
+        dx = [x - icx for icx in self.tunnel_x]
+        dy = [y - icy for icy in self.tunnel_y]
+
+        d = np.hypot(dx, dy)
+        closest_id = int(np.argmin(d))
+
+        return closest_id
+
+
     def mode_cb(self, msg):
         self.mode = msg.mode
         self.waypoint = msg.closet_wp if self.mode == 'tunnel' else 0
@@ -241,6 +259,19 @@ class Localization(Node):
 
         self.localization_pub.publish(self.state2d)
 
+        # create car frame
+        transform = TransformStamped()
+        transform.header.frame_id = 'odom'
+        transform.child_frame_id = 'car'
+        transform.transform.translation.x = self.state2d.pose.x + self.GtoL * np.cos(self.state2d.pose.theta)
+        transform.transform.translation.y = self.state2d.pose.y + self.GtoL * np.sin(self.state2d.pose.theta)
+        transform.transform.rotation.x = 0.0
+        transform.transform.rotation.y = 0.0
+        transform.transform.rotation.z = np.sin(self.state2d.pose.theta / 2)
+        transform.transform.rotation.w = np.cos(self.state2d.pose.theta / 2)
+
+        # Broadcast the transform as a static transform
+        self.tf_broadcaster.sendTransform(transform)
 
     def trajectory(self):
         if self.state2d != None:

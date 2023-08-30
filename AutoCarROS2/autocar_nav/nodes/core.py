@@ -72,7 +72,7 @@ class Core(Node):
         self.avoid_count = 0
         self.tunnel_state = 'entry'
 
-        self.yolo_light = 'Straightleft'
+        self.yolo_light = 'None'
         self.traffic_stop = False
         self.pause = 0.0
 
@@ -215,7 +215,9 @@ class Core(Node):
 
         if value != self.link_num:
             self.status = 'driving'
+            self.traffic_stop = False
             self.pause = 0.0
+            self.t = 0
 
             counter = Counter(self.mode_change)
             value, count = counter.most_common(1)[0]
@@ -236,9 +238,6 @@ class Core(Node):
 
             if self.traffic_stop_wp <= 5:
                 self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-            else:
-                self.traffic_stop = False
-                self.t = 0
 
 
         # elif self.mode == 'tollgate':
@@ -257,7 +256,7 @@ class Core(Node):
             elif self.status == 'track':
                 self.cmd_steer = self.track_steer
 
-                if self.traffic_stop_wp <= 20:
+                if self.traffic_stop_wp <= 20 and self.cte_term <= 5:
                     if self.obstacle == 'rubber_cone':
                         self.avoid_count = time.time()
 
@@ -289,7 +288,7 @@ class Core(Node):
                     self.brake = 0.0
                     self.t = 0
 
-                if self.traffic_stop_wp <= 50:
+                if self.traffic_stop_wp <= 40:
                     self.status = 'complete'
                     self.brake = 0.0
                     self.t = 0
@@ -352,9 +351,6 @@ class Core(Node):
 
                 if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-                else:
-                    self.traffic_stop = False
-                    self.t = 0
 
 
         elif self.mode == 'dynamic':
@@ -386,9 +382,6 @@ class Core(Node):
 
                 if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-                else:
-                    self.traffic_stop = False
-                    self.t = 0
 
 
         elif self.mode == 'parking':
@@ -439,9 +432,7 @@ class Core(Node):
 
                 if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-                else:
-                    self.traffic_stop = False
-                    self.t = 0
+
 
         elif self.mode == 'revpark':
             if self.status == 'driving':
@@ -499,9 +490,6 @@ class Core(Node):
 
                 if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-                else:
-                    self.traffic_stop = False
-                    self.t = 0
 
 
         elif self.mode in ['delivery_A', 'delivery_B']:
@@ -514,6 +502,9 @@ class Core(Node):
                 if self.sign_pose >= 500:
                     self.t = 0
                     self.status = 'stop'
+
+                if self.traffic_stop_wp <= 5/0.2:
+                    self.status = 'complete'
 
             elif self.status == 'check':
 
@@ -537,9 +528,7 @@ class Core(Node):
 
                 if self.traffic_stop_wp <= 5/0.2:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
-                else:
-                    self.traffic_stop = False
-                    self.t = 0
+
 
         elif self.mode == 'finish':
             if self.waypoint >= 10:

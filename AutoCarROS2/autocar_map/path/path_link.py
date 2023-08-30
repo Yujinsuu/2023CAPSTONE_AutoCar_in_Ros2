@@ -130,15 +130,15 @@ def boong():
 
 def htech():
     base_file = file_path + '/ST_base.csv'
-    # global_file = file_path + '/htech/htech_track.csv'
-    global_file = file_path + '/htech/delivery.csv'
+    global_file = file_path + '/htech/htech_track.csv'
+    # global_file = file_path + '/htech/delivery.csv'
     parking_file = None
     revpark_file = None
     htech = Path(base_file, global_file, parking_file, revpark_file)
-    # htech.car_mode[1] = 'static'
+    htech.car_mode[1] = 'tunnel'
     # htech.car_mode[4] = 'tunnel'
-    htech.car_mode[0] = 'delivery_A'
-    htech.car_mode[3] = 'delivery_B'
+    # htech.car_mode[0] = 'delivery_A'
+    # htech.car_mode[3] = 'delivery_B'
 
     return htech
 
@@ -176,7 +176,7 @@ def kcity():
     kcity.car_mode[12] = 'revpark'
 
     straight = [4,5,9,10]
-    left = [3,7]
+    left = [3,6,7]
     right = [8]
     for i in straight:
         kcity.next_path[i] = 'straight'
@@ -199,5 +199,5 @@ def qualifier():
 
     return qualifier
 
-use_map = qualifier()
-start_index = 4
+use_map = htech()
+start_index = 0

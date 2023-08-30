@@ -280,6 +280,15 @@ def main(args=None):
   rclpy.init(args=args)
   node = odomPublisher()
 
+  # create odom frame
+  transform = TransformStamped()
+  transform.header.frame_id = 'map'
+  transform.child_frame_id = 'odom'
+
+  # Broadcast the transform as a static transform
+  static_broadcaster = StaticTransformBroadcaster(node)
+  static_broadcaster.sendTransform(transform)
+
   try:
     rclpy.spin(node)
   except KeyboardInterrupt:
