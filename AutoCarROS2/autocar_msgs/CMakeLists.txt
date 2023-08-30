@@ -33,6 +33,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PolygonArray.msg"
   "msg/PathArray.msg"
   "msg/LinkArray.msg"
+  "msg/VisionSteer.msg"
   DEPENDENCIES geometry_msgs std_msgs
  )
 

@@ -9,7 +9,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile
 
 from nav_msgs.msg import Path
-from std_msgs.msg import Float64
+from autocar_msgs.msg import VisionSteer
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker, MarkerArray
@@ -45,9 +45,10 @@ class make_delaunay(Node):
 
         self.cone_pub = self.create_publisher(MarkerArray, '/rviz/rubber_cone', 10)
         self.Local_path_pub = self.create_publisher(Path, '/rviz/track_path', 10)
-        self.track_steer_pub = self.create_publisher(Float64, '/autocar/track_steer', 10)
+        self.track_steer_pub = self.create_publisher(VisionSteer, '/autocar/track_steer', 10)
 
         self.L = 1.04
+        self.cone_check = False
 
         self.cluster = MarkerArray()
         self.deltri = None
@@ -63,8 +64,6 @@ class make_delaunay(Node):
         self.filter = LowPassFilter(cutoff_freq=4.3, update_rate=10.0)
 
         self.id = 0
-        self.virtual_cone = [[-1, -2, 0], [-1.5, -2, 0], [-2, -2, 0],
-                             [-1,  2, 1], [-1.5,  2, 1], [-2,  2, 1]]
 
         self.world_frame = "odom"
         self.detection_frame = "car"
@@ -102,8 +101,11 @@ class make_delaunay(Node):
 
     def cluster_callback(self, msg):
         self.cluster = msg
+        virtual_cone = [[-1, -2, 0], [-1.5, -2, 0], [-2, -2, 0],
+                        [-1,  2, 1], [-1.5,  2, 1], [-2,  2, 1]]
 
-        points = copy.copy(self.virtual_cone)
+        num = [0, 0]
+        points = []
         # 0_Blue : 차량 우측 (y < 0), 1_Yellow : 차량 좌측 (y > 0)
         for id, obs in enumerate(self.cluster.markers):
             xmin = obs.points[1].x
@@ -114,18 +116,28 @@ class make_delaunay(Node):
             depth = abs(xmax - xmin)
             width = abs(ymax - ymin)
 
-            if depth <= 1.2 and width <= 1.2:
+            if depth <= 0.6 and width <= 0.6:
                 x = (xmin + xmax) / 2
                 y = (ymin + ymax) / 2
 
-                if -3 < y < 0 and -1 < x < 0.8 : # 0_Blue
+                if -3 < y < 0   and -1.2 < x < 1.5: # 0_Blue
                     point = [x, y, 0]
+                    num[0] += 1
                     points.append(point)
 
-                elif 0 < y < 3 and -1 < x < 0.8 : # 1_Yellow
+                elif 0 <= y < 3 and -1.2 < x < 1.5 : # 1_Yellow
                     point = [x, y, 1]
+                    num[1] += 1
                     points.append(point)
+        if num[0] + num[1] < 2:
+            self.cone_check = False
+        else:
+            self.cone_check = True
 
+        if num[0] < 3 or num[1] < 3:
+            for n in range(len(virtual_cone)):
+                points.append(virtual_cone[n])
+        
         self.deltri = DelaunayTriPath(np.array(points))
 
     def delaunay_callback(self):
@@ -242,7 +254,7 @@ class make_delaunay(Node):
         self.sigma = self.filter.update(input_steer)
 
     def stanley_callback(self):
-        steer = Float64()
+        track = VisionSteer()
 
         # dist = 1
         # car_yaw = 0.0
@@ -273,8 +285,10 @@ class make_delaunay(Node):
             elif sigma_t <= -self.max_steer:
                 sigma_t = -self.max_steer
 
-            steer.data = sigma_t
-            self.track_steer_pub.publish(steer)
+            track.steer = sigma_t
+            track.detected = self.cone_check
+            
+            self.track_steer_pub.publish(track)
 
 
 def main(args=None):

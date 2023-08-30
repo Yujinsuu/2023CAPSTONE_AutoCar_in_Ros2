@@ -33,8 +33,8 @@ class ObstaclePub(Node):
 
         self.GtoL = 1.29 # gps to lidar distance
         self.msg = MarkerArray()
-        self.cam_x = -1.39
-        self.cam_y = -0.20
+        self.cam_x = -1.35
+        self.cam_y = -0.17
         self.angle = 0.0
         self.signs = []
         self.mode = 'None'

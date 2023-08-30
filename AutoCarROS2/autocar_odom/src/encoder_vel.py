@@ -28,10 +28,11 @@ class Pub_Two_Enc_Vel2(Node):
     def __init__(self):
         super().__init__('pub_enc_tic')
 
+        qos_profile = QoSProfile(depth=10)
         self.pub_enc_vel_two = self.create_publisher(Odometry, '/data/encoder_vel_two', qos_profile)
         self.pub_enc_vel_one = self.create_publisher(Odometry, '/data/encoder_vel_one', qos_profile)
 
-        self.steer_sub = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.steer_cb, 10)
+        self.steer_sub = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.steer_callback, 10)
         self.sub_enc_tic = self.create_subscription(Int32MultiArray, '/data/encoder_tic',self.get_enc_tic, qos_profile)
 
 
@@ -46,7 +47,6 @@ class Pub_Two_Enc_Vel2(Node):
         self.encoder_vel_one.header.stamp = self.get_clock().now().to_msg()
         self.encoder_vel_one.header.frame_id = 'odom_footprint'
 
-        qos_profile = QoSProfile(depth=10)
 
         self.time_old = 0.0
         self.old_enc_left = 0
@@ -127,7 +127,7 @@ class Pub_Two_Enc_Vel2(Node):
       rad = tic*0.06283185307
       return rad
 
-    def cmd_cb(self, msg):
+    def steer_callback(self, msg):
         input_steer = msg.drive.steering_angle
 
         self.steer = self.filter.update(input_steer)

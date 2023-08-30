@@ -84,6 +84,7 @@ class Localization(Node):
         self.dr_mode = False
         self.get_offset = False
 
+        self.GtoL = 1.29 # gps to lidar distance
         self.mode = 'global'
         self.waypoint = 0
         self.odom_state = 'GPS Odometry'
@@ -105,9 +106,9 @@ class Localization(Node):
         if len(self.gp) > 100:
             del self.gp[0]
 
-        self.get_logger().info('cov1  : %f' %msg.pose.covariance[0])
-        self.get_logger().info('cov2  : %f' %msg.pose.covariance[7])
-        self.get_logger().info('dr_mode  : %s' %self.dr_mode)
+        # self.get_logger().info('cov1  : %f' %msg.pose.covariance[0])
+        # self.get_logger().info('cov2  : %f' %msg.pose.covariance[7])
+        # self.get_logger().info('dr_mode  : %s' %self.dr_mode)
         # self.get_logger().info('zz  : %f' %zz)
         #cov
 
@@ -117,6 +118,7 @@ class Localization(Node):
         #     self.dr_mode = True
 
         if self.dr_state is not None:
+            self.get_logger().info(self.odom_state)
             if self.dr_mode == True:
                 self.update_state(self.dr_state)
             else:
@@ -127,8 +129,10 @@ class Localization(Node):
 
         if (self.cov1 > 0.2 or self.cov2 > 0.2) or self.mode == 'tunnel':
             self.dr_mode = True
+            self.odom_state = 'Dead-Reckoning'
         elif (self.cov1 < 0.1 or self.cov2 < 0.1) and self.mode != 'tunnel':
             self.dr_mode = False
+            self.odom_state = 'GPS-Odometry'
 
 
         self.dp.append((msg.pose.pose.position.x,msg.pose.pose.position.y,time.time()))
@@ -235,7 +239,7 @@ class Localization(Node):
 
     def mode_cb(self, msg):
         self.mode = msg.mode
-        self.waypoint = msg.closet_wp if self.mode == 'tunnel' else 0
+        self.waypoint = msg.closest_wp if self.mode == 'tunnel' else 0
 
     def status_cb(self, msg):
         self.status = msg.data

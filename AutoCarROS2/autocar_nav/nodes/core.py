@@ -8,8 +8,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from std_msgs.msg import Int32MultiArray, Float64MultiArray, Float64, Float32, String
-from autocar_msgs.msg import LinkArray, State2D, Obstacle
+from std_msgs.msg import Int32MultiArray, Float64, Float32, String
+from autocar_msgs.msg import LinkArray, State2D, Obstacle, VisionSteer
 from ackermann_msgs.msg import AckermannDriveStamped
 
 
@@ -30,7 +30,7 @@ class Core(Node):
         self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.state_cb, 10)
         self.cte_sub = self.create_subscription(Float64, '/autocar/cte_error', self.cte_cb, 10)
         # self.vision_sub = self.create_subscription(Float64MultiArray, '/lanenet_steer', self.vision_cb, 10)
-        self.track_sub = self.create_subscription(Float64, '/autocar/track_steer', self.track_cb, 10)
+        self.track_sub = self.create_subscription(VisionSteer, '/autocar/track_steer', self.track_cb, 10)
         self.obstacle_sub = self.create_subscription(Obstacle, '/autocar/obs_recog', self.obstacle_cb, 10)
         # self.tunnel_sub = self.create_subscription(String, '/tunnel_check', self.tunnel_check, 10)
         self.traffic_sub = self.create_subscription(String, '/traffic_sign', self.traffic_cb, 10)
@@ -68,6 +68,7 @@ class Core(Node):
         self.obs_distance = float(1e3)
         self.lane_detected = False
         self.vision_steer = 0.0
+        self.cone_check = False
         self.track_steer = 0.0
         self.avoid_count = 0
         self.tunnel_state = 'entry'
@@ -132,7 +133,8 @@ class Core(Node):
         self.vision_steer = msg.data[1]
 
     def track_cb(self, msg):
-        self.track_steer = msg.data
+        self.cone_check = msg.detected
+        self.track_steer = msg.steer
 
     def tunnel_check(self, msg):
         self.tunnel_state = msg.data
@@ -254,7 +256,8 @@ class Core(Node):
                     self.t = 0
 
             elif self.status == 'track':
-                self.cmd_steer = self.track_steer
+                if self.cone_check:
+                    self.cmd_steer = self.track_steer
 
                 if self.traffic_stop_wp <= 20 and self.cte_term <= 5:
                     if self.obstacle == 'rubber_cone':
