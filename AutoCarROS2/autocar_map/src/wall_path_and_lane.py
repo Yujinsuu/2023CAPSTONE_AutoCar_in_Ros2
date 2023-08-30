@@ -36,7 +36,6 @@ class WallFollower(Node):
         self.WalltoPath = 4.72
         self.LaneWidth = 3.68 #3.38
         self.WalltoLane = [self.WalltoPath - 0.5 * self.LaneWidth, self.WalltoPath + 1.5 * self.LaneWidth]
-        self.path_length = 30
 
         self.x_coords = None
         self.y_coords = None
@@ -183,10 +182,8 @@ class WallFollower(Node):
         if self.x_coords is not None:
             waypoints = min(len(self.x_coords), len(self.y_coords))
 
-            for i in range(min(waypoints, self.path_length)) :
+            for i in range(waypoints) :
                 wx, wy, wyaw = self.change_frame(float(self.x_coords[i]), float(self.y_coords[i]), self.slope, self.world_frame, self.detection_frame)
-                l1x, l1y, l1yaw = self.change_frame(float(self.x_lane1[i]), float(self.y_lane1[i]), self.slope, self.world_frame, self.detection_frame)
-                l2x, l2y, l2yaw = self.change_frame(float(self.x_lane2[i]), float(self.y_lane2[i]), self.slope, self.world_frame, self.detection_frame)
 
                 path = Pose2D()
                 path.x = wx
@@ -194,6 +191,11 @@ class WallFollower(Node):
 
                 wall_path.poses.append(path)
 
+            dist = 5
+            for i in range(int(waypoints/dist)):
+                l1x, l1y, l1yaw = self.change_frame(float(self.x_lane1[dist*i]), float(self.y_lane1[dist*i]), self.slope, self.world_frame, self.detection_frame)
+                l2x, l2y, l2yaw = self.change_frame(float(self.x_lane2[dist*i]), float(self.y_lane2[dist*i]), self.slope, self.world_frame, self.detection_frame)
+                
                 lane1 = Pose2D()
                 lane1.x = l1x
                 lane1.y = l1y
@@ -205,7 +207,7 @@ class WallFollower(Node):
                 lane2.y = l2y
 
                 wall_lane.poses.append(lane2)
-
+                
         self.path_pub.publish(wall_path)
         self.lane_pub.publish(wall_lane)
 

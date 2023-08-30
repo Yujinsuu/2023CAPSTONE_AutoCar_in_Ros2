@@ -87,6 +87,7 @@ class Localization(Node):
         self.GtoL = 1.29 # gps to lidar distance
         self.mode = 'global'
         self.waypoint = 0
+        self.tunnel_exit = False
         self.odom_state = 'GPS Odometry'
 
         self.tf_broadcaster = StaticTransformBroadcaster(self)
@@ -153,11 +154,13 @@ class Localization(Node):
 
         # elif (self.dr_mode == True) and (self.get_offset == True) and (145 <= self.waypoint <= 150): # kcity
         elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
-            index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
-            self.offset_x = self.tunnel_x[index]
-            self.offset_y = self.tunnel_y[index]
-            self.init_x = msg.pose.pose.position.x
-            self.init_y = msg.pose.pose.position.y
+            if not self.tunnel_exit:
+                index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
+                self.offset_x = self.tunnel_x[index]
+                self.offset_y = self.tunnel_y[index]
+                self.init_x = msg.pose.pose.position.x
+                self.init_y = msg.pose.pose.position.y
+                self.tunnel_exit = True
 
         self.dr_state = msg
         self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x

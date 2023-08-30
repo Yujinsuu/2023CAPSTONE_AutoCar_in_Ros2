@@ -33,6 +33,7 @@ class LocalPathPlanner(Node):
         self.path_viz_pub = self.create_publisher(Path, '/autocar/viz_path', 10)
         self.obs_recog_pub = self.create_publisher(Obstacle, '/autocar/obs_recog', 10)
         self.center_viz_pub = self.create_publisher(MarkerArray, '/rviz/pathlane', 10)
+        self.static_obs_pub = self.create_publisher(MarkerArray, '/rviz/static_obs', 10)
 
         # Initialise subscribers
         self.goals_sub = self.create_subscription(Path2D, '/autocar/goals', self.goals_cb, 10)
@@ -63,7 +64,7 @@ class LocalPathPlanner(Node):
 
         ##################### 회피주행시 넘으면 안되는 선의 위치정보 ##########################
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        df = pd.read_csv(file_path + '/kcity/track_lane_6m.csv')
+        df = pd.read_csv(file_path + '/kcity/track_lane.csv')
         self.center_x = df['x'].tolist()
         self.center_y = df['y'].tolist()
         # self.center_x = [i - 1.2 for i in self.center_x]
@@ -88,7 +89,7 @@ class LocalPathPlanner(Node):
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
         self.L = 1.6 #1.04/2+1.6/2 # 차량 길이
-        self.W = 1.35 # 차량 폭
+        self.W = 1.45 # 차량 폭
         self.p_L = 5.0 # 차선 길이
         self.p_W = 0.1 # 차선 폭
         self.obstacle_detected = False
@@ -98,9 +99,13 @@ class LocalPathPlanner(Node):
         self.queue = 0
         self.prev_dist = None
         self.is_fail = False
+        self.static_obstacles = []
         self.path_lane = []
 
     def goals_cb(self, msg):
+        '''
+        Callback function to recieve immediate goals from global planner in global frame
+        '''
         self.ax = []
         self.ay = []
         for i in range(len(msg.poses)):
@@ -123,6 +128,9 @@ class LocalPathPlanner(Node):
                 self.center_yaw.append(pyaw)
 
     def vehicle_state_cb(self, msg):
+        '''
+        Callback function to recieve vehicle state information from localization in global frame
+        '''
         self.x = msg.pose.x
         self.y = msg.pose.y
         self.yaw = msg.pose.theta
@@ -150,8 +158,39 @@ class LocalPathPlanner(Node):
 
         self.viz_path_lane()
 
-
     def viz_path_lane(self):
+
+        marray2 = MarkerArray()
+        static_obstacle = self.static_obstacles
+        i = 0
+        for obs in static_obstacle:
+            m = Marker()
+            m.header.frame_id = "/map"
+            m.header.stamp = self.get_clock().now().to_msg()
+            m.type = m.CUBE
+            m.id = i
+            i += 1
+
+            m.pose.position.x = obs[0]
+            m.pose.position.y = obs[1]
+            m.pose.position.z = 0.75
+            quat = yaw_to_quaternion(obs[2])
+            m.pose.orientation.x = quat.x
+            m.pose.orientation.y = quat.y
+            m.pose.orientation.z = quat.z
+            m.pose.orientation.w = quat.w
+
+            m.scale.x = obs[3]
+            m.scale.y = obs[4]
+            m.scale.z = 1.645
+
+            m.color.r = 121 / 255.0
+            m.color.g = 12 / 255.0
+            m.color.b = 102 / 255.0
+            m.color.a = 0.97
+
+            m.lifetime = Duration(nanoseconds= 100000000).to_msg()
+            marray2.markers.append(m)
 
         marray = MarkerArray()
         for i in range(len(self.center_x)):
@@ -179,9 +218,10 @@ class LocalPathPlanner(Node):
             m.color.b = 102 / 255.0
             m.color.a = 0.97
 
-            m.lifetime = Duration(nanoseconds=100000000).to_msg()
+            m.lifetime = Duration(nanoseconds=150000000).to_msg()
             marray.markers.append(m)
 
+        self.static_obs_pub.publish(marray2)
         self.center_viz_pub.publish(marray)
 
     def determine_path(self, cx, cy, cyaw):
@@ -189,34 +229,35 @@ class LocalPathPlanner(Node):
         self.obstacle_info = 'None'
 
         obstacle_colliding = []
-        # car_msg = []
-        # for i in range(0,len(cyaw),10):
-        #     car_msg.append((cx[i],cy[i],cyaw[i],self.L,self.W))
-
         for obs in self.obstacles:
-            for i in range(0,len(cyaw),10):
+            for i in range(0,len(cyaw),15):
                 car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.7))
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
 
                 if is_collide:
                     obstacle_colliding.append(obs)
+                    self.update_static_obstacle(obs)
+                    # self.static_obstacles.append(obs)
                     break
 
         # 모드에 따라 reroute할것인지 급정거 할 것인지 설정
         if len(obstacle_colliding) != 0:
             self.queue = 0
             o = obstacle_colliding[0]
-            self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
-            self.obstacle_detected = True
             if self.mode in ['static', 'tunnel']:
                 cx, cy, cyaw = self.collision_reroute(cx, cy, cyaw, obstacle_colliding)
+                self.obstacle_detected = True
+                self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
 
-            # elif self.mode == 'dynamic':
-            #     self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
+            elif self.mode == 'dynamic':
+                self.obstacle_detected = True
+                self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
 
             elif self.mode == 'uturn':
+                self.obstacle_detected = True
                 self.obstacle_info = 'rubber_cone'
+                self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
 
         ## 최근에 장애물 검출이 안된다면 prev_dist를 None으로 변경
         else:
@@ -280,11 +321,12 @@ class LocalPathPlanner(Node):
         region1_y = cy[target_idx_e] - 15
         region2_x = cx[target_idx_e] + 15
         region2_y = cy[target_idx_e] + 15
-        obstacles = self.obstacles + self.path_lane
+        
+        static_obstacle = self.obstacles + self.static_obstacles + self.path_lane
 
         hy_a_star = hybrid_a_star(region1_x, region2_x,
                                   region1_y, region2_y,
-                                  obstacle = obstacles,
+                                  obstacle = static_obstacle,
                                   resolution = 1.0,
                                   length = self.L, width = self.W)
         reroute_path = hy_a_star.find_path(start, end)
@@ -308,8 +350,8 @@ class LocalPathPlanner(Node):
 
         cx_ = CubicSpline(range(len(rcx_)), rcx_)
         cy_ = CubicSpline(range(len(rcy_)), rcy_)
-        dx = cx_(np.arange(0, len(rcx_) - 1, 0.1))
-        dy = cy_(np.arange(0, len(rcy_) - 1, 0.1))
+        dx = cx_(np.arange(0, len(rcx_) - 1, 0.2))
+        dy = cy_(np.arange(0, len(rcy_) - 1, 0.2))
         rcyaw = np.arctan2(dy[1:] - dy[:-1], dx[1:] - dx[:-1])
         rcx = dx[:-1]
         rcy = dy[:-1]
@@ -322,6 +364,20 @@ class LocalPathPlanner(Node):
         # print('Generated dev path')
         return cx, cy, cyaw
 
+    def update_static_obstacle(self, obs):
+        min_dist = 1000000
+
+        if len(self.static_obstacles) == 0:
+            self.static_obstacles.append(obs)
+        else:
+            for static_obs in self.static_obstacles:
+                # self.get_logger().info(f'{obs[1]}, {static_obs[0]}')
+                dist = np.sqrt((obs[0] - static_obs[0])**2 + (obs[1] - static_obs[1])**2)
+                if dist < min_dist:
+                    min_dist = dist
+
+            if min_dist > 1.0:
+                self.static_obstacles.append(obs)
 
     def find_path(self):
         self.is_fail = False
@@ -337,6 +393,9 @@ class LocalPathPlanner(Node):
 
         if self.mode in ['dynamic', 'static', 'tunnel', 'uturn']:
             cx, cy, cyaw = self.determine_path(cx, cy, cyaw)
+        else:
+            self.static_obstacles = []
+            
         if self.is_fail == True:
             return
 
@@ -355,12 +414,14 @@ class LocalPathPlanner(Node):
         self.viz_path.header.stamp = self.get_clock().now().to_msg()
 
         for n in range(0, path_length):
+            # Appending to Target Path
             npose = Pose2D()
             npose.x = cx[n]
             npose.y = cy[n]
             npose.theta = cyaw[n]
             self.target_path.poses.append(npose)
 
+            # Appending to Visualization Path
             vpose = PoseStamped()
             vpose.header.frame_id = "map"
             vpose.header.stamp = self.get_clock().now().to_msg()

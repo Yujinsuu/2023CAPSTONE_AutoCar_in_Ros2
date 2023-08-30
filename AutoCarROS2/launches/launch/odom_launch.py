@@ -23,6 +23,13 @@ def generate_launch_description():
         SetEnvironmentVariable(
             'RCUTILS_COLORIZED_OUTPUT', '1'
         ),
+        
+        Node(
+            package = 'tf2_ros',
+            executable = 'static_transform_publisher',
+            arguments = ['0', '0', '0', '0', '0', '0', 'map', 'odom'],
+            name = 'static_transform_publisher'
+        ),
 
         Node(
             package = odom,

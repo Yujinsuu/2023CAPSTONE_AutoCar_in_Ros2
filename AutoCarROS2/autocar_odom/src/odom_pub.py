@@ -84,7 +84,7 @@ class odomPublisher(Node):
 
 		self.timer = self.create_timer(0.1, self.odom_publish)
 
-		self.gps_tf_publisher_static()
+		# self.gps_tf_publisher_static()
 
 	def update_parameter(self, params):
 		for param in params:
@@ -115,9 +115,9 @@ class odomPublisher(Node):
 		self.gpose.pose.covariance[0] = gps.position_covariance[0]
 		self.gpose.pose.covariance[7] = gps.position_covariance[4]
 
-		self.set_odom_tf = self.set_odom_tf + 1
-		if(self.set_odom_tf == 1):
-			self.odom_tf_publisher_static()
+		# self.set_odom_tf = self.set_odom_tf + 1
+		# if(self.set_odom_tf == 1):
+		# 	self.odom_tf_publisher_static()
 
 
 		#publish for dead reckoning
@@ -207,7 +207,7 @@ class odomPublisher(Node):
 		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
 		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
 		self.get_logger().info(f'{np.rad2deg(-self.yaw_offset_av),2}')
-		self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
+		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
 
 		self.final_imu_yaw = normalise_angle(self.imu_yaw) #normalise_angle(self.imu_yaw - self.yaw_offset_av)
 		imu_quat = yaw_to_quaternion(self.final_imu_yaw)
@@ -235,45 +235,43 @@ class odomPublisher(Node):
 		#self.get_logger().info('yaw_offset_av: %s' % self.yaw_offset_array)
 		#self.get_logger().info('yaw_offset_av: %s' % self.yaw_offset_array)
 		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}')
-		self.tf_publisher_dynamic()
-		self.tf_publisher_dynamic()
 		self.odom_pub.publish(self.gpose)
 		self.odom_pub.publish(self.gpose)
 		self.yaw_offset_av_pub.data = self.yaw_offset_av_print
 		self.pub_yaw_offset_av.publish(self.yaw_offset_av_pub)
 
 
-	def gps_tf_publisher_static(self):
+	# def gps_tf_publisher_static(self):
 
-		transform = TransformStamped()
-		transform.header.frame_id = 'map'
-		transform.child_frame_id = 'odom0'
-		transform.transform.translation.x = 0.0 #self.gpose.pose.pose.position.x
-		transform.transform.translation.y = 0.0 #self.gpose.pose.pose.position.y
-		# Broadcast the transform as a static transform
-		static_broadcaster = StaticTransformBroadcaster(self)
-		static_broadcaster.sendTransform(transform)
+	# 	transform = TransformStamped()
+	# 	transform.header.frame_id = 'map'
+	# 	transform.child_frame_id = 'odom0'
+	# 	transform.transform.translation.x = 0.0 #self.gpose.pose.pose.position.x
+	# 	transform.transform.translation.y = 0.0 #self.gpose.pose.pose.position.y
+	# 	# Broadcast the transform as a static transform
+	# 	static_broadcaster = StaticTransformBroadcaster(self)
+	# 	static_broadcaster.sendTransform(transform)
 
-	def odom_tf_publisher_static(self):
-		  # create odom frame
-		transform = TransformStamped()
-		transform.header.frame_id = 'map'
-		transform.child_frame_id = 'odom'
-		transform.transform.translation.x = 0.0 #self.gpose.pose.pose.position.x
-		transform.transform.translation.y = 0.0 #self.gpose.pose.pose.position.y
-		# Broadcast the transform as a static transform
-		static_broadcaster = StaticTransformBroadcaster(self)
-		static_broadcaster.sendTransform(transform)
+	# def odom_tf_publisher_static(self):
+	# 	  # create odom frame
+	# 	transform = TransformStamped()
+	# 	transform.header.frame_id = 'map'
+	# 	transform.child_frame_id = 'odom'
+	# 	transform.transform.translation.x = 0.0 #self.gpose.pose.pose.position.x
+	# 	transform.transform.translation.y = 0.0 #self.gpose.pose.pose.position.y
+	# 	# Broadcast the transform as a static transform
+	# 	static_broadcaster = StaticTransformBroadcaster(self)
+	# 	static_broadcaster.sendTransform(transform)
 
-	def tf_publisher_dynamic(self):
+	# def tf_publisher_dynamic(self):
 
-		 # create odom_footprint
-		transform = TransformStamped()
-		transform.header.stamp = self.get_clock().now().to_msg()
-		transform.header.frame_id = 'odom'
-		transform.child_frame_id = 'odom_footprint'
-		dynamic_broadcaster = TransformBroadcaster(self)
-		dynamic_broadcaster.sendTransform(transform)
+	# 	 # create odom_footprint
+	# 	transform = TransformStamped()
+	# 	transform.header.stamp = self.get_clock().now().to_msg()
+	# 	transform.header.frame_id = 'odom'
+	# 	transform.child_frame_id = 'odom_footprint'
+	# 	dynamic_broadcaster = TransformBroadcaster(self)
+	# 	dynamic_broadcaster.sendTransform(transform)
 
 
 def main(args=None):
