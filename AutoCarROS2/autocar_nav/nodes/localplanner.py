@@ -36,7 +36,7 @@ class LocalPathPlanner(Node):
 
         # Initialise subscribers
         self.goals_sub = self.create_subscription(Path2D, '/autocar/goals', self.goals_cb, 10)
-        self.lanes_sub = self.create_subscription(Path2D, '/autocar/tunnel_lane', self.lanes_cb, 10)
+        self.lanes_sub = self.create_subscription(Path2D, '/autocar/tunnel_lane_6m', self.lanes_cb, 10)
         self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10, callback_group=ReentrantCallbackGroup())
         # self.offset_sub = self.create_subscription(Float64MultiArray, '/autocar/tunnel_offset', self.offset_cb, 10)
         self.obstacle_sub = self.create_subscription(ObjectArray, '/obstacles', self.obstacle_cb, 10)

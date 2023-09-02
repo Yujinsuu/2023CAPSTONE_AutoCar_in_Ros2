@@ -191,11 +191,19 @@ class GlobalPathPlanner(Node):
         self.traffic_stop_wp = wp_num - wp_ahead - closest_id
 
 
-        if closest_id >= len(via_x) - wp_ahead:
-            if self.global_index < self.count['global'] - 1:
-                self.global_index += 1
-                closest_id = wp_behind
-                self.traffic_stop_wp = 1e3
+        if self.mode == 'uturn':
+            if closest_id >= len(via_x) - wp_ahead and self.status == 'complete':
+                if self.global_index < self.count['global'] - 1:
+                    self.global_index += 1
+                    closest_id = wp_behind
+                    self.traffic_stop_wp = 1e3
+
+        else:
+            if closest_id >= len(via_x) - wp_ahead:
+                if self.global_index < self.count['global'] - 1:
+                    self.global_index += 1
+                    closest_id = wp_behind
+                    self.traffic_stop_wp = 1e3
 
 
         self.mode = self.mode_list[self.global_index]

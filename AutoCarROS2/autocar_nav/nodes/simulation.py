@@ -56,8 +56,8 @@ class Simulation(Node):
         self.filter = LowPassFilter(cutoff_freq=4.3, update_rate=10.0)
 
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        # df = pd.read_csv(file_path + '/kcity/track.csv')
-        df = pd.read_csv(file_path + '/htech/htech_track.csv')
+        df = pd.read_csv(file_path + '/kcity/track.csv')
+        # df = pd.read_csv(file_path + '/htech/htech_track.csv')
         map_x = df[df['Link']==0]['X-axis'].to_list()[0:2]
         map_y = df[df['Link']==0]['Y-axis'].to_list()[0:2]
         self.init_x = map_x[0]

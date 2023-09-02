@@ -51,19 +51,9 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        car:
-          Value: true
-        imu_link:
-          Value: true
         map:
           Value: true
         odom:
-          Value: true
-        odom_footprint:
-          Value: true
-        velodyne:
-          Value: true
-        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -73,11 +63,7 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            car:
-              velodyne:
-                {}
-            odom_footprint:
-              {}
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
@@ -96,7 +82,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -144,7 +130,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -183,7 +169,7 @@ Visualization Manager:
       Enabled: true
       Name: WallScan
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -267,7 +253,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        adaptive_clustering_v1: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -418,25 +404,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 469.22705078125
+      Distance: 363.3694152832031
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 208.52923583984375
-        Y: 74.74076080322266
-        Z: -69.82304382324219
+        X: 113.68006134033203
+        Y: 32.37978744506836
+        Z: -69.9047622680664
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4347964525222778
+      Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 1.6521971225738525
+      Yaw: 4.227200508117676
     Saved: ~
 Window Geometry:
   Displays:

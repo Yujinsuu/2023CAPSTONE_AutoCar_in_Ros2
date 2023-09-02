@@ -23,7 +23,7 @@ def generate_launch_description():
         SetEnvironmentVariable(
             'RCUTILS_COLORIZED_OUTPUT', '1'
         ),
-        
+
         Node(
             package = 'tf2_ros',
             executable = 'static_transform_publisher',

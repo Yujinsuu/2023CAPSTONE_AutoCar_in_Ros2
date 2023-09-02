@@ -107,7 +107,7 @@ class make_delaunay(Node):
         points = []
         for n in range(len(virtual_cone)):
             points.append(virtual_cone[n])
-        
+
         num = [0, 0]
         # 0_Blue : 차량 우측 (y < 0), 1_Yellow : 차량 좌측 (y > 0)
         for id, obs in enumerate(self.cluster.markers):
@@ -132,12 +132,12 @@ class make_delaunay(Node):
                     point = [x, y, 1]
                     num[1] += 1
                     points.append(point)
-                    
+
         if num[0] + num[1] < 2:
             self.cone_check = False
         else:
             self.cone_check = True
-        
+
         self.deltri = DelaunayTriPath(np.array(points))
 
     def delaunay_callback(self):
@@ -269,20 +269,20 @@ class make_delaunay(Node):
             vector = [np.sin(car_yaw), -np.cos(car_yaw)]
             crosstrack_error = np.dot([dx[idx], dy[idx]], vector)
             crosstrack_term = np.arctan2((self.k * crosstrack_error), (self.velocity))
-            
+
             dist = 1.5 * 0.425
-            
+
             car_yaw = dist * np.tan(self.sigma) / self.L
-            
+
             car_x = dist * np.cos(car_yaw)
             car_y = dist * np.sin(car_yaw)
-            
+
             dx = [car_x - icx for icx in self.path_x]
             dy = [car_y - icy for icy in self.path_y]
 
             d = np.hypot(dx, dy)
             idx = np.argmin(d)
-            
+
             heading_term = normalise_angle(self.path_yaw[idx] - car_yaw)
 
             sigma_t = crosstrack_term + heading_term
@@ -296,7 +296,7 @@ class make_delaunay(Node):
 
             track.steer = sigma_t
             track.detected = self.cone_check
-            
+
             self.track_steer_pub.publish(track)
 
 
