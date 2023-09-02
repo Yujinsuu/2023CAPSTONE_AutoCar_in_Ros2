@@ -101,11 +101,14 @@ class make_delaunay(Node):
 
     def cluster_callback(self, msg):
         self.cluster = msg
-        virtual_cone = [[-1, -2, 0], [-1.5, -2, 0], [-2, -2, 0],
-                        [-1,  2, 1], [-1.5,  2, 1], [-2,  2, 1]]
+        virtual_cone = [[-1, -0.5, 0], [-1.5, -0.5, 0], [-2, -0.5, 0],
+                        [-1,  0.5, 1], [-1.5,  0.5, 1], [-2,  0.5, 1]]
 
-        num = [0, 0]
         points = []
+        for n in range(len(virtual_cone)):
+            points.append(virtual_cone[n])
+        
+        num = [0, 0]
         # 0_Blue : 차량 우측 (y < 0), 1_Yellow : 차량 좌측 (y > 0)
         for id, obs in enumerate(self.cluster.markers):
             xmin = obs.points[1].x
@@ -120,23 +123,20 @@ class make_delaunay(Node):
                 x = (xmin + xmax) / 2
                 y = (ymin + ymax) / 2
 
-                if -3 < y < 0   and -1.2 < x < 1.5: # 0_Blue
+                if y < -0.6   and -1 < x < 2: # 0_Blue
                     point = [x, y, 0]
                     num[0] += 1
                     points.append(point)
 
-                elif 0 <= y < 3 and -1.2 < x < 1.5 : # 1_Yellow
+                elif y >= -0.6 and -1 < x < 2 : # 1_Yellow
                     point = [x, y, 1]
                     num[1] += 1
                     points.append(point)
+                    
         if num[0] + num[1] < 2:
             self.cone_check = False
         else:
             self.cone_check = True
-
-        if num[0] < 3 or num[1] < 3:
-            for n in range(len(virtual_cone)):
-                points.append(virtual_cone[n])
         
         self.deltri = DelaunayTriPath(np.array(points))
 
@@ -147,6 +147,7 @@ class make_delaunay(Node):
             midpoints   = self.deltri.get_mid()
             blue_cone   = self.deltri.get_blue()
             yellow_cone = self.deltri.get_yellow()
+            print(blue_cone, yellow_cone)
 
             self.create_marker(blue_cone, "blue")
             self.create_marker(yellow_cone, "yellow")
@@ -256,12 +257,6 @@ class make_delaunay(Node):
     def stanley_callback(self):
         track = VisionSteer()
 
-        # dist = 1
-        # car_yaw = 0.0
-        # car_x = dist * np.cos(car_yaw)
-        # car_y = dist * np.sin(car_yaw)
-
-        # car_yaw = dist * np.tan(self.sigma) / self.L
         car_x, car_y, car_yaw = 0,0,0
 
         if self.path_x is not None:
@@ -274,6 +269,20 @@ class make_delaunay(Node):
             vector = [np.sin(car_yaw), -np.cos(car_yaw)]
             crosstrack_error = np.dot([dx[idx], dy[idx]], vector)
             crosstrack_term = np.arctan2((self.k * crosstrack_error), (self.velocity))
+            
+            dist = 1.5 * 0.425
+            
+            car_yaw = dist * np.tan(self.sigma) / self.L
+            
+            car_x = dist * np.cos(car_yaw)
+            car_y = dist * np.sin(car_yaw)
+            
+            dx = [car_x - icx for icx in self.path_x]
+            dy = [car_y - icy for icy in self.path_y]
+
+            d = np.hypot(dx, dy)
+            idx = np.argmin(d)
+            
             heading_term = normalise_angle(self.path_yaw[idx] - car_yaw)
 
             sigma_t = crosstrack_term + heading_term

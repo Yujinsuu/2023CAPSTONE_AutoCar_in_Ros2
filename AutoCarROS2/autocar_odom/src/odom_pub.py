@@ -73,7 +73,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', 62)
+		self.declare_parameter('yaw_init', 165)
 		self.declare_parameter('yaw_offset_array', [])
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.yaw_offset_array = self.get_parameter('yaw_offset_array').value
@@ -106,7 +106,7 @@ class odomPublisher(Node):
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
 		x = b - self.gps_offset['seoul'][0]
-		y = a - self.gps_offset['seoul'][1]
+		y = a - self.gps_offset['seoul'][1]+1
 
 		self.gpose.pose.pose.position.x=x
 		self.gpose.pose.pose.position.y=y

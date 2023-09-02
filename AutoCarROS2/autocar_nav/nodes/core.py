@@ -249,7 +249,7 @@ class Core(Node):
 
         elif self.mode == 'uturn':
             if self.status == 'driving':
-                if self.obs_distance <= 2:
+                if self.obs_distance <= 10:
                     self.avoid_count = time.time()
                     self.status = 'track'
                     self.brake = 0.0
@@ -263,8 +263,8 @@ class Core(Node):
                     if self.obstacle == 'rubber_cone':
                         self.avoid_count = time.time()
 
-                    elif time.time() - self.avoid_count >= 2:
-                        self.status = 'complete'
+                    # elif time.time() - self.avoid_count >= 2:
+                    #     self.status = 'complete'
 
             else:
                 self.cmd_speed = self.target_speed['tollgate']
