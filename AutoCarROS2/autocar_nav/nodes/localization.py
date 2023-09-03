@@ -53,7 +53,7 @@ class Localization(Node):
             raise Exception("Missing ROS parameters. Check the configuration file.")
 
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        df = pd.read_csv(file_path + '/htech/tunnel_map.csv')
+        df = pd.read_csv(file_path + '/kcity/tunnel_map.csv')
         self.tunnel_x = df['X'].tolist()
         self.tunnel_y = df['Y'].tolist()
 
@@ -152,8 +152,8 @@ class Localization(Node):
             self.offset_y = self.dgy + (self.init_y - self.dDy)
             self.get_offset = True
 
-        # elif (self.dr_mode == True) and (self.get_offset == True) and (145 <= self.waypoint <= 150): # kcity
-        elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
+        elif (self.dr_mode == True) and (self.get_offset == True) and (145 <= self.waypoint <= 150): # kcity
+        # elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
             if not self.tunnel_exit:
                 index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
                 self.offset_x = self.tunnel_x[index]

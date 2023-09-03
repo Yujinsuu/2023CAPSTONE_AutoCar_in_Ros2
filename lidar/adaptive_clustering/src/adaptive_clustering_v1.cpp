@@ -94,7 +94,7 @@ class AdaptiveClustering : public rclcpp::Node
       // 중앙 이외의 부분 추출
       xfilter.setInputCloud(pcl_pc_in);
       xfilter.setFilterFieldName("x");
-      xfilter.setFilterLimits(-1.5, 0.5);
+      xfilter.setFilterLimits(-1.5, 0.35);
       xfilter.filter(*center);
       xfilter.setFilterLimitsNegative(true);
       xfilter.filter(*outskirt);
@@ -102,7 +102,7 @@ class AdaptiveClustering : public rclcpp::Node
       // 그 후 y축 방향으로 중앙에 있는 부분 제거
       yfilter.setInputCloud(center);
       yfilter.setFilterFieldName("y");
-      yfilter.setFilterLimits(-0.7, 0.7);
+      yfilter.setFilterLimits(-0.65, 0.65);
       yfilter.setFilterLimitsNegative(true);
       yfilter.filter(*pcl_pc_in);
       *pcl_pc_in += *outskirt;

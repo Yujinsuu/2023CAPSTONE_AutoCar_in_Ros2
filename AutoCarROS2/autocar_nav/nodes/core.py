@@ -104,7 +104,7 @@ class Core(Node):
         self.cmd_speed = self.target_speed[self.mode]
 
         self.cmd_steer = msg.drive.steering_angle
-        # if self.link_num == 0 and self.waypoint >= 210:
+        # if self.link_num == 0 and self.waypoint > 200:
         #     self.cmd_steer = self.vision_steer
         # elif self.link_num == 1 or 2:
         #     self.cmd_steer = self.vision_steer
@@ -262,7 +262,7 @@ class Core(Node):
                 if self.traffic_stop_wp <= 0:
                     self.status = 'complete'
 
-                if self.obs_distance <= 10:
+                if self.waypoint >= 30 and self.obs_distance <= 10:
                     self.avoid_count = time.time()
                     self.status = 'track'
                     self.brake = 0.0
@@ -328,7 +328,7 @@ class Core(Node):
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 1.5:
-                    self.status = 'lanenet' if self.mission_count < 2 else 'complete'
+                    self.status = 'lanenet'
                     self.t = 0
 
             elif self.status == 'avoid':
@@ -342,7 +342,7 @@ class Core(Node):
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 2:
-                    self.status = 'lanenet' if self.mission_count < 2 else 'complete'
+                    self.status = 'lanenet'
                     self.t = 0
 
 

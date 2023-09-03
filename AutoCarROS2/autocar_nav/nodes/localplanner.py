@@ -36,7 +36,7 @@ class LocalPathPlanner(Node):
 
         # Initialise subscribers
         self.goals_sub = self.create_subscription(Path2D, '/autocar/goals', self.goals_cb, 10)
-        self.lanes_sub = self.create_subscription(Path2D, '/autocar/tunnel_lane_6m', self.lanes_cb, 10)
+        self.lanes_sub = self.create_subscription(Path2D, '/autocar/tunnel_lane', self.lanes_cb, 10)
         self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10, callback_group=ReentrantCallbackGroup())
         # self.offset_sub = self.create_subscription(Float64MultiArray, '/autocar/tunnel_offset', self.offset_cb, 10)
         self.obstacle_sub = self.create_subscription(ObjectArray, '/obstacles', self.obstacle_cb, 10)
@@ -87,8 +87,8 @@ class LocalPathPlanner(Node):
         self.start = time.time()
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
-        self.L = 1.6 #1.04/2+1.6/2 # 차량 길이
-        self.W = 1.35 # 차량 폭
+        self.L = 1.4 #1.04/2+1.6/2 # 차량 길이
+        self.W = 1.17 # 차량 폭
         self.p_L = 5.0 # 차선 길이
         self.p_W = 0.1 # 차선 폭
         self.obstacle_detected = False
@@ -195,7 +195,7 @@ class LocalPathPlanner(Node):
 
         for obs in self.obstacles:
             for i in range(0,len(cyaw),10):
-                car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.7))
+                car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.1, 1.4))
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
 
@@ -285,7 +285,7 @@ class LocalPathPlanner(Node):
         hy_a_star = hybrid_a_star(region1_x, region2_x,
                                   region1_y, region2_y,
                                   obstacle = obstacles,
-                                  resolution = 1.0,
+                                  resolution = 0.75,
                                   length = self.L, width = self.W)
         reroute_path = hy_a_star.find_path(start, end)
 
