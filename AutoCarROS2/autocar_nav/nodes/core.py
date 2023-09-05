@@ -186,9 +186,6 @@ class Core(Node):
 
 
     def identify_traffic_light(self, path, wp):
-        if path != 'right' and self.yolo_light == 'None':
-            self.pause += self.dt
-
         if path == 'straight': tf_light = ['Green', 'Straightleft']
         elif path == 'left': tf_light = ['Left', 'Straightleft']
         elif path == 'right':
@@ -198,8 +195,6 @@ class Core(Node):
             else:
                 tf_light = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
         else: tf_light = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
-
-        if self.pause > 30: tf_light = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
 
         if self.yolo_light not in tf_light:
             self.traffic_stop = True
@@ -248,8 +243,10 @@ class Core(Node):
             else:
                 self.brake = 0.0
 
-            if self.traffic_stop_wp <= 5:
-                self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+            if self.traffic_stop_wp <= 15:
+                self.cmd_speed = self.target_speed['curve']
+                if self.traffic_stop_wp <= 5:
+                    self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
 
         # elif self.mode == 'tollgate':
@@ -479,7 +476,7 @@ class Core(Node):
                 elif self.traffic_stop_wp <= 12:
                     self.brake = 20.0
 
-                elif self.parking_stop_wp <= 10:
+                elif self.parking_stop_wp <= 13:
                     self.t = 0
                     self.gear = 0.0
                     self.status = 'return'
@@ -522,7 +519,7 @@ class Core(Node):
 
             elif self.status == 'check':
                 if self.distance != -1:
-                    self.stop_wp = self.waypoint + int(self.distance) -3
+                    self.stop_wp = self.waypoint + int(self.distance) -1
                     self.t = 0
                     self.status = 'detected'
 

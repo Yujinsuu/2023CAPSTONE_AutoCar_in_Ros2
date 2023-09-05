@@ -137,7 +137,7 @@ class AdaptiveClustering : public rclcpp::Node
 
             pt.setInputCloud(pcl_pc_in);
             pt.setFilterFieldName("x");
-            pt.setFilterLimits(-0.5, 10.0);
+            pt.setFilterLimits(-1.1, 10.0);
             pt.filter(*pc_indices);
         }
 

@@ -95,9 +95,11 @@ class ObstaclePub(Node):
         # object length, width
         o.length = abs(xmax - xmin)
         o.width  = abs(ymax - ymin)
-        if o.length * o.width <= 1:
-            if o.length < 1: o.length = 1.0
-            if o.width  < 1: o.width  = 1.0
+        # 장애물 최소크기 설정
+        if o.length < 0.4 and o.width < 0.4:
+            o.width = 0.4
+            o.length = 0.4
+        
 
         # object x, y, yaw
         x = (xmin + xmax)/2

@@ -87,10 +87,10 @@ class LocalPathPlanner(Node):
         self.start = time.time()
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
-        self.L = 1.4 #1.04/2+1.6/2 # 차량 길이
-        self.W = 1.17 # 차량 폭
-        self.p_L = 5.0 # 차선 길이
-        self.p_W = 0.1 # 차선 폭
+        self.L = 1.45 #1.04/2+1.6/2 # 차량 길이
+        self.W = 1.22 # 차량 폭
+        self.p_L = 5.0 # viz상의 차선 길이
+        self.p_W = 0.1 # viz상의 차선 폭
         self.obstacle_detected = False
         self.obstacle_info = 'None'
         self.obstacle_dist = float(1e3)
@@ -195,7 +195,7 @@ class LocalPathPlanner(Node):
 
         for obs in self.obstacles:
             for i in range(0,len(cyaw),10):
-                car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.1, 1.4))
+                car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.4))
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
 
@@ -228,7 +228,7 @@ class LocalPathPlanner(Node):
         return cx, cy, cyaw
 
     def collision_reroute(self, cx, cy, cyaw, obstacle_colliding):
-        step = 55
+        step = 65
         # step_region = 15
         obs_first = obstacle_colliding[-1]
         obs_end = obstacle_colliding[0]
@@ -285,7 +285,7 @@ class LocalPathPlanner(Node):
         hy_a_star = hybrid_a_star(region1_x, region2_x,
                                   region1_y, region2_y,
                                   obstacle = obstacles,
-                                  resolution = 0.75,
+                                  resolution = 0.8,
                                   length = self.L, width = self.W)
         reroute_path = hy_a_star.find_path(start, end)
 

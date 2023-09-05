@@ -65,7 +65,7 @@ class hybrid_a_star:
         output = ratioDelta * abs(position[2] - target[2])
         return float(output)
 
-    def find_path(self, start, end, max_steer = 30):
+    def find_path(self, start, end, max_steer = 20):
         # max steering
         steering_inputs = [0, -max_steer, max_steer]
         cost_steering_inputs= [0, 0.3, 0.3]

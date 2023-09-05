@@ -128,12 +128,12 @@ class Localization(Node):
 
     def dead_reckoning_cb(self, msg):
 
-        if (self.cov1 > 0.2 or self.cov2 > 0.2) or self.mode == 'tunnel':
-            self.dr_mode = True
-            self.odom_state = 'Dead-Reckoning'
-        elif (self.cov1 < 0.1 or self.cov2 < 0.1) and self.mode != 'tunnel':
-            self.dr_mode = False
-            self.odom_state = 'GPS-Odometry'
+        # if (self.cov1 > 0.2 or self.cov2 > 0.2) or self.mode == 'tunnel':
+        #     self.dr_mode = True
+        #     self.odom_state = 'Dead-Reckoning'
+        # elif (self.cov1 < 0.1 or self.cov2 < 0.1) and self.mode != 'tunnel':
+        #     self.dr_mode = False
+        #     self.odom_state = 'GPS-Odometry'
 
 
         self.dp.append((msg.pose.pose.position.x,msg.pose.pose.position.y,time.time()))

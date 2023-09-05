@@ -61,6 +61,10 @@ class odomPublisher(Node):
 		self.yaw_offset_av_print = 0.0
 		self.yaw_offset_av_pub = Float32()
 		self.last_corr = False
+  
+		self.x_cov = 0.0
+		self.y_cov = 0.0
+		self.corr_mode = False
 
 		self.gpose = Odometry()
 		self.gpose.header.stamp = self.get_clock().now().to_msg()
@@ -105,15 +109,21 @@ class odomPublisher(Node):
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['kcity'][0]+0.5
-		y = a - self.gps_offset['kcity'][1]+1
+		x = b - self.gps_offset['kcity'][0]
+		y = a - self.gps_offset['kcity'][1]
 
 		self.gpose.pose.pose.position.x=x
 		self.gpose.pose.pose.position.y=y
 
 		#추가
-		self.gpose.pose.covariance[0] = gps.position_covariance[0]
-		self.gpose.pose.covariance[7] = gps.position_covariance[4]
+		self.x_cov =  gps.position_covariance[0]
+		self.y_cov = gps.position_covariance[4]
+		self.gpose.pose.covariance[0] = self.x_cov
+		self.gpose.pose.covariance[7] = self.y_cov
+		if(self.x_cov < 0.01 and self.y_cov < 0.01):
+			self.corr_mode = True
+		else:
+			self.corr_mode = False
 
 		# self.set_odom_tf = self.set_odom_tf + 1
 		# if(self.set_odom_tf == 1):
@@ -184,7 +194,8 @@ class odomPublisher(Node):
 
 			# apply average yaw_offset when Straigt > Curve
 			elif msg.direction == 'Straight' and self.velocity > 7/3.6:
-				self.yaw_offset_array.append(self.yaw_offset)
+				if self.corr_mode or msg.mode != 'tunnel' :
+					self.yaw_offset_array.append(self.yaw_offset)
 				if len(self.yaw_offset_array) != 0:
 					self.yaw_offset_av_print = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
 				if len(self.yaw_offset_array) > 20:
@@ -206,8 +217,8 @@ class odomPublisher(Node):
 		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
 		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
 		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
-		self.get_logger().info(f'{np.rad2deg(-self.yaw_offset_av),2}')
-		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
+		self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
+		self.get_logger().info('corr_mode: %s' % self.corr_mode)
 
 		self.final_imu_yaw = normalise_angle(self.imu_yaw) #normalise_angle(self.imu_yaw - self.yaw_offset_av)
 		imu_quat = yaw_to_quaternion(self.final_imu_yaw)
@@ -234,7 +245,7 @@ class odomPublisher(Node):
 		# self.get_logger().info('imu yaw : %f' % self.imu_yaw)
 		#self.get_logger().info('yaw_offset_av: %s' % self.yaw_offset_array)
 		#self.get_logger().info('yaw_offset_av: %s' % self.yaw_offset_array)
-		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}')
+		#self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}')
 		self.odom_pub.publish(self.gpose)
 		self.odom_pub.publish(self.gpose)
 		self.yaw_offset_av_pub.data = self.yaw_offset_av_print
