@@ -186,24 +186,16 @@ class GlobalPathPlanner(Node):
         transform = self.frame_transform(via_x[closest_id], via_y[closest_id], fx, fy, self.theta)
 
         if self.mode == 'revpark' and self.parking_path_num != -1:
-            wp_num = 45 + 5 * self.parking_path_num # kcity
+            wp_num = 48 + 5 * self.parking_path_num # kcity
             # wp_num = 45-10 + 7 * self.parking_path_num # test
         self.traffic_stop_wp = wp_num - wp_ahead - closest_id
 
 
-        if self.mode == 'uturn':
-            if closest_id >= len(via_x) - wp_ahead and self.status == 'complete':
-                if self.global_index < self.count['global'] - 1:
-                    self.global_index += 1
-                    closest_id = wp_behind
-                    self.traffic_stop_wp = 1e3
-
-        else:
-            if closest_id >= len(via_x) - wp_ahead:
-                if self.global_index < self.count['global'] - 1:
-                    self.global_index += 1
-                    closest_id = wp_behind
-                    self.traffic_stop_wp = 1e3
+        if closest_id >= len(via_x) - wp_ahead:
+            if self.global_index < self.count['global'] - 1:
+                self.global_index += 1
+                closest_id = wp_behind
+                self.traffic_stop_wp = 1e3
 
 
         self.mode = self.mode_list[self.global_index]
@@ -431,13 +423,11 @@ class GlobalPathPlanner(Node):
             to_yolo.data = 'tunnel'
 
         # 정지선 15m 전부터 신호등 인식을 위한 YOLO 모델 활성화
-        elif self.traffic_stop_wp <= 20:
+        elif self.traffic_stop_wp <= 15:
             to_yolo.data = 'traffic'
 
         elif self.mode in ['delivery_A', 'delivery_B']:
             to_yolo.data = 'delivery'
-            if self.traffic_stop_wp <= 20/0.2:
-                to_yolo.data = 'traffic'
 
         else:
             to_yolo.data = 'None'

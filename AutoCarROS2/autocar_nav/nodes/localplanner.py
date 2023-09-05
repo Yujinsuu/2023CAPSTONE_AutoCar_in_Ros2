@@ -38,7 +38,6 @@ class LocalPathPlanner(Node):
         self.goals_sub = self.create_subscription(Path2D, '/autocar/goals', self.goals_cb, 10)
         self.lanes_sub = self.create_subscription(Path2D, '/autocar/tunnel_lane', self.lanes_cb, 10)
         self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10, callback_group=ReentrantCallbackGroup())
-        # self.offset_sub = self.create_subscription(Float64MultiArray, '/autocar/tunnel_offset', self.offset_cb, 10)
         self.obstacle_sub = self.create_subscription(ObjectArray, '/obstacles', self.obstacle_cb, 10)
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
 
@@ -62,15 +61,20 @@ class LocalPathPlanner(Node):
             raise Exception("Missing ROS parameters. Check the configuration file.")
 
         ##################### 회피주행시 넘으면 안되는 선의 위치정보 ##########################
+        self.center_x = []
+        self.center_y = []
+        self.center_yaw = []
         file_path = os.path.join(get_package_share_directory('autocar_map'), 'data')
-        df = pd.read_csv(file_path + '/kcity/track_lane_6m.csv')
-        self.center_x = df['x'].tolist()
-        self.center_y = df['y'].tolist()
-        # self.center_x = [i - 1.2 for i in self.center_x]
-        # self.center_y = [i + 1.0 for i in self.center_y]
-        self.center_yaw = df['yaw'].tolist()
-        self.offset_x = 0.0
-        self.offset_y = 0.0
+        df = pd.read_csv(file_path + '/kcity/track.csv')
+        lane1_x = df[df['Link']==2]['X-axis'].to_list()[25:52:5]
+        lane1_y = df[df['Link']==2]['Y-axis'].to_list()[25:52:5]
+        self.make_lane(lane1_x, lane1_y, 2.4, 2.4)
+        lane2_x = df[df['Link']==5]['X-axis'].to_list()[74:124:5]
+        lane2_y = df[df['Link']==5]['Y-axis'].to_list()[74:124:5]
+        self.make_lane(lane2_x, lane2_y, 2.4, 7.2)
+        self.center_x = list(np.concatenate(self.center_x))
+        self.center_y = list(np.concatenate(self.center_y))
+        self.center_yaw = list(np.concatenate(self.center_yaw))
         ###############################################################################
         self.ds = 1 / self.frequency
 
@@ -99,6 +103,37 @@ class LocalPathPlanner(Node):
         self.prev_dist = None
         self.is_fail = False
         self.path_lane = []
+
+
+    def make_lane(self, x, y, l, r):
+        num = len(x)
+        angle = np.arctan2(y[-1]-y[0], x[-1]-x[0])
+        vector = [np.sin(angle), -np.cos(angle)]
+
+        yaw = []
+        for i in range(num-1):
+           yaw.append(np.arctan2(y[i+1]-y[i], x[i+1]-x[i]))
+        yaw.append(yaw[-1])
+
+        lx = []
+        ly = []
+        for i in range(num):
+           lx.append(x[i]-l*vector[0])
+           ly.append(y[i]-l*vector[1])
+
+        self.center_x.append(lx)
+        self.center_y.append(ly)
+        self.center_yaw.append(yaw)
+
+        rx = []
+        ry = []
+        for i in range(num):
+           rx.append(x[i]+r*vector[0])
+           ry.append(y[i]+r*vector[1])
+
+        self.center_x.append(rx)
+        self.center_y.append(ry)
+        self.center_yaw.append(yaw)
 
     def goals_cb(self, msg):
         self.ax = []
@@ -136,9 +171,6 @@ class LocalPathPlanner(Node):
         self.direction = msg.direction
         self.next_path = msg.next_path
 
-    def offset_cb(self, msg):
-        self.offset_x, self.offset_y = msg.data
-
     def obstacle_cb(self, msg):
         self.obstacles = [(o.x, o.y, o.yaw, o.length, o.width) for o in msg.object_list]
         self.path_lane = []
@@ -146,7 +178,7 @@ class LocalPathPlanner(Node):
         if self.mode in ['tunnel', 'static']:
             for i in range(len(self.center_x)):
                 # length는 waypoint 간격만큼, width는 차선의 폭 (가능하면 최대한 작게)
-                self.path_lane.append((self.center_x[i] - self.offset_x, self.center_y[i] - self.offset_y, self.center_yaw[i], self.p_L, self.p_W))
+                self.path_lane.append((self.center_x[i], self.center_y[i], self.center_yaw[i], self.p_L, self.p_W))
 
         self.viz_path_lane()
 
@@ -161,8 +193,8 @@ class LocalPathPlanner(Node):
             m.type = m.CUBE
             m.id = i
 
-            m.pose.position.x = self.center_x[i] - self.offset_x
-            m.pose.position.y = self.center_y[i] - self.offset_y
+            m.pose.position.x = self.center_x[i]
+            m.pose.position.y = self.center_y[i]
             m.pose.position.z = 0.75
             quat = yaw_to_quaternion(self.center_yaw[i])
             m.pose.orientation.x = quat.x

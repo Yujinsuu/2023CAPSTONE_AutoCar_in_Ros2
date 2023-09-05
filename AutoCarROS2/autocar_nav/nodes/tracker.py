@@ -114,7 +114,7 @@ class PathTracker(Node):
         self.y = msg.pose.y
         self.yaw = msg.pose.theta
         self.vel = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
-        if self.vel <= 1: self.vel = 1.0
+        if self.vel <= 0.5: self.vel = 0.5
 
 
         if self.cyaw:

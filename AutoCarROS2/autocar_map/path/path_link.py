@@ -177,7 +177,7 @@ def kcity():
 
     straight = [4,5,9,10]
     left = [3,6,7]
-    right = [8]
+    right = [2,8]
     for i in straight:
         kcity.next_path[i] = 'straight'
     for i in left:
@@ -200,4 +200,4 @@ def qualifier():
     return qualifier
 
 use_map = qualifier()
-start_index = 2
+start_index = 0

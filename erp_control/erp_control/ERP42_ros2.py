@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf8 -*-
 
+import os
+import time
+import serial
+import numpy as np
+import matplotlib.pyplot as plt
+
 import rclpy
 from rclpy.node import Node
+
 from std_msgs.msg import Float64MultiArray
 from autocar_msgs.msg import State2D
 from ackermann_msgs.msg import AckermannDriveStamped
-#from geometry_msgs.msg import Twist
-
-from math import *
-import numpy as np
-import serial
-import math
-import time
 
 fast_flag =False
 S = 0x53
@@ -44,6 +44,7 @@ class erp42(Node):
 		self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_callback, 10)
 		self.ser = serial.serial_for_url("/dev/ttyERP", baudrate=115200, timeout=1)
 
+		self.t = 0.0
 		self.velocity = 0.0
 		self.speed = 0.0
 		self.cmd_steer = 0.0
@@ -53,7 +54,13 @@ class erp42(Node):
 		self.gear = 0
 		self.dir = ['Forward', 'Forward', 'Backward']
 
-		self.timer = self.create_timer(0.3, self.timer_callback)
+		self.time = time.time()
+		self.times = []
+		self.target_value = []
+		self.actual_value = []
+
+		self.timer1 = self.create_timer(0.3, self.timer_callback)
+		self.timer2 = self.create_timer(0.1, self.plot_creator)
 
 	def GetAorM(self):
 		AorM = 0x01
@@ -75,7 +82,7 @@ class erp42(Node):
 		return SPEED0, SPEED1
 
 	def GetSTEER(self, steer): # steer은 rad/s 값으로 넣어줘야한다.
-		steer=steer*71*(180/pi) # rad/s to degree/s*71
+		steer=steer*71*(180/np.pi) # rad/s to degree/s*71
 
 		if(steer>=2000):
 			steer=1999
@@ -145,20 +152,22 @@ class erp42(Node):
 		return np.deg2rad(output_steer)
 
 	def faster_motor_control(self, target_speed, gps_vel):
-		if ( gps_vel <= 0.5 ):
+		if target_speed != 0 and gps_vel <= 0.5:
 			speed = 5.0
 		else :
 			speed = target_speed
 		#print("target_speed", speed)
-		
+
 		return speed
 
 	def vehicle_callback(self, msg):
 		self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
+		if self.velocity >= 0.5:
+			self.t += 0.1
 
 	def acker_callback(self, msg):
-		self.speed = msg.drive.speed
-		# self.speed = self.faster_motor_control(msg.drive.speed, self.velocity)
+		# self.speed = msg.drive.speed
+		self.speed = self.faster_motor_control(msg.drive.speed, self.velocity)
 
 		# self.steer = msg.drive.steering_angle
 		cmd_steer = np.rad2deg(msg.drive.steering_angle)
@@ -167,11 +176,8 @@ class erp42(Node):
 
 		self.gear = int(msg.drive.acceleration)
 
-
-		# if self.velocity > self.speed - 2:
-		self.brake = int(msg.drive.jerk)
-		# else:
-		# 	self.brake = 0
+		if self.t >= 3:
+			self.brake = int(msg.drive.jerk)
 
 	def vision_callback(self, msg):
 		self.vision_steer = msg.data[1]
@@ -182,12 +188,47 @@ class erp42(Node):
 		print("Speed :",round(self.speed*3.6, 1), "km/h\t Steer :", round(np.rad2deg(self.steer), 2), "deg\t Brake :",self.brake, "%\t Gear :", self.dir[self.gear])
 		self.Send_to_ERP42(self.gear, self.speed, -self.steer, self.brake)
 
+	def plot_creator(self):
+		elapsed_time = time.time() - self.time
+		self.times.append(elapsed_time)
+		self.target_value.append(self.speed * 3.6)
+		self.actual_value.append(self.velocity * 3.6)
+
+	def save(self, output_folder):
+		count = 0
+		output = os.path.join(output_folder, f'speed_plot_{count}.csv')
+		while os.path.exists(output):
+				count += 1
+				output = os.path.join(output_folder, f'speed_plot_{count}.csv')
+
+		# 그래프 그리기
+		plt.figure(figsize=(10, 6))
+		plt.plot(self.times, self.target_value, label='목표값', color='blue')
+		plt.plot(self.times, self.actual_value, label='실제값', color='red')
+		plt.xlabel("시간 (s)")
+		plt.ylabel("속도 (km/h)")
+		plt.title("속도 데이터 그래프")
+		plt.legend()
+
+		plt.savefig(output)
+		plt.show()
+
 def main(args=None):
 	rclpy.init(args=args)
 	node = erp42()
-	rclpy.spin(node)
-	node.destroy_node()
-	rclpy.shutdown()
+
+	try:
+		rclpy.spin(node)
+
+	except KeyboardInterrupt:
+		home_folder = os.path.expanduser("~")
+		plot_folder = os.path.join(home_folder, 'dataset')
+		node.save(plot_folder)
+		node.get_logger().info('Plot Img Saved')
+
+	finally:
+		node.destroy_node()
+		rclpy.shutdown()
 
 if __name__ == '__main__':
 	main()
