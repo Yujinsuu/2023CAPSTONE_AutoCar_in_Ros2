@@ -265,10 +265,11 @@ class Core(Node):
                 if self.traffic_stop_wp <= 0:
                     self.status = 'complete'
 
-                if self.waypoint >= 30 and self.obs_distance <= 10:
-                    self.status = 'track'
+                if self.waypoint >= 20 and self.obs_distance <= 10:
                     self.brake = 0.0
                     self.t = 0
+                    if self.cone_check:
+                        self.status = 'track'
 
 
             elif self.status == 'track':

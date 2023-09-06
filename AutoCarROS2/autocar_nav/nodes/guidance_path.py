@@ -108,7 +108,7 @@ class make_delaunay(Node):
         for n in range(len(virtual_cone)):
             points.append(virtual_cone[n])
 
-        num = [0, 0]
+        num = 0
         # 0_Blue : 차량 우측 (y < 0), 1_Yellow : 차량 좌측 (y > 0)
         for id, obs in enumerate(self.cluster.markers):
             xmin = obs.points[1].x
@@ -119,21 +119,24 @@ class make_delaunay(Node):
             depth = abs(xmax - xmin)
             width = abs(ymax - ymin)
 
-            if depth <= 0.6 and width <= 0.6:
+            if depth <= 0.4 and width <= 0.4:
                 x = (xmin + xmax) / 2
                 y = (ymin + ymax) / 2
 
-                if y < -0.6   and -1 < x < 2: # 0_Blue
-                    point = [x, y, 0]
-                    num[0] += 1
-                    points.append(point)
-
-                elif y >= -0.6 and -1 < x < 2 : # 1_Yellow
+                # Yellow : y > mx + b
+                m, b = -0.35, 0
+                if (0 < x < 8 and m * x + b <= y < 1.5) or (-1 < x <= 0 and -0.6 <= y < 1.5): # 1_Yellow
                     point = [x, y, 1]
-                    num[1] += 1
                     points.append(point)
+                    num += 1
 
-        if num[0] + num[1] < 2:
+                    points.append([x-1, y-3,0])
+
+                # elif y < -0.6   and -1.2 < x < 3: # 0_Blue
+                #     point = [x, y, 0]
+                #     points.append(point)
+
+        if num < 3:
             self.cone_check = False
         else:
             self.cone_check = True
@@ -216,7 +219,7 @@ class make_delaunay(Node):
         p = np.poly1d(coefficients)
         #print(x_data[0], x_data[-1])
         # 경로 생성
-        path_x = np.arange(x_data[0], 3, 0.1) # 경로 길이제한 3m
+        path_x = np.arange(x_data[0], 6, 0.1) # 경로 길이제한 3m
         path_y = p(path_x)
 
         return path_x, path_y

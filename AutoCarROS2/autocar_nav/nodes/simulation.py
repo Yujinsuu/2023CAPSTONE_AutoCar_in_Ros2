@@ -60,9 +60,9 @@ class Simulation(Node):
         # df = pd.read_csv(file_path + '/htech/htech_track.csv')
         map_x = df[df['Link']==0]['X-axis'].to_list()[0:2]
         map_y = df[df['Link']==0]['Y-axis'].to_list()[0:2]
-        self.init_x = map_x[0]
-        self.init_y = map_y[0]
-        self.init_yaw = np.arctan2((map_y[1] - self.init_y), (map_x[1] - self.init_x))
+        self.init_x   = 0.#map_x[0]
+        self.init_y   = 0.#map_y[0]
+        self.init_yaw = 0.#np.arctan2((map_y[1] - self.init_y), (map_x[1] - self.init_x))
 
 
         self.state2d = None
@@ -93,7 +93,7 @@ class Simulation(Node):
         d_yaw = d * np.tan(self.sigma) / self.L
         new_yaw = yaw + d_yaw
 
-        return x1, y1, new_yaw
+        return x0,y0,yaw #x1, y1, new_yaw
 
     def vehicle_cb(self, msg):
         if self.x == None:

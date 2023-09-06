@@ -71,7 +71,7 @@ class LocalPathPlanner(Node):
         self.make_lane(lane1_x, lane1_y, 2.4, 2.4)
         lane2_x = df[df['Link']==5]['X-axis'].to_list()[74:124:5]
         lane2_y = df[df['Link']==5]['Y-axis'].to_list()[74:124:5]
-        self.make_lane(lane2_x, lane2_y, 2.4, 7.2)
+        self.make_lane(lane2_x, lane2_y, 2.4, 5.8)
         self.center_x = list(np.concatenate(self.center_x))
         self.center_y = list(np.concatenate(self.center_y))
         self.center_yaw = list(np.concatenate(self.center_yaw))
@@ -97,7 +97,7 @@ class LocalPathPlanner(Node):
         self.p_W = 0.1 # viz상의 차선 폭
         self.obstacle_detected = False
         self.obstacle_info = 'None'
-        self.obstacle_dist = float(1e3)
+        self.obstacle_dist = 1e3
         self.dist_thresh = 6 # 정적 및 동적 판단 기준 : 6m
         self.queue = 0
         self.prev_dist = None
@@ -226,8 +226,16 @@ class LocalPathPlanner(Node):
         #     car_msg.append((cx[i],cy[i],cyaw[i],self.L,self.W))
 
         for obs in self.obstacles:
+            if self.mode == 'uturn':
+                obs[3] = 0.4
+                obs[4] = 0.4
+
             for i in range(0,len(cyaw),10):
-                car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.4))
+                if self.mode == 'static':
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.65))
+                else:
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.47))
+
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
 
@@ -260,7 +268,8 @@ class LocalPathPlanner(Node):
         return cx, cy, cyaw
 
     def collision_reroute(self, cx, cy, cyaw, obstacle_colliding):
-        step = 65
+        if self.mode == 'static': step = 70
+        else: step = 50
         # step_region = 15
         obs_first = obstacle_colliding[-1]
         obs_end = obstacle_colliding[0]
@@ -354,7 +363,6 @@ class LocalPathPlanner(Node):
         # print('Generated dev path')
         return cx, cy, cyaw
 
-
     def find_path(self):
         self.is_fail = False
         if len(self.ax) < 2:
@@ -375,7 +383,7 @@ class LocalPathPlanner(Node):
         obs = Obstacle()
         obs.detected = self.obstacle_detected
         obs.obstacle = self.obstacle_info
-        obs.distance = self.obstacle_dist
+        obs.distance = float(self.obstacle_dist)
         self.obs_recog_pub.publish(obs)
 
         path_length = min(len(cx), len(cy), len(cyaw))
