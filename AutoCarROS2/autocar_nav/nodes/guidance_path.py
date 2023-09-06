@@ -136,7 +136,7 @@ class make_delaunay(Node):
                 #     point = [x, y, 0]
                 #     points.append(point)
 
-        if num < 3:
+        if num < 2:
             self.cone_check = False
         else:
             self.cone_check = True
@@ -214,7 +214,7 @@ class make_delaunay(Node):
         x_data = midpoints[:, 0]
         y_data = midpoints[:, 1]
 
-        # 3차 다항식
+        # 2차 다항식
         coefficients = np.polyfit(x_data, y_data, deg=2)
         p = np.poly1d(coefficients)
         #print(x_data[0], x_data[-1])

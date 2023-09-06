@@ -265,23 +265,22 @@ class Core(Node):
                 if self.traffic_stop_wp <= 0:
                     self.status = 'complete'
 
-                if self.waypoint >= 20 and self.obs_distance <= 10:
+                if self.waypoint >= 20 and self.obs_distance < 7:
                     self.brake = 0.0
                     self.t = 0
-                    if self.cone_check:
-                        self.status = 'track'
+                    self.status = 'track'
 
 
             elif self.status == 'track':
-                if self.waypoint > 216:
-                    if abs(self.cte_term) <= 5:
+                if self.waypoint > 70:#216:
+                    if abs(self.cte_term) <= 10:
                         self.avoid_count = time.time()
                         self.status = 'complete'
 
                 self.cmd_steer = self.track_steer
 
             else:
-                if time.time() - self.avoid_count > 5:
+                if time.time() - self.avoid_count > 3:
                     self.cmd_speed = self.target_speed['tollgate']
 
 

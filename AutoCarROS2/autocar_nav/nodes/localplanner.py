@@ -227,14 +227,13 @@ class LocalPathPlanner(Node):
 
         for obs in self.obstacles:
             if self.mode == 'uturn':
-                obs[3] = 0.4
-                obs[4] = 0.4
+                obs = (obs[0], obs[1], obs[2], 0.4, 0.4)
 
             for i in range(0,len(cyaw),10):
                 if self.mode == 'static':
                     car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.65))
                 else:
-                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.47))
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.8))
 
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
@@ -264,6 +263,7 @@ class LocalPathPlanner(Node):
             if self.queue >= 5:
                 self.queue = 5
                 self.prev_dist = None
+                self.obstacle_dist = 1e3
 
         return cx, cy, cyaw
 

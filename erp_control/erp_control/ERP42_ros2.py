@@ -196,18 +196,18 @@ class erp42(Node):
 
 	def save(self, output_folder):
 		count = 0
-		output = os.path.join(output_folder, f'speed_plot_{count}.csv')
+		output = os.path.join(output_folder, f'speed_graph_{count}.png')
 		while os.path.exists(output):
 				count += 1
-				output = os.path.join(output_folder, f'speed_plot_{count}.csv')
+				output = os.path.join(output_folder, f'speed_graph_{count}.png')
 
 		# 그래프 그리기
 		plt.figure(figsize=(10, 6))
-		plt.plot(self.times, self.target_value, label='목표값', color='blue')
-		plt.plot(self.times, self.actual_value, label='실제값', color='red')
-		plt.xlabel("시간 (s)")
-		plt.ylabel("속도 (km/h)")
-		plt.title("속도 데이터 그래프")
+		plt.plot(self.times, self.target_value, label='target_speed', color='blue')
+		plt.plot(self.times, self.actual_value, label='actual_speed', color='red')
+		plt.xlabel("Time (s)")
+		plt.ylabel("Speed (km/h)")
+		plt.title("Speed Data Graph")
 		plt.legend()
 
 		plt.savefig(output)
