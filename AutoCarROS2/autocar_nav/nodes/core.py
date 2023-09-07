@@ -74,7 +74,7 @@ class Core(Node):
         self.mission_count = 0
         self.tunnel_state = 'entry'
 
-        self.yolo_light = 'None'
+        self.yolo_light = ['None']
         self.traffic_stop = False
         self.pause = 0.0
 
@@ -147,7 +147,7 @@ class Core(Node):
         self.tunnel_state = msg.data
 
     def traffic_cb(self, msg):
-        self.yolo_light = msg.data
+        self.yolo_light = msg.data.split(",")
 
     def delivery_stop_cb(self, msg):
         self.distance = msg.data
@@ -196,7 +196,8 @@ class Core(Node):
                 tf_light = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
         else: tf_light = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
 
-        if self.yolo_light not in tf_light:
+
+        if len([i for i in self.yolo_light if i in tf_light]) == 0:
             self.traffic_stop = True
 
         else:

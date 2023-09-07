@@ -19,25 +19,17 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray, String
 
-WEIGHTS = 'weights/delivery.pt'
+WEIGHTS = 'weights/trafficlight.pt'
 IMG_SIZE = 640
 DEVICE = ''
 AUGMENT = False
-CONF_THRES = 0.70
+CONF_THRES = 0.60
 IOU_THRES = 0.45
 CLASSES = None
 AGNOSTIC_NMS = False
 
-QUEUE_SIZE = 13
-CLASS_MAP = (
-    ("id_0", "id_1", "id_2"),
-    ("A1",),
-    ("A2",),
-    ("A3",),
-    ("B1",),
-    ("B2",),
-    ("B3",)
-    )
+QUEUE_SIZE = 23
+CLASS_MAP = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
 
 # Initialize
 device = select_device(DEVICE)
@@ -62,23 +54,17 @@ if device.type != 'cpu':
 class YOLOv7(Node):
     def __init__(self):
 
-        super().__init__('side')
+        super().__init__('forward')
 
-        self.detected_pub = self.create_publisher(Image, "/yolo/delivery", 10)
-        self.delivery_pub = self.create_publisher(Int32MultiArray, "/delivery_sign", 10)
+        self.detected_pub = self.create_publisher(Image, "/yolo/trafficlight", 10)
+        self.traffic_pub = self.create_publisher(String, "/traffic_sign", 10)
 
         self.mode_sub = self.create_subscription(String, "/yolo_mode", self.mode_cb, 10)
-        self.image_sub = self.create_subscription(Image, "/side/image_raw", self.image_cb, 10)
+        self.image_sub = self.create_subscription(Image, "/front/image_raw", self.image_cb, 10)
 
-        self.img_width = IMG_SIZE
         self.mode = 'None'
-        self.sign = 0
 
-        # [[A queue], [B1 queue], [B2 queue], ...]
-        self.queue_list = [[-1 for i in range(QUEUE_SIZE)] for j in range(len(CLASS_MAP))]
-
-        # [[A1 to A queue], [A2 to A queue], [A3 to A queue], [B1 to B1 queue], [B2 to B2 queue], [B3 to B3 queue], ...]
-        self.id_to_queue_list = [self.queue_list[i] for i in range(len(CLASS_MAP)) for _ in range(len(CLASS_MAP[i]))]
+        self.queue_list = [-1 for _ in range(QUEUE_SIZE)]
 
         self.timer = self.create_timer(0.1, self.yolo_pub)
 
@@ -86,13 +72,12 @@ class YOLOv7(Node):
         self.mode = msg.data
 
     def image_cb(self, img):
-        self.img_width = img.width
         check_requirements(exclude=('pycocotools', 'thop'))
         with torch.no_grad():
             bridge = CvBridge()
             cap = bridge.imgmsg_to_cv2(img, desired_encoding="bgr8")
 
-            if self.mode == 'delivery':
+            if self.mode == 'traffic':
                 result = self.detect(cap)
                 image_message = bridge.cv2_to_imgmsg(result, encoding="bgr8")
             else:
@@ -151,73 +136,42 @@ class YOLOv7(Node):
                 plot_one_box(xyxy, img0, label=label, color=colors[id], line_thickness=3)
                 xmin, ymin, xmax, ymax = [int(tensor.item()) for tensor in xyxy]
 
-                xmean = (xmin + xmax) / 2
+                ymean = (ymin + ymax) / 2
 
-                if xmean > 50 and xmean < self.img_width - 50:
-                    self.id_to_queue_list[id + 3].append(int(xmean))
-                    if id in (0, 1, 2):
-                        self.id_to_queue_list[0].append(id)
-
+                if ymean < IMG_SIZE / 2:
+                    self.queue_list.append(id)
                 else:
-                    for queue in self.queue_list:
-                        if len(queue) == QUEUE_SIZE: # append -1 to an undetected classes
-                            queue.append(-1)
+                    self.queue_list.append(-1)
 
         else:
-            for queue in self.queue_list:
-                if len(queue) == QUEUE_SIZE: # append -1 to an undetected classes
-                    queue.append(-1)
+            self.queue_list.append(-1)
 
         # return results
         return img0
 
 
     # CLASS ==========================================================================
-    # 0 : A1  1 : A2  2 : A3  3 : B1  4 : B2  5: B3
+    # 0 : Green  1 : Left  2 : Red  3 : Straightleft  4 : Yellow
     # ================================================================================
-
-    # OUTPUT =========================================================================
-    # [(A.id), (A1.x), (A2.x), (A3.x), (B1.x), (B2.x), (B3.x)]
-    # ================================================================================
-    def delivery_vote(self, queue):
-        if queue.count(-1) > int(QUEUE_SIZE / 2):
-            return 0
-        else:
-            for element in queue: # get latest x_mean
-                if element != -1:
-                    val = element
-            return val
-
-
     def hard_vote(self, queue):
         return statistics.mode(queue)
 
 
     def yolo_pub(self):
-        final_check = Int32MultiArray()
+        final_check = String()
 
-        for queue in self.queue_list:
-            while len(queue) != QUEUE_SIZE: # delete first element
-                del queue[0]
+        while len(self.queue_list) != QUEUE_SIZE: # delete first element
+            del self.queue_list[0]
 
         queue_list = self.queue_list
 
         # queue voting
-        for idx in range(len(queue_list)):
-            if idx == 0: # find A number
-                final_check.data.append(self.hard_vote(queue_list[idx]))
-            else:
-                final_check.data.append(self.delivery_vote(queue_list[idx]))
+        final_id = self.hard_vote(queue_list)
+        final_check.data = CLASS_MAP[final_id]
 
-        if final_check.data[0] != -1:
-            self.sign = final_check.data[0] + 1
+        print('Traffic Light : ', CLASS_MAP[final_id])
 
-        if self.sign:
-            print(f'Delivery Sign : A{self.sign}, B{self.sign}')
-        else:
-            print('Not Detected yet')
-
-        self.delivery_pub.publish(final_check)
+        self.traffic_pub.publish(final_check)
 
 
 def main(args=None):

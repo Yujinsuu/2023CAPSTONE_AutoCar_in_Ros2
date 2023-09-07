@@ -29,7 +29,7 @@ CLASSES = None
 AGNOSTIC_NMS = False
 
 QUEUE_SIZE = 23
-CLASS_MAP = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
+CLASS_MAP = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow']
 
 # Initialize
 device = select_device(DEVICE)
@@ -62,9 +62,10 @@ class YOLOv7(Node):
         self.mode_sub = self.create_subscription(String, "/yolo_mode", self.mode_cb, 10)
         self.image_sub = self.create_subscription(Image, "/front/image_raw", self.image_cb, 10)
 
+        self.img_height = IMG_SIZE
         self.mode = 'None'
 
-        self.queue_list = [-1 for _ in range(QUEUE_SIZE)]
+        self.queue_list = [[0 for i in range(QUEUE_SIZE)] for j in range(5)]
 
         self.timer = self.create_timer(0.1, self.yolo_pub)
 
@@ -72,6 +73,7 @@ class YOLOv7(Node):
         self.mode = msg.data
 
     def image_cb(self, img):
+        self.img_height = img.height
         check_requirements(exclude=('pycocotools', 'thop'))
         with torch.no_grad():
             bridge = CvBridge()
@@ -129,22 +131,30 @@ class YOLOv7(Node):
                 n = (det[:, -1] == c).sum()  # detections per class
                 s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
+            ids = []
             # Write results
             for *xyxy, conf, cls in reversed(det):
                 id = int(cls)
+                ids.append(id)
                 label = f'{names[id]} {conf:.2f}'
                 plot_one_box(xyxy, img0, label=label, color=colors[id], line_thickness=3)
                 xmin, ymin, xmax, ymax = [int(tensor.item()) for tensor in xyxy]
 
                 ymean = (ymin + ymax) / 2
 
-                if ymean < IMG_SIZE / 2:
-                    self.queue_list.append(id)
+                if ymean < self.img_height / 2:
+                    self.queue_list[id].append(1)
                 else:
-                    self.queue_list.append(-1)
+                    self.queue_list[id].append(0)
+
+            ids = list(set(ids))
+            for i in range(5):
+                if i not in ids:
+                    self.queue_list[i].append(0)
 
         else:
-            self.queue_list.append(-1)
+            for k in range(5):
+                self.queue_list[k].append(0)
 
         # return results
         return img0
@@ -154,22 +164,36 @@ class YOLOv7(Node):
     # 0 : Green  1 : Left  2 : Red  3 : Straightleft  4 : Yellow
     # ================================================================================
     def hard_vote(self, queue):
-        return statistics.mode(queue)
+        if sum(queue) > 0.7 * QUEUE_SIZE:
+            return True
+
+        else:
+            return False
 
 
     def yolo_pub(self):
         final_check = String()
+        data = ""
 
-        while len(self.queue_list) != QUEUE_SIZE: # delete first element
-            del self.queue_list[0]
+        for n in range(5):
+            while len(self.queue_list[n]) != QUEUE_SIZE: # delete first element
+                del self.queue_list[n][0]
 
-        queue_list = self.queue_list
+            queue_list = self.queue_list[n]
 
-        # queue voting
-        final_id = self.hard_vote(queue_list)
-        final_check.data = CLASS_MAP[final_id]
+            # queue voting
+            if self.hard_vote(queue_list):
+                if data == "":
+                    data += CLASS_MAP[n]
+                else:
+                    data += "," + CLASS_MAP[n]
 
-        print('Traffic Light : ', CLASS_MAP[final_id])
+        if data == "":
+            data = "None"
+
+        print('Traffic Light : ' + data)
+
+        final_check.data = data
 
         self.traffic_pub.publish(final_check)
 

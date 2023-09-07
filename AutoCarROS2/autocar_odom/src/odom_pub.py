@@ -61,7 +61,7 @@ class odomPublisher(Node):
 		self.yaw_offset_av_print = 0.0
 		self.yaw_offset_av_pub = Float32()
 		self.last_corr = False
-  
+
 		self.x_cov = 0.0
 		self.y_cov = 0.0
 		self.corr_mode = False
@@ -217,8 +217,8 @@ class odomPublisher(Node):
 		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
 		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
 		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
-		self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
-		self.get_logger().info('corr_mode: %s' % self.corr_mode)
+		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
+		# self.get_logger().info('corr_mode: %s' % self.corr_mode)
 
 		self.final_imu_yaw = normalise_angle(self.imu_yaw) #normalise_angle(self.imu_yaw - self.yaw_offset_av)
 		imu_quat = yaw_to_quaternion(self.final_imu_yaw)

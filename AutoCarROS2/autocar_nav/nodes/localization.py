@@ -152,7 +152,7 @@ class Localization(Node):
             self.offset_y = self.dgy + (self.init_y - self.dDy)
             self.get_offset = True
 
-        elif (self.dr_mode == True) and (self.get_offset == True) and (145 <= self.waypoint <= 150): # kcity
+        elif (self.dr_mode == True) and (self.get_offset == True) and (150 <= self.waypoint <= 152): # kcity
         # elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
             if not self.tunnel_exit:
                 index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)

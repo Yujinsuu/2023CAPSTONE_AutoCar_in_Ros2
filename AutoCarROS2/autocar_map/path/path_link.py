@@ -72,8 +72,13 @@ class Path(Node):
 
                 data = df[df['Link'] == link]
 
-                self.ax[var_name] = data['X-axis'].tolist()
-                self.ay[var_name] = data['Y-axis'].tolist()
+                # self.ax[var_name] = data['X-axis'].tolist()
+                # self.ay[var_name] = data['Y-axis'].tolist()
+                x = data['X-axis'].tolist()
+                y = data['Y-axis'].tolist()
+                d = 0 # 주차 경로 d m 앞으로 이동
+                self.ax[var_name] = [i - 0.4423572639935003 * d for i in x]
+                self.ay[var_name] = [i - 0.8308233860879995 * d for i in y]
 
 
 def test_track():
@@ -130,12 +135,12 @@ def boong():
 
 def htech():
     base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/htech_track.csv'
+    global_file = file_path + '/htech/linear_path.csv'
     # global_file = file_path + '/htech/delivery.csv'
     parking_file = None
     revpark_file = None
     htech = Path(base_file, global_file, parking_file, revpark_file)
-    htech.car_mode[1] = 'tunnel'
+    htech.car_mode[1] = 'tollgate'
     # htech.car_mode[4] = 'tunnel'
     # htech.car_mode[0] = 'delivery_A'
     # htech.car_mode[3] = 'delivery_B'
@@ -199,5 +204,5 @@ def qualifier():
 
     return qualifier
 
-use_map = uturn()
+use_map = htech()
 start_index = 0
