@@ -58,6 +58,7 @@ class erp42(Node):
 		self.times = []
 		self.target_value = []
 		self.actual_value = []
+		self.brake_value = []
 
 		self.timer1 = self.create_timer(0.3, self.timer_callback)
 		self.timer2 = self.create_timer(0.1, self.plot_creator)
@@ -152,7 +153,7 @@ class erp42(Node):
 		return np.deg2rad(output_steer)
 
 	def faster_motor_control(self, target_speed, gps_vel):
-		if target_speed != 0 and gps_vel <= 0.5:
+		if target_speed != 0 and gps_vel <= 0.2:
 			speed = 5.0
 		else :
 			speed = target_speed
@@ -175,9 +176,15 @@ class erp42(Node):
 		# self.steer = self.vision_steer
 
 		self.gear = int(msg.drive.acceleration)
-
-		if self.t >= 3:
+   
+		if self.t < 3:
+			self.brake = 0
+   
+		elif self.velocity - self.speed > - 0.5:
 			self.brake = int(msg.drive.jerk)
+   
+		else:
+			self.brake = 0
 
 	def vision_callback(self, msg):
 		self.vision_steer = msg.data[1]
@@ -193,6 +200,7 @@ class erp42(Node):
 		self.times.append(elapsed_time)
 		self.target_value.append(self.speed * 3.6)
 		self.actual_value.append(self.velocity * 3.6)
+		self.brake_value.append(self.brake/10)
 
 	def save(self, output_folder):
 		count = 0
@@ -205,6 +213,7 @@ class erp42(Node):
 		plt.figure(figsize=(10, 6))
 		plt.plot(self.times, self.target_value, label='target_speed', color='blue')
 		plt.plot(self.times, self.actual_value, label='actual_speed', color='red')
+		plt.plot(self.times, self.brake_value, label='brake_force', color='black')
 		plt.xlabel("Time (s)")
 		plt.ylabel("Speed (km/h)")
 		plt.title("Speed Data Graph")

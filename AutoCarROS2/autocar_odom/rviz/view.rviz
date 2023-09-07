@@ -54,11 +54,17 @@ Visualization Manager:
         All Enabled: true
         car:
           Value: true
+        imu_link:
+          Value: true
         map:
           Value: true
         odom:
           Value: true
+        odom_footprint:
+          Value: true
         velodyne:
+          Value: true
+        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -71,6 +77,8 @@ Visualization Manager:
             car:
               velodyne:
                 {}
+            odom_footprint:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
@@ -89,7 +97,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -238,9 +246,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 151
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 1
       Name: PointCloud2
       Position Transformer: XYZ
       Selectable: true
@@ -425,25 +433,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 73.69786071777344
+      Distance: 108.66780090332031
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 14.393735885620117
-        Y: -2.6676127910614014
-        Z: -45.634098052978516
+        X: -308.26190185546875
+        Y: 528.3881225585938
+        Z: -45.095298767089844
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.424796462059021
+      Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 3.0772037506103516
+      Yaw: 4.502206802368164
     Saved: ~
 Window Geometry:
   Displays:

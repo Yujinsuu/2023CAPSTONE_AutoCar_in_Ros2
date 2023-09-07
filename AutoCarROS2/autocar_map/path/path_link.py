@@ -144,6 +144,8 @@ def htech():
     # htech.car_mode[4] = 'tunnel'
     # htech.car_mode[0] = 'delivery_A'
     # htech.car_mode[3] = 'delivery_B'
+    
+    htech.next_path[0] = 'right'
 
     return htech
 
