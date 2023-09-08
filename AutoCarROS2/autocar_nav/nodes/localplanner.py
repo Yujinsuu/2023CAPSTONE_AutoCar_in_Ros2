@@ -68,10 +68,10 @@ class LocalPathPlanner(Node):
         df = pd.read_csv(file_path + '/kcity/track.csv')
         lane1_x = df[df['Link']==2]['X-axis'].to_list()[25:52:5]
         lane1_y = df[df['Link']==2]['Y-axis'].to_list()[25:52:5]
-        self.make_lane(lane1_x, lane1_y, 2.4, 2.4)
+        self.make_lane(lane1_x, lane1_y, 2.3, 2.3)
         lane2_x = df[df['Link']==5]['X-axis'].to_list()[74:124:5]
         lane2_y = df[df['Link']==5]['Y-axis'].to_list()[74:124:5]
-        self.make_lane(lane2_x, lane2_y, 2.4, 5.8)
+        self.make_lane(lane2_x, lane2_y, 1.8, 4.2)
         self.center_x = list(np.concatenate(self.center_x))
         self.center_y = list(np.concatenate(self.center_y))
         self.center_yaw = list(np.concatenate(self.center_yaw))
@@ -92,7 +92,7 @@ class LocalPathPlanner(Node):
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
         self.L = 1.45 #1.04/2+1.6/2 # 차량 길이
-        self.W = 1.22 # 차량 폭
+        self.W = 1.35 # 차량 폭
         self.p_L = 5.0 # viz상의 차선 길이
         self.p_W = 0.1 # viz상의 차선 폭
         self.obstacle_detected = False

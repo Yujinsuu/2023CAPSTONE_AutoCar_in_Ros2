@@ -53,8 +53,8 @@ class Core(Node):
         self.status = 'driving'
         self.time = 0.0
 
-        self.target_speed = {'global': 25/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':  7/3.6,    'revpark': 6/3.6,      'uturn':   1.5,
-                             'static':  6/3.6, 'dynamic': 7/3.6,  'tunnel': 9/3.6, 'tollgate': 6/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':  7/3.6,    'revpark': 6/3.6,      'uturn':   1.5,
+                             'static':  6/3.6, 'dynamic': 7/3.6,  'tunnel': 9/3.6, 'tollgate': 10/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
@@ -77,6 +77,7 @@ class Core(Node):
         self.yolo_light = ['None']
         self.traffic_stop = False
         self.pause = 0.0
+        self.traffic_pass = False
 
         self.A_check = False
         self.A_num = 0
@@ -170,7 +171,7 @@ class Core(Node):
                     self.sign_pose = msg.data[self.A_num + 4]
 
             if not self.A_check and self.mode == 'delivery_B':
-                self.sign_pose = msg.data[4]
+                self.sign_pose = msg.data[5]
 
             if self.sign_pose <= 100:
                 angle.data = 0.0
@@ -198,7 +199,13 @@ class Core(Node):
 
 
         if len([i for i in self.yolo_light if i in tf_light]) == 0:
-            self.traffic_stop = True
+            if self.link_num == 6 and 'Left' in self.yolo_light:
+                self.traffic_pass = True
+            elif self.link_num != 6:
+                self.traffic_pass = False
+            
+            if not self.traffic_pass:
+                self.traffic_stop = True
 
         else:
             self.traffic_stop = False

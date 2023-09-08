@@ -421,6 +421,9 @@ class GlobalPathPlanner(Node):
         to_yolo = String()
         if self.mode == 'tunnel':
             to_yolo.data = 'tunnel'
+        
+        elif self.global_index == 2:
+            to_yolo.data = 'static'
 
         # 정지선 15m 전부터 신호등 인식을 위한 YOLO 모델 활성화
         elif self.traffic_stop_wp <= 15:

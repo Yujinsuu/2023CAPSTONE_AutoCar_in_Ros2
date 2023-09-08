@@ -23,6 +23,7 @@ setup(
         'erp_publish = erp_control.erp_publish:main',
         'erp_client = erp_control.erp_client:main',
         'ERP42_ros2 = erp_control.ERP42_ros2:main',
+        'simul_plot = erp_control.simul_plot:main',
         'delay = erp_control.delay_test:main'
         ],
     },

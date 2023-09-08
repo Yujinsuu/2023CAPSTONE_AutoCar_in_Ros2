@@ -124,6 +124,25 @@ class AdaptiveClustering : public rclcpp::Node
             pt.filter(*pc_indices);
 
         }
+
+        else if (mode == "static") {
+            pt.setInputCloud(pcl_pc_in);
+            pt.setFilterFieldName("z");
+            pt.setFilterLimits(0, 4.0);
+            pt.filter(*pcl_pc_in);
+
+            pt.setInputCloud(pcl_pc_in);
+            pt.setFilterFieldName("y");
+            pt.setFilterLimits(-3.0, 3.0);
+            pt.filter(*pcl_pc_in);
+
+            pt.setInputCloud(pcl_pc_in);
+            pt.setFilterFieldName("x");
+            pt.setFilterLimits(-1.5, 10.0);
+            pt.filter(*pc_indices);
+
+        }
+
         else{
             pt.setInputCloud(pcl_pc_in);
             pt.setFilterFieldName("z");
@@ -137,7 +156,7 @@ class AdaptiveClustering : public rclcpp::Node
 
             pt.setInputCloud(pcl_pc_in);
             pt.setFilterFieldName("x");
-            pt.setFilterLimits(-1.1, 10.0);
+            pt.setFilterLimits(-1.5, 10.0);
             pt.filter(*pc_indices);
         }
 

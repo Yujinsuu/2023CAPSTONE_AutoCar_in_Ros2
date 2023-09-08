@@ -23,12 +23,12 @@ WEIGHTS = 'weights/trafficlight.pt'
 IMG_SIZE = 640
 DEVICE = ''
 AUGMENT = False
-CONF_THRES = 0.60
+CONF_THRES = 0.50
 IOU_THRES = 0.45
 CLASSES = None
 AGNOSTIC_NMS = False
 
-QUEUE_SIZE = 23
+QUEUE_SIZE = 13
 CLASS_MAP = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow']
 
 # Initialize
@@ -141,11 +141,11 @@ class YOLOv7(Node):
                 xmin, ymin, xmax, ymax = [int(tensor.item()) for tensor in xyxy]
 
                 ymean = (ymin + ymax) / 2
-
-                if ymean < self.img_height / 2:
-                    self.queue_list[id].append(1)
-                else:
-                    self.queue_list[id].append(0)
+                self.queue_list[id].append(1)
+                # if ymean < self.img_height / 2:
+                #     self.queue_list[id].append(1)
+                # else:
+                #     self.queue_list[id].append(0)
 
             ids = list(set(ids))
             for i in range(5):

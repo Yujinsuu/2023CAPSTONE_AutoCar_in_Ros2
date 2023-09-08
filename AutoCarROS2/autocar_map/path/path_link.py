@@ -206,5 +206,5 @@ def qualifier():
 
     return qualifier
 
-use_map = htech()
-start_index = 0
+use_map = kcity()
+start_index = 6
