@@ -152,8 +152,7 @@ class erp42(Node):
 		return np.deg2rad(output_steer)
 
 	def faster_motor_control(self, target_speed, gps_vel):
-		# if target_speed != 0 and gps_vel <= 0.2:
-		if self.t < 2:
+		if target_speed != 0 and gps_vel <= 0.2:
 			speed = 5.0
 		else :
 			speed = target_speed
@@ -176,11 +175,16 @@ class erp42(Node):
 		# self.steer = self.vision_steer
 
 		self.gear = int(msg.drive.acceleration)
-   
-		self.brake = int(msg.drive.jerk)
-		if self.t < 3:
+
+		# self.brake = int(msg.drive.jerk)
+		if self.t < 5:
 			self.brake = 0
-   
+
+		elif self.velocity - self.speed > - 0.5:
+			self.brake = int(msg.drive.jerk)
+
+		else:
+			self.brake = 0
 
 	def timer_callback(self):
 		# steer=radians(float(input("steer_angle:")))
