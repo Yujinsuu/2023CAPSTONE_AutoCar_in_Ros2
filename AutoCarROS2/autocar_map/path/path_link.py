@@ -72,13 +72,8 @@ class Path(Node):
 
                 data = df[df['Link'] == link]
 
-                # self.ax[var_name] = data['X-axis'].tolist()
-                # self.ay[var_name] = data['Y-axis'].tolist()
-                x = data['X-axis'].tolist()
-                y = data['Y-axis'].tolist()
-                d = 0 # 주차 경로 d m 앞으로 이동
-                self.ax[var_name] = [i - 0.4423572639935003 * d for i in x]
-                self.ay[var_name] = [i - 0.8308233860879995 * d for i in y]
+                self.ax[var_name] = data['X-axis'].tolist()
+                self.ay[var_name] = data['Y-axis'].tolist()
 
 
 def test_track():
@@ -144,18 +139,18 @@ def htech():
     # htech.car_mode[4] = 'tunnel'
     # htech.car_mode[0] = 'delivery_A'
     # htech.car_mode[3] = 'delivery_B'
-    
+
     htech.next_path[0] = 'right'
 
     return htech
 
 def revpark():
     base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/park_test.csv'
-    parking_file = file_path + '/htech/parking.csv'
+    global_file = file_path + '/htech/rev_global.csv'
+    parking_file = file_path + '/htech/parking_line.csv'
     revpark_file = file_path + '/htech/revpark.csv'
     revpark = Path(base_file, global_file, parking_file, revpark_file)
-    revpark.car_mode[0] = 'parking'
+    revpark.car_mode[1] = 'revpark'
 
     return revpark
 
@@ -173,7 +168,7 @@ def uturn():
 def kcity():
     base_file = file_path + '/KC_base.csv'
     global_file = file_path + '/kcity/track.csv'
-    parking_file = file_path + '/kcity/track_lane.csv'
+    parking_file = file_path + '/kcity/parking_line.csv'
     revpark_file = file_path + '/kcity/revpark.csv'
     kcity = Path(base_file, global_file, parking_file, revpark_file)
     kcity.car_mode[1] = 'delivery_A'
@@ -206,5 +201,5 @@ def qualifier():
 
     return qualifier
 
-use_map = kcity()
+use_map = revpark()
 start_index = 0

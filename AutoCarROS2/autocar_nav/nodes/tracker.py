@@ -119,7 +119,7 @@ class PathTracker(Node):
 
         if self.cyaw:
             if (self.mode == 'parking' and self.status == 'return') or (self.mode == 'revpark' and self.status == 'parking'):
-                d = -1
+                d = -0.8
                 self.x = self.x + d * np.cos(self.yaw)
                 self.y = self.y + d * np.sin(self.yaw)
 
@@ -130,14 +130,16 @@ class PathTracker(Node):
 
             else:
                 if self.mode == 'global' or self.vel > 10/3.6:
-                    d = 2
+                    d = 1.5
                 else:
                     d = 1
+
                 self.x = self.x + d * np.cos(self.yaw)
                 self.y = self.y + d * np.sin(self.yaw)
 
                 d_yaw = d * np.tan(self.sigma) / self.L
                 self.yaw = self.yaw + d_yaw
+
 
                 self.target_index_calculator()
 
@@ -259,6 +261,15 @@ class PathTracker(Node):
 
         elif sigma_t <= -self.max_steer:
             sigma_t = -self.max_steer
+
+        if self.mode == 'revpark':
+            if self.status in ['parking', 'return']:
+                self.kyaw = 2.0
+                if abs(sigma_t) > np.deg2rad(15):
+                    sigma_t = self.max_steer * sigma_t/abs(sigma_t)
+
+            else:
+                self.kyaw = 1.0
 
         self.set_vehicle_command(sigma_t)
         self.lock.release()

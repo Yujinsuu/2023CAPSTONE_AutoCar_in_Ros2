@@ -61,6 +61,9 @@ alias ip='sudo ifconfig enp2s0 192.168.3.121'
 alias velodyne='ros2 launch velodyne velodyne-all-nodes-VLP16-launch.py'
 alias cluster='ros2 launch launches cluster_launch.py'
 
+alias enc_tic='ros2 run autocar_odom get_encoder.py'
+alias enc_vel='ros2 run autocar_odom encoder_vel.py'
+
 alias port='sudo chmod 777 /dev/tty*'
 alias gps='noetic && roslaunch ublox_gps ublox_device.launch'
 alias ntrip='noetic && roslaunch ntrip_ros ntrip_ros.launch'

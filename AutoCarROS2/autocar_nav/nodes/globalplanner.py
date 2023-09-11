@@ -186,7 +186,7 @@ class GlobalPathPlanner(Node):
         transform = self.frame_transform(via_x[closest_id], via_y[closest_id], fx, fy, self.theta)
 
         if self.mode == 'revpark' and self.parking_path_num != -1:
-            wp_num = 48 + 5 * self.parking_path_num # kcity
+            wp_num = 47 + 5 * self.parking_path_num # kcity
             # wp_num = 45-10 + 7 * self.parking_path_num # test
         self.traffic_stop_wp = wp_num - wp_ahead - closest_id
 
@@ -261,20 +261,28 @@ class GlobalPathPlanner(Node):
             self.get_logger().info('Parking path number : {} '.format(self.parking_path_num))
 
             self.link = self.mode + '_' + str(self.parking_path_num)
+            park_x = self.mx[self.link]
+            park_y = self.my[self.link]
+
+            d = 0.5 # 주차 경로 d m 앞으로 이동
+            # park_x = [i - 0.4423572639935003 * d for i in park_x]
+            # park_y = [i - 0.8308233860879995 * d for i in park_y]
+            park_x = [i - 0.256388029315985 * d for i in park_x]
+            park_y = [i - 0.904206226115093 * d for i in park_y]
 
             point_x0 = self.mx['global_' + str(self.global_index)][-1]
-            point_x1 = self.mx[self.link][0]
+            point_x1 = park_x[0]
             point_y0 = self.my['global_' + str(self.global_index)][-1]
-            point_y1 = self.my[self.link][0]
+            point_y1 = park_y[0]
 
             point0 = [point_x0, point_y0]
             point1 = [point_x1, point_y1]
 
             px, py = self.interpolate(point0, point1)
 
-            for i in range(len(self.mx[self.link])):
-                px.append(self.mx[self.link][i])
-                py.append(self.my[self.link][i])
+            for i in range(len(park_x)):
+                px.append(park_x[i])
+                py.append(park_y[i])
 
             self.parking_stop_wp = self.get_parking_stop_wp(px, py)
             self.direction = 'Straight'
@@ -421,7 +429,7 @@ class GlobalPathPlanner(Node):
         to_yolo = String()
         if self.mode == 'tunnel':
             to_yolo.data = 'tunnel'
-        
+
         elif self.global_index == 2:
             to_yolo.data = 'static'
 

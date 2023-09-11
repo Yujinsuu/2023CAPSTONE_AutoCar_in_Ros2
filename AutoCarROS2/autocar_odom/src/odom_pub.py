@@ -64,7 +64,7 @@ class odomPublisher(Node):
 		self.yaw_offset_av_pub = Float32()
 		self.final_yaw_pub = Float32()
 		self.gps_yaw_pub= Float32()
-  
+
 		self.last_corr = False
 
 		self.x_cov = 0.0
@@ -75,7 +75,7 @@ class odomPublisher(Node):
 		self.gy_key_offset = 0.0
 		self.dx_key_offset = 0.0
 		self.dy_key_offset = 0.0
-		
+
 		self.gpose = Odometry()
 		self.gpose.header.stamp = self.get_clock().now().to_msg()
 		self.gpose.header.frame_id = 'odom'
@@ -111,9 +111,9 @@ class odomPublisher(Node):
 
 	def encoder_callback(self, enc):
 		self.encoder_vel = enc.twist.twist.linear.x
-  
+
 	def pose_offset_cb(self, msg):
-     
+
 		self.gx_key_offset = msg.data[0]
 		self.gy_key_offset = msg.data[1]
 		self.dx_key_offset = msg.data[2]
@@ -124,8 +124,8 @@ class odomPublisher(Node):
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['kcity'][0]
-		y = a - self.gps_offset['kcity'][1]
+		x = b - self.gps_offset['seoul'][0]
+		y = a - self.gps_offset['seoul'][1]
 
 		self.gpose.pose.pose.position.x=x + self.gx_key_offset
 		self.gpose.pose.pose.position.y=y + self.gy_key_offset
@@ -260,11 +260,11 @@ class odomPublisher(Node):
 		#self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}')
 		self.odom_pub.publish(self.gpose)
 		self.odom_pub.publish(self.gpose)
-  
+
 		self.yaw_offset_av_pub.data = self.yaw_offset_av_print
 		self.final_yaw_pub.data = self.final_imu_yaw
 		self.gps_yaw_pub.data = self.gps_yaw
-  
+
 		self.pub_yaw_offset_av.publish(self.yaw_offset_av_pub)
 		self.pub_final_yaw.publish(self.final_yaw_pub)
 		self.pub_gps_yaw.publish(self.gps_yaw_pub)
