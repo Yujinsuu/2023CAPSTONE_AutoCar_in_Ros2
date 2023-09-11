@@ -207,4 +207,4 @@ def qualifier():
     return qualifier
 
 use_map = kcity()
-start_index = 6
+start_index = 0

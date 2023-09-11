@@ -13,7 +13,7 @@ def generate_launch_description():
         Node(
             package = 'autocar_map',
             name = 'wall_follower',
-            # executable = 'wall_following.py'
+            #executable = 'wall_following.py'
             executable = 'wall_path_and_lane.py'
         ),
 

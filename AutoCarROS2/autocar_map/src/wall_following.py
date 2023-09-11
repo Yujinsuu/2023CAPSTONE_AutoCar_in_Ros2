@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 import time
+import math
 import numpy as np
 from sklearn.linear_model import RANSACRegressor
 
@@ -8,7 +9,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 
-from std_msgs.msg import Int32MultiArray, String
+from std_msgs.msg import Int32MultiArray, String, Float32
 from sensor_msgs.msg import LaserScan
 from autocar_msgs.msg import Path2D
 from geometry_msgs.msg import Point, Pose2D, TransformStamped
@@ -27,6 +28,7 @@ class WallFollower(Node):
         self.create_rate(10)
         self.viz_pub = self.create_publisher(Marker, '/rviz/wall', 10)
         self.path_pub = self.create_publisher(Path2D, '/wall_path', 10)
+        self.lidar_yaw_pub = self.create_publisher(Float32, '/lidar_yaw', 10)
         # self.state_pub = self.create_publisher(String, '/tunnel_check', 10)
 
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
@@ -48,6 +50,7 @@ class WallFollower(Node):
         self.state = String()
         self.state.data = 'entry'
 
+        self.lidar_yaw = Float32()
         self.ransac = RANSACRegressor()
 
         self.tf_buffer = Buffer()
@@ -120,6 +123,7 @@ class WallFollower(Node):
 
         slope = self.ransac.estimator_.coef_[0][0]
         intercept = self.ransac.estimator_.intercept_[0]
+        
 
         x_coords = np.arange(-10, 20)[:, np.newaxis]
         # num = min(self.path_length, len(x_coords))
@@ -129,6 +133,11 @@ class WallFollower(Node):
         self.plot_line(x_coords, y_coords)
 
         y_coords += self.WalltoPath
+
+        #pub lidar yaw
+        
+        self.lidar_yaw.data = math.atan2(slope, 1.0)
+        self.lidar_yaw_pub.publish(self.lidar_yaw)
 
         return x_coords, y_coords
 

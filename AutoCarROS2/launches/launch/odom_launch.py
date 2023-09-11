@@ -37,17 +37,17 @@ def generate_launch_description():
             executable = 'odom_pub.py'
         ),
 
-        Node(
-            package = odom,
-            name = 'pub_enc_tic',
-            executable = 'get_encoder.py'
-        ),
+        # Node(
+        #     package = odom,
+        #     name = 'pub_enc_tic',
+        #     executable = 'get_encoder.py'
+        # ),
 
-        Node(
-            package = odom,
-            name = 'pub_enc_vel',
-            executable = 'encoder_vel.py'
-        ),
+        # Node(
+        #     package = odom,
+        #     name = 'pub_enc_vel',
+        #     executable = 'encoder_vel.py'
+        # ),
 
         Node(
             package = 'robot_localization',

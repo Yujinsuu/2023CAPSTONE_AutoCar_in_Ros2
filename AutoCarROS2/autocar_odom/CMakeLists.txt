@@ -37,6 +37,8 @@ install(PROGRAMS
   src/get_encoder.py
   src/encoder_vel.py
   src/tf_pub.py
+  src/move_position.py
+  src/get_yaw_init.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -11,7 +11,7 @@ from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Float32MultiArray
 from sensor_msgs.msg import NavSatFix, Imu
 from autocar_msgs.msg import LinkArray
 from geometry_msgs.msg import TwistWithCovarianceStamped, QuaternionStamped, Vector3Stamped, TransformStamped
@@ -31,7 +31,8 @@ class odomPublisher(Node):
 		self.data_pub_gps = self.create_publisher(Odometry, '/data/gps', qos_profile)
 		self.data_pub_imu = self.create_publisher(Imu, '/data/imu', qos_profile)
 		self.pub_yaw_offset_av = self.create_publisher(Float32, 'yaw_offset_av', qos_profile)
-
+		self.pub_final_yaw = self.create_publisher(Float32, 'final_yaw', qos_profile)
+		self.pub_gps_yaw = self.create_publisher(Float32, 'gps_yaw', qos_profile)
 
 		self.gps_sub = self.create_subscription(NavSatFix, '/ublox_gps/fix', self.gps_callback, qos_profile)
 		self.gps_vel_sub = self.create_subscription(TwistWithCovarianceStamped, '/ublox_gps/fix_velocity', self.gps_vel_callback, qos_profile)
@@ -39,6 +40,7 @@ class odomPublisher(Node):
 		self.imu_angularV_sub = self.create_subscription(Vector3Stamped, '/imu/angular_velocity', self.imu_angularV_callback, qos_profile)
 		self.encoder_sub = self.create_subscription(Odometry, '/data/encoder_vel', self.encoder_callback, 10)
 		self.mode_sub = self.create_subscription(LinkArray,'/autocar/mode', self.mode_callback, qos_profile )
+		self.pose_offset_sub= self.create_subscription(Float32MultiArray , '/data/key_offset', self.pose_offset_cb, 10)
 
 		self.heading_array = []
 		self.heading = 0
@@ -60,12 +62,20 @@ class odomPublisher(Node):
 		self.encoder_vel = 0.0
 		self.yaw_offset_av_print = 0.0
 		self.yaw_offset_av_pub = Float32()
+		self.final_yaw_pub = Float32()
+		self.gps_yaw_pub= Float32()
+  
 		self.last_corr = False
 
 		self.x_cov = 0.0
 		self.y_cov = 0.0
 		self.corr_mode = False
 
+		self.gx_key_offset = 0.0
+		self.gy_key_offset = 0.0
+		self.dx_key_offset = 0.0
+		self.dy_key_offset = 0.0
+		
 		self.gpose = Odometry()
 		self.gpose.header.stamp = self.get_clock().now().to_msg()
 		self.gpose.header.frame_id = 'odom'
@@ -77,7 +87,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', 167)
+		self.declare_parameter('yaw_init', 70)
 		self.declare_parameter('yaw_offset_array', [])
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.yaw_offset_array = self.get_parameter('yaw_offset_array').value
@@ -87,8 +97,6 @@ class odomPublisher(Node):
 
 
 		self.timer = self.create_timer(0.1, self.odom_publish)
-
-		# self.gps_tf_publisher_static()
 
 	def update_parameter(self, params):
 		for param in params:
@@ -103,17 +111,24 @@ class odomPublisher(Node):
 
 	def encoder_callback(self, enc):
 		self.encoder_vel = enc.twist.twist.linear.x
+  
+	def pose_offset_cb(self, msg):
+     
+		self.gx_key_offset = msg.data[0]
+		self.gy_key_offset = msg.data[1]
+		self.dx_key_offset = msg.data[2]
+		self.dy_key_offset = msg.data[3]
 
 	def gps_callback(self, gps):
 
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['kcity'][0]-.5
+		x = b - self.gps_offset['kcity'][0]
 		y = a - self.gps_offset['kcity'][1]
 
-		self.gpose.pose.pose.position.x=x
-		self.gpose.pose.pose.position.y=y
+		self.gpose.pose.pose.position.x=x + self.gx_key_offset
+		self.gpose.pose.pose.position.y=y + self.gy_key_offset
 
 		#추가
 		self.x_cov =  gps.position_covariance[0]
@@ -124,11 +139,6 @@ class odomPublisher(Node):
 			self.corr_mode = True
 		else:
 			self.corr_mode = False
-
-		# self.set_odom_tf = self.set_odom_tf + 1
-		# if(self.set_odom_tf == 1):
-		# 	self.odom_tf_publisher_static()
-
 
 		#publish for dead reckoning
 		self.gps_data.pose.pose.position.x = x
@@ -171,6 +181,7 @@ class odomPublisher(Node):
 
 		if self.velocity > 7/3.6:
 			self.gps_yaw = euler_from_quaternion(0.0, 0.0, gps_qz, gps_qw)
+			normalise_angle(self.gps_yaw)
 			self.yaw_offset = normalise_angle(self.final_imu_yaw - self.gps_yaw)
 
 		self.i = self.i + 1
@@ -217,7 +228,8 @@ class odomPublisher(Node):
 		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
 		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
 		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
-		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
+		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
+  		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
 		# self.get_logger().info('corr_mode: %s' % self.corr_mode)
 
 		self.final_imu_yaw = normalise_angle(self.imu_yaw) #normalise_angle(self.imu_yaw - self.yaw_offset_av)
@@ -248,41 +260,14 @@ class odomPublisher(Node):
 		#self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}')
 		self.odom_pub.publish(self.gpose)
 		self.odom_pub.publish(self.gpose)
+  
 		self.yaw_offset_av_pub.data = self.yaw_offset_av_print
+		self.final_yaw_pub.data = self.final_imu_yaw
+		self.gps_yaw_pub.data = self.gps_yaw
+  
 		self.pub_yaw_offset_av.publish(self.yaw_offset_av_pub)
-
-
-	# def gps_tf_publisher_static(self):
-
-	# 	transform = TransformStamped()
-	# 	transform.header.frame_id = 'map'
-	# 	transform.child_frame_id = 'odom0'
-	# 	transform.transform.translation.x = 0.0 #self.gpose.pose.pose.position.x
-	# 	transform.transform.translation.y = 0.0 #self.gpose.pose.pose.position.y
-	# 	# Broadcast the transform as a static transform
-	# 	static_broadcaster = StaticTransformBroadcaster(self)
-	# 	static_broadcaster.sendTransform(transform)
-
-	# def odom_tf_publisher_static(self):
-	# 	  # create odom frame
-	# 	transform = TransformStamped()
-	# 	transform.header.frame_id = 'map'
-	# 	transform.child_frame_id = 'odom'
-	# 	transform.transform.translation.x = 0.0 #self.gpose.pose.pose.position.x
-	# 	transform.transform.translation.y = 0.0 #self.gpose.pose.pose.position.y
-	# 	# Broadcast the transform as a static transform
-	# 	static_broadcaster = StaticTransformBroadcaster(self)
-	# 	static_broadcaster.sendTransform(transform)
-
-	# def tf_publisher_dynamic(self):
-
-	# 	 # create odom_footprint
-	# 	transform = TransformStamped()
-	# 	transform.header.stamp = self.get_clock().now().to_msg()
-	# 	transform.header.frame_id = 'odom'
-	# 	transform.child_frame_id = 'odom_footprint'
-	# 	dynamic_broadcaster = TransformBroadcaster(self)
-	# 	dynamic_broadcaster.sendTransform(transform)
+		self.pub_final_yaw.publish(self.final_yaw_pub)
+		self.pub_gps_yaw.publish(self.gps_yaw_pub)
 
 
 def main(args=None):

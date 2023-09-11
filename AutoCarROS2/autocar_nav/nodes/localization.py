@@ -12,7 +12,7 @@ from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, Float32MultiArray
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D, LinkArray
 from geometry_msgs.msg import PoseStamped, TransformStamped
@@ -35,6 +35,8 @@ class Localization(Node):
         self.GPS_odom_sub = self.create_subscription(Odometry, '/autocar/odom', self.vehicle_state_cb, 10)
         self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10, callback_group=ReentrantCallbackGroup())
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
+        self.pose_offset_sub= self.create_subscription(Float32MultiArray , '/data/key_offset', self.pose_offset_cb, 10)
+
 
         # Load parameters
         try:
@@ -70,6 +72,9 @@ class Localization(Node):
 
         self.cov1 =0.0
         self.cov2 =0.0
+        
+        self.dx_key_offset = 0.0
+        self.dy_key_offset = 0.0
 
         self.gp = []
         self.dp = []
@@ -128,12 +133,12 @@ class Localization(Node):
 
     def dead_reckoning_cb(self, msg):
 
-        # if (self.cov1 > 0.2 or self.cov2 > 0.2) or self.mode == 'tunnel':
-        #     self.dr_mode = True
-        #     self.odom_state = 'Dead-Reckoning'
-        # elif (self.cov1 < 0.1 or self.cov2 < 0.1) and self.mode != 'tunnel':
-        #     self.dr_mode = False
-        #     self.odom_state = 'GPS-Odometry'
+        if (self.cov1 > 0.2 or self.cov2 > 0.2) or self.mode == 'tunnel':
+            self.dr_mode = True
+            self.odom_state = 'Dead-Reckoning'
+        elif (self.cov1 < 0.1 or self.cov2 < 0.1) and self.mode != 'tunnel':
+            self.dr_mode = False
+            self.odom_state = 'GPS-Odometry'
 
 
         self.dp.append((msg.pose.pose.position.x,msg.pose.pose.position.y,time.time()))
@@ -163,11 +168,11 @@ class Localization(Node):
                 self.tunnel_exit = True
 
         self.dr_state = msg
-        self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x
-        self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y
+        self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x + self.offset_x + self.dx_key_offset
+        self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y + self.offset_y + self.dy_key_offset
 
         offset = Float64MultiArray()
-        offset.data = [- self.init_x + self.offset_x, - self.init_y + self.offset_y]
+        offset.data = [- self.init_x + self.offset_x + self.dx_key_offset, - self.init_y + self.offset_y + self.dy_key_offset]
         self.offset_pub.publish(offset)
         #self.get_logger().info('offset  : %s' %offset.data)
 
@@ -246,6 +251,11 @@ class Localization(Node):
 
     def status_cb(self, msg):
         self.status = msg.data
+
+    def pose_offset_cb(self, msg):
+        
+        self.dx_key_offset = msg.data[2]
+        self.dy_key_offset = msg.data[3]
 
     # Gets vehicle position from Gazebo and publishes data
     def update_state(self, state):

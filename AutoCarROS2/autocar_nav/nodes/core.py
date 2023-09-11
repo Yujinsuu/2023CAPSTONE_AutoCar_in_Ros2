@@ -53,8 +53,8 @@ class Core(Node):
         self.status = 'driving'
         self.time = 0.0
 
-        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':  7/3.6,    'revpark': 6/3.6,      'uturn':   1.5,
-                             'static':  6/3.6, 'dynamic': 7/3.6,  'tunnel': 9/3.6, 'tollgate': 10/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
+        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':  7/3.6,    'revpark': 6/3.6,      'uturn':   10/3.6, 'track': 1.5,
+                             'static':  6/3.6, 'dynamic': 7/3.6,  'tunnel': 9/3.6, 'tollgate': 15/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
         self.vel = 1.0
@@ -273,10 +273,16 @@ class Core(Node):
                 if self.traffic_stop_wp <= 0:
                     self.status = 'complete'
 
-                if self.waypoint >= 30 and self.obs_distance < 7:
-                    self.brake = 0.0
-                    self.t = 0
-                    self.status = 'track'
+                if self.waypoint >= 20:
+                    if self.obs_distance < 7:
+                        self.cmd_speed = self.target_speed['track']
+                        self.brake = 0.0
+                        self.t = 0
+                        self.status = 'track'
+                    
+                    elif 10 < self.obs_distance < 15:
+                        self.brake = 20.0
+                        self.cmd_speed = self.target_speed['track']
 
 
             elif self.status == 'track':
@@ -285,11 +291,12 @@ class Core(Node):
                         self.avoid_count = time.time()
                         self.status = 'complete'
 
+                self.cmd_speed = self.target_speed['track']
                 self.cmd_steer = self.track_steer
 
             else:
-                if time.time() - self.avoid_count > 3:
-                    self.cmd_speed = self.target_speed['tollgate']
+                if time.time() - self.avoid_count < 3:
+                    self.cmd_speed = self.target_speed['track']
 
 
         elif self.mode == 'tunnel':

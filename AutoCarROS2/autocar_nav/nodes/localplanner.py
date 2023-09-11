@@ -91,8 +91,8 @@ class LocalPathPlanner(Node):
         self.start = time.time()
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
-        self.L = 1.45 #1.04/2+1.6/2 # 차량 길이
-        self.W = 1.35 # 차량 폭
+        self.L = 1.5 #1.04/2+1.6/2 # 차량 길이
+        self.W = 1.45 # 차량 폭
         self.p_L = 5.0 # viz상의 차선 길이
         self.p_W = 0.1 # viz상의 차선 폭
         self.obstacle_detected = False
@@ -232,6 +232,8 @@ class LocalPathPlanner(Node):
             for i in range(0,len(cyaw),10):
                 if self.mode == 'static':
                     car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.65))
+                elif self.mode == 'uturn':
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.))
                 else:
                     car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.8))
 
