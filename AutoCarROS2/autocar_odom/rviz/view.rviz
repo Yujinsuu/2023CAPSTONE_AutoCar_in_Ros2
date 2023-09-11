@@ -54,9 +54,17 @@ Visualization Manager:
         All Enabled: true
         car:
           Value: true
+        imu_link:
+          Value: true
         map:
           Value: true
         odom:
+          Value: true
+        odom_footprint:
+          Value: true
+        velodyne:
+          Value: true
+        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -67,6 +75,9 @@ Visualization Manager:
         map:
           odom:
             car:
+              velodyne:
+                {}
+            odom_footprint:
               {}
       Update Interval: 0
       Value: true
@@ -86,7 +97,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -134,7 +145,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -173,7 +184,7 @@ Visualization Manager:
       Enabled: true
       Name: WallScan
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -235,7 +246,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 172
+      Max Intensity: 255
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
@@ -257,7 +268,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        {}
+        adaptive_clustering_v1: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -299,7 +310,7 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: Rubber_cone
       Namespaces:
         {}
@@ -309,7 +320,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/rubber_cone
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -422,16 +433,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 87.83397674560547
+      Distance: 138.20846557617188
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -303.0221862792969
-        Y: 545.3731689453125
-        Z: -42.121761322021484
+        X: -301.23382568359375
+        Y: 551.9620361328125
+        Z: -42.12858200073242
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -440,7 +451,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 4.784032344818115
+      Yaw: 1.245848298072815
     Saved: ~
 Window Geometry:
   Displays:

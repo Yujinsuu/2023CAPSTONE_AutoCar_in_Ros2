@@ -73,7 +73,7 @@ class ParkingPath(Node):
 
         self.mode = 'global'
 
-        self.car_width = 1.2
+        self.car_width = 1.0
         self.obstacles = []
 
         self.timer = self.create_timer(0.1, self.park_path_publish)

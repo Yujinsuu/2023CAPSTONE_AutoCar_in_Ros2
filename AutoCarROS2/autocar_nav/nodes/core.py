@@ -487,7 +487,7 @@ class Core(Node):
                 if self.traffic_stop_wp <= 10:
                     self.cmd_speed = self.target_speed['rush']
 
-                    brake_force = 150
+                    brake_force = 300
                     max_brake = 200
                     self.brake_control(brake_force, max_brake, 2)
 
@@ -504,17 +504,17 @@ class Core(Node):
 
             elif self.status == 'return':
                 self.cmd_speed = self.target_speed['parking']
-                if self.parking_stop_wp <= 15:
+                if self.parking_stop_wp <= 14:
                     self.cmd_steer = 0.45
 
                 if self.parking_stop_wp <= 10:
                     self.cmd_speed = self.target_speed['rush']
 
-                    brake_force = 150
+                    brake_force = 300
                     max_brake = 200
                     self.brake_control(brake_force, max_brake, 3)
 
-                elif self.parking_stop_wp <= 12:
+                elif self.parking_stop_wp <= 11:
                     self.brake_stop = False
                     self.brake = 20.0
                     self.t = 0

@@ -72,9 +72,16 @@ class Path(Node):
 
                 data = df[df['Link'] == link]
 
-                self.ax[var_name] = data['X-axis'].tolist()
-                self.ay[var_name] = data['Y-axis'].tolist()
+                # self.ax[var_name] = data['X-axis'].tolist()
+                # self.ay[var_name] = data['Y-axis'].tolist()
+                park_x = data['X-axis'].tolist()
+                park_y = data['Y-axis'].tolist()
 
+                d = -0.5 # 주차 경로 d m 앞으로 이동
+                # self.ax[var_name] = [i - 0.4423572639935003 * d for i in park_x]
+                # self.ay[var_name] = [i - 0.8308233860879995 * d for i in park_y]
+                self.ax[var_name] = [i - 0.256388029315985 * d for i in park_x]
+                self.ay[var_name] = [i - 0.904206226115093 * d for i in park_y]
 
 def test_track():
     base_file = file_path + '/ST_base.csv'
