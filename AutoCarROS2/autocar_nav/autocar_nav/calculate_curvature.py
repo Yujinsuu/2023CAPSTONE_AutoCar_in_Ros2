@@ -37,9 +37,13 @@ def classify_segments(x, y, threshold):
     return direction
 
 def calculate_point_curvature(x1, y1, x2, y2, x3, y3):
-    length1 = calculate_distance(x1, y1, x2, y2)
-    length2 = calculate_distance(x2, y2, x3, y3)
-    length3 = calculate_distance(x3, y3, x1, y1)
+    l1 = calculate_distance(x1, y1, x2, y2)
+    l2 = calculate_distance(x2, y2, x3, y3)
+    l3 = calculate_distance(x3, y3, x1, y1)
+    length1 = l1 if l1 != 0 else 1e-2
+    length2 = l2 if l2 != 0 else 1e-2
+    length3 = l3 if l3 != 0 else 1e-2
+
     try:
         area = calculate_triangle_area(length1, length2, length3)
     except:

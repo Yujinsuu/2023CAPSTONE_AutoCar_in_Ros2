@@ -6,12 +6,15 @@ import matplotlib.pyplot as plt
 
 plt.figure(1)
 
-df = pd.read_csv('output.csv')
+df = pd.read_csv('track.csv')
 
-x = df['X-axis'].values.tolist()
-y = df['Y-axis'].values.tolist()
+x = df[df['Link']==6]['X-axis'].values.tolist()
+y = df[df['Link']==6]['Y-axis'].values.tolist()
 
-
-plt.plot(x,y,'o-',linewidth=0.5)
-
+d = 0
+r = 100
+plt.plot(x[d:d+r],y[d:d+r],'o-',linewidth=0.5)
+plt.plot(x[d],y[d],'ro',linewidth=0.5)
+for i in range(d,d+r):
+    plt.text(x[i], y[i], str(i), ha='center', va='bottom')
 plt.show()

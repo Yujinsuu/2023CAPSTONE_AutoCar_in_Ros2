@@ -7,26 +7,29 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
-file_path = 'global.csv'
+file_path = 'revpark.csv'
 df=pd.read_csv(file_path)
 
-x = df['X-axis'][df['Link']==3].tolist()
-y = df['Y-axis'][df['Link']==3].tolist()
+# offset = [-0.4423572639935003, -0.8308233860879995] # kcity
+offset = [-0.256388029315985, -0.904206226115093] # htech
 
-ax = -3.5
-ay = 1.04
+x0 = df['X-axis'][df['Link']==0].tolist()
+y0 = df['Y-axis'][df['Link']==0].tolist()
 
-x0 = [i+3*ax for i in x]
-y0 = [i+3*ay for i in y]
+x = [i + 0.256388029315985 * 0.5 for i in x0]
+y = [i + 0.904206226115093 * 0.5 for i in y0]
+
+num = len(x)
+d = 5.2
 
 wx=[]
 wy=[]
 wz=[]
 
-for i in range(21):
-    for j in range(len(x)):
-        wx.append(x[j]+i*ax)
-        wy.append(y[j]+i*ay)
+for i in range(3):
+    for j in range(num):
+        wx.append(x[j] + i * d * offset[0])
+        wy.append(y[j] + i * d * offset[1])
         wz.append(i)
 
 

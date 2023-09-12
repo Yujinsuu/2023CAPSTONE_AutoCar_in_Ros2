@@ -43,7 +43,7 @@ class erp42(Node):
 		self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_callback, 10)
 		self.ser = serial.serial_for_url("/dev/ttyERP", baudrate=115200, timeout=1)
 
-		self.t = 0.0
+		self.departure = time.time()
 		self.velocity = 0.0
 		self.speed = 0.0
 		self.cmd_steer = 0.0
@@ -53,6 +53,16 @@ class erp42(Node):
 		self.gear = 0
 		self.dir = ['Forward', 'Forward', 'Backward']
 
+		self.prev_speed = 0.0
+		self.prev_gear = 0
+		self.gear_change = False
+		self.slow_down = False
+		self.brake_time = time.time()
+		self.brake_force = 0
+		self.t = 0
+		self.dt = 0.3
+
+		# plot variable
 		self.time = time.time()
 		self.times = []
 		self.target_value = []
@@ -163,9 +173,9 @@ class erp42(Node):
 	def vehicle_callback(self, msg):
 		self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
 		if self.velocity >= 0.5:
-			self.t += 0.1
+			self.departure += 0.1
 
-	def acker_callback(self, msg):
+	def acker_callback1(self, msg):
 		# self.speed = msg.drive.speed
 		self.speed = self.faster_motor_control(msg.drive.speed, self.velocity)
 
@@ -177,7 +187,7 @@ class erp42(Node):
 		self.gear = int(msg.drive.acceleration)
 
 		# self.brake = int(msg.drive.jerk)
-		if self.t < 5:
+		if self.departure < 5:
 			self.brake = 0
 
 		elif self.velocity - self.speed > - 0.5:
@@ -186,10 +196,87 @@ class erp42(Node):
 		else:
 			self.brake = 0
 
+	def brake_control(self, b, m, t=3):
+		brake = b * self.t
+		self.t += self.dt
+
+		if brake >= m: brake = m
+
+		return brake
+
+	def acker_callback(self, msg):
+		# self.steer = msg.drive.steering_angle
+		cmd_steer = np.rad2deg(msg.drive.steering_angle)
+		self.steer = self.real_steer(cmd_steer)
+
+		quick_stop = bool(msg.drive.jerk)
+
+		input_speed = msg.drive.speed
+		if self.prev_speed - input_speed > 0:
+			if not self.slow_down:
+				self.brake_time = time.time()
+				self.brake_force = 300 * (self.prev_speed - input_speed) / self.prev_speed
+			self.slow_down = True
+
+		self.gear = int(msg.drive.acceleration)
+		if self.gear != self.prev_gear:
+			self.gear_change = True
+
+		# Full brake
+		if quick_stop:
+			self.speed = 0.0
+
+			if self.velocity > 0.1:
+				self.brake_time = time.time()
+
+			if time.time() - self.brake_time < 2:
+				self.brake = 200
+
+		# Gear Change
+		elif self.gear_change:
+			self.speed = 0.0
+
+			if self.velocity > 0.1:
+				self.brake_time = time.time()
+
+			if time.time() - self.brake_time < 3:
+				self.brake = 200
+
+			else:
+				self.gear_change = False
+				self.brake = 0
+
+		# Deceleration zones
+		elif self.slow_down:
+			if abs(self.velocity - input_speed) > 1:
+				self.brake_time = time.time()
+
+			if self.velocity - input_speed > -0.5:
+				self.speed = 0.0
+				max_brake = 150
+				self.brake = self.brake_control(self.brake_force, max_brake, 3)
+
+			if self.t > 3:
+				self.slow_down = False
+				self.brake = 0
+				self.t = 0
+
+		else:
+			self.speed = self.faster_motor_control(input_speed, self.velocity)
+			self.brake = 0
+
+		# On initial departure
+		if self.departure < 5:
+			self.brake = 0
+
+		self.prev_gear = self.gear
+		self.prev_speed = input_speed
+
 	def timer_callback(self):
 		# steer=radians(float(input("steer_angle:")))
 
-		print("Speed :",round(self.speed*3.6, 1), "km/h\t Steer :", round(np.rad2deg(self.steer), 2), "deg\t Brake :",self.brake, "%\t Gear :", self.dir[self.gear])
+		print("Speed :", round(self.speed*3.6, 1), "km/h\t", "Steer :", round(np.rad2deg(self.steer), 2), "deg\t",
+					"Brake :", self.brake, "%\t", 									"Gear :", self.dir[self.gear])
 		self.Send_to_ERP42(self.gear, self.speed, -self.steer, self.brake)
 
 	def plot_creator(self):

@@ -186,7 +186,7 @@ class GlobalPathPlanner(Node):
         transform = self.frame_transform(via_x[closest_id], via_y[closest_id], fx, fy, self.theta)
 
         if self.mode == 'revpark' and self.parking_path_num != -1:
-            wp_num = 45 + 5 * self.parking_path_num # kcity
+            wp_num = 46 + 5 * self.parking_path_num # kcity
             # wp_num = 45-10 + 7 * self.parking_path_num # test
         self.traffic_stop_wp = wp_num - wp_ahead - closest_id
 
@@ -324,6 +324,7 @@ class GlobalPathPlanner(Node):
                 py = self.my[self.link][(closest_id - self.wp_behind) : (closest_id + self.wp_ahead)]
 
             self.direction = classify_segments(px[self.wp_behind:], py[self.wp_behind:], self.curv_thresh)
+
             self.parking_stop_wp = 1e3
 
             if self.mode == 'tunnel':
@@ -430,7 +431,7 @@ class GlobalPathPlanner(Node):
         if self.mode == 'tunnel':
             to_yolo.data = 'tunnel'
 
-        elif self.global_index == 2:
+        elif self.global_index == 2 and self.mode == 'static':
             to_yolo.data = 'static'
 
         # 정지선 15m 전부터 신호등 인식을 위한 YOLO 모델 활성화

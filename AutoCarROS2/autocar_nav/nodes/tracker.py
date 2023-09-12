@@ -84,8 +84,8 @@ class PathTracker(Node):
                   'dynamic'   : {'Straight': 1.0, 'Curve': 1.0},
                   'tollgate'  : {'Straight': 1.0, 'Curve': 1.0},
                   'tunnel'    : {'Straight': 1.0, 'Curve': 1.0},
-                  'delivery_A': {'Straight': 1.0, 'Curve': 1.0},
-                  'delivery_B': {'Straight': 1.0, 'Curve': 1.0},
+                  'delivery_A': {'Straight': 1.5, 'Curve': 1.5},
+                  'delivery_B': {'Straight': 1.5, 'Curve': 1.5},
                   'finish'    : {'Straight': 1.0, 'Curve': 1.0}}
         self.ksoft = 0.1
         self.kyaw = 1.0
@@ -129,7 +129,7 @@ class PathTracker(Node):
                 self.target_index_calculator_backward()
 
             else:
-                if self.mode == 'global' or self.vel > 10/3.6:
+                if self.mode == 'global' or self.vel > 12/3.6:
                     d = 1.5
                 else:
                     d = 1

@@ -51,9 +51,8 @@ class Core(Node):
         self.direction = 'None'
         self.next_path = 'straight'
         self.status = 'driving'
-        self.time = 0.0
 
-        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':  7/3.6,    'revpark': 8/3.6,      'uturn':   10/3.6, 'track': 1.5,
+        self.target_speed = {'global': 15/3.6,  'curve': 10/3.6, 'parking': 6/3.6,     'rush':  7/3.6,    'revpark': 8/3.6,   'uturn':   10/3.6, 'track':   1.5,
                              'static':  6/3.6, 'dynamic': 7/3.6,  'tunnel': 9/3.6, 'tollgate': 15/3.6, 'delivery_A': 4/3.6, 'delivery_B': 4/3.6,
                              'finish': 10/3.6}
 
@@ -84,6 +83,7 @@ class Core(Node):
         self.sign_pose = 0
         self.distance = -1.0
         self.stop_wp = 1e3
+        self.delivery_stop = False
 
         self.Mount_angle = 30
         self.Camera_angle = 78
@@ -218,9 +218,9 @@ class Core(Node):
         if self.brake >= m: self.brake = m
 
         if self.t >= t: self.brake = 0
-        elif self.brake_stop:
-            self.cmd_speed = 0.0
-            self.cmd_steer = 0.0
+        # elif self.brake_stop:
+        #     self.cmd_speed = 0.0
+        #     self.cmd_steer = 0.0
 
 
     def autocar_control(self):
@@ -485,8 +485,6 @@ class Core(Node):
                 self.gear = 2.0
 
                 if self.traffic_stop_wp <= 10:
-                    self.cmd_speed = self.target_speed['rush']
-
                     brake_force = 300
                     max_brake = 200
                     self.brake_control(brake_force, max_brake, 2)
@@ -508,8 +506,6 @@ class Core(Node):
                     self.cmd_steer = 0.45
 
                 if self.parking_stop_wp <= 10:
-                    self.cmd_speed = self.target_speed['rush']
-
                     brake_force = 300
                     max_brake = 200
                     self.brake_control(brake_force, max_brake, 3)
@@ -536,8 +532,12 @@ class Core(Node):
 
         elif self.mode == 'delivery_A':
             if self.status == 'driving':
-                if self.waypoint > 30:
+                if self.waypoint > 45:
                     self.status = 'check'
+
+                elif self.waypoint < 20:
+                    self.cmd_speed = self.target_speed['curve']
+
 
             elif self.status == 'check':
                 if self.distance != -1:
@@ -549,15 +549,18 @@ class Core(Node):
                     self.t = 0
                     self.status = 'stop'
 
-                if self.traffic_stop_wp <= 15:
+                if self.traffic_stop_wp <= 20:
                     self.status = 'complete'
 
             elif self.status == 'detected':
-
                 if self.stop_wp - self.waypoint <= 0:
                     self.status = 'stop'
 
+                elif self.traffic_stop_wp <= 15:
+                    self.status = 'complete'
+
             elif self.status == 'stop':
+                self.delivery_stop = True
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
@@ -566,21 +569,22 @@ class Core(Node):
                 self.brake_control(brake_force, max_brake, 2)
 
                 if self.t >= 6:
+                    self.delivery_stop = False
                     self.status = 'complete'
                     self.t = 0
 
             else:
-                self.cmd_speed = self.target_speed['global']
+                self.cmd_speed = self.target_speed['curve']
 
                 if self.traffic_stop_wp <= 5:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
         elif self.mode == 'delivery_B':
             if self.status == 'driving':
-                if self.waypoint > 40:
+                if self.waypoint > 45:
                     self.status = 'check'
 
-                elif self.waypoint < 15:
+                elif self.waypoint < 20:
                     self.cmd_speed = self.target_speed['curve']
 
             elif self.status == 'check':
@@ -593,7 +597,7 @@ class Core(Node):
                     self.t = 0
                     self.status = 'stop'
 
-                if self.traffic_stop_wp <= 50:
+                if self.traffic_stop_wp <= 70:
                     self.status = 'complete'
 
             elif self.status == 'detected':
@@ -601,7 +605,11 @@ class Core(Node):
                 if self.stop_wp - self.waypoint <= 0:
                     self.status = 'stop'
 
+                elif self.traffic_stop_wp <= 55:
+                    self.status = 'complete'
+
             elif self.status == 'stop':
+                self.delivery_stop = True
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
 
@@ -610,6 +618,7 @@ class Core(Node):
                 self.brake_control(brake_force, max_brake, 2)
 
                 if self.t >= 6:
+                    self.delivery_stop = False
                     self.status = 'complete'
                     self.t = 0
 
@@ -643,15 +652,14 @@ class Core(Node):
         car.header.stamp = self.get_clock().now().to_msg()
 
         car.drive.acceleration = self.gear
-        car.drive.jerk = float(self.brake)
 
-        if self.traffic_stop:
-            car.drive.jerk = 200.0
+        if self.traffic_stop or self.delivery_stop:
+            car.drive.jerk = float(True)
             car.drive.steering_angle = 0.0
             car.drive.speed = 0.0
         else:
+            car.drive.jerk = float(False)
             car.drive.steering_angle = self.cmd_steer
-            self.time+=self.dt
             car.drive.speed = self.cmd_speed
 
         self.autocar_pub.publish(car)

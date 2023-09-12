@@ -66,22 +66,22 @@ class Path(Node):
 
         if rf_ is not None:
             df = pd.read_csv(rf_)
-            for link in df['Link'].unique():
+            for link in range(3):
 
                 var_name = 'revpark_' + str(link)
 
-                data = df[df['Link'] == link]
+                data = df[df['Link'] == 0]
 
-                # self.ax[var_name] = data['X-axis'].tolist()
-                # self.ay[var_name] = data['Y-axis'].tolist()
-                park_x = data['X-axis'].tolist()
-                park_y = data['Y-axis'].tolist()
+                x0 = data['X-axis'].tolist()
+                y0 = data['Y-axis'].tolist()
 
-                d = -0.5 # 주차 경로 d m 앞으로 이동
-                # self.ax[var_name] = [i - 0.4423572639935003 * d for i in park_x]
-                # self.ay[var_name] = [i - 0.8308233860879995 * d for i in park_y]
-                self.ax[var_name] = [i - 0.256388029315985 * d for i in park_x]
-                self.ay[var_name] = [i - 0.904206226115093 * d for i in park_y]
+                d = [0, 5.2, 10.4] # 주차 경로 d m 앞으로 이동
+                # kcity
+                self.ax[var_name] = [i - 0.4423572639935003 * d[link] for i in x0]
+                self.ay[var_name] = [i - 0.8308233860879995 * d[link] for i in y0]
+                # htech
+                # self.ax[var_name] = [i - 0.256388029315985 * d[link] for i in x0]
+                # self.ay[var_name] = [i - 0.904206226115093 * d[link] for i in y0]
 
 def test_track():
     base_file = file_path + '/ST_base.csv'
@@ -208,5 +208,5 @@ def qualifier():
 
     return qualifier
 
-use_map = revpark()
+use_map = kcity()
 start_index = 0
