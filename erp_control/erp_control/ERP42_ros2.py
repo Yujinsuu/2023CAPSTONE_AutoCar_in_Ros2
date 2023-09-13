@@ -202,7 +202,7 @@ class erp42(Node):
 
 		if brake >= m: brake = m
 
-		return brake
+		return int(brake)
 
 	def acker_callback(self, msg):
 		# self.steer = msg.drive.steering_angle
@@ -212,11 +212,12 @@ class erp42(Node):
 		quick_stop = bool(msg.drive.jerk)
 
 		input_speed = msg.drive.speed
-		if self.prev_speed - input_speed > 0:
-			if not self.slow_down:
-				self.brake_time = time.time()
-				self.brake_force = 300 * (self.prev_speed - input_speed) / self.prev_speed
-			self.slow_down = True
+		if self.prev_speed - input_speed > 0 and input_speed != 0:
+			if self.velocity - self.prev_speed > -0.5 and self.velocity > 8/3.6:
+				if not self.slow_down:
+					self.brake_time = time.time()
+					self.brake_force = 100 * (self.prev_speed - input_speed) / self.prev_speed
+				self.slow_down = True
 
 		self.gear = int(msg.drive.acceleration)
 		if self.gear != self.prev_gear:
@@ -224,22 +225,26 @@ class erp42(Node):
 
 		# Full brake
 		if quick_stop:
+			print("Quick Stop")
 			self.speed = 0.0
 
 			if self.velocity > 0.1:
 				self.brake_time = time.time()
 
 			if time.time() - self.brake_time < 2:
+				self.steer = 0.0
 				self.brake = 200
 
 		# Gear Change
 		elif self.gear_change:
+			print("Gear Change")
 			self.speed = 0.0
 
 			if self.velocity > 0.1:
 				self.brake_time = time.time()
 
-			if time.time() - self.brake_time < 3:
+			if time.time() - self.brake_time < 1:
+				self.steer = 0.0
 				self.brake = 200
 
 			else:
@@ -248,20 +253,19 @@ class erp42(Node):
 
 		# Deceleration zones
 		elif self.slow_down:
-			if abs(self.velocity - input_speed) > 1:
-				self.brake_time = time.time()
+			print("Slow Down")
 
 			if self.velocity - input_speed > -0.5:
 				self.speed = 0.0
-				max_brake = 150
-				self.brake = self.brake_control(self.brake_force, max_brake, 3)
+				self.brake = self.brake_force
 
-			if self.t > 3:
+			if time.time() - self.brake_time > 5:
 				self.slow_down = False
 				self.brake = 0
 				self.t = 0
 
 		else:
+			print("Else")
 			self.speed = self.faster_motor_control(input_speed, self.velocity)
 			self.brake = 0
 

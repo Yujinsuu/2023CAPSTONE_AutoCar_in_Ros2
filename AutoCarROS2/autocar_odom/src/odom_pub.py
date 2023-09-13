@@ -50,6 +50,7 @@ class odomPublisher(Node):
 		self.before_qw = 1
 
 		self.gps_yaw = 0.0
+		self.gps_yaw_array = []
 		self.imu_yaw = 0.0
 		self.velocity = 0.0
 		self.gps_offset = {'seoul':[962897.516413939,1958728.3104721],'kcity':[935504.1834692371,1915769.1316598575]}
@@ -87,10 +88,12 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', -95)
+		self.declare_parameter('yaw_init', -110)
 		self.declare_parameter('yaw_offset_array', [])
+		self.declare_parameter('corr', False)
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.yaw_offset_array = self.get_parameter('yaw_offset_array').value
+		self.corr = self.get_parameter('corr').value
 		self.add_on_set_parameters_callback(self.update_parameter)
 
 		#self.odom_pub = self.create_publisher(Odometry, '/odometry/filtered', qos_profile)
@@ -104,6 +107,12 @@ class odomPublisher(Node):
 				self.yaw_init = param.value
 
 			if param.name == 'yaw_offset_array':
+				self.yaw_offset_array.clear()
+    
+			if param.name == 'corr':
+				self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+				self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+				self.corr = False
 				self.yaw_offset_array.clear()
 
 		return SetParametersResult(successful=True)
@@ -124,8 +133,8 @@ class odomPublisher(Node):
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['seoul'][0]-70.5
-		y = a - self.gps_offset['seoul'][1]+23.4
+		x = b - self.gps_offset['seoul'][0]
+		y = a - self.gps_offset['seoul'][1]
 
 		self.gpose.pose.pose.position.x=x + self.gx_key_offset
 		self.gpose.pose.pose.position.y=y + self.gy_key_offset
@@ -152,12 +161,12 @@ class odomPublisher(Node):
 		self.gpose.twist.twist.linear.y = gps_vel.twist.twist.linear.y
 		self.gpose.twist.twist.linear.z = gps_vel.twist.twist.linear.z
 
-		self.heading=math.atan2(gps_vel.twist.twist.linear.y , gps_vel.twist.twist.linear.x)
-		self.heading_array.insert(0,self.heading)
+		self.filtered_heading=math.atan2(gps_vel.twist.twist.linear.y , gps_vel.twist.twist.linear.x)
+		# self.heading_array.insert(0,self.heading)
 
-		if len(self.heading_array) == 3:   # save number
-			self.heading_array.pop()
-			self.filtered_heading = (sum(self.heading_array)/len(self.heading_array))   # moving average
+		# if len(self.heading_array) == 1:   # save number
+		# 	self.heading_array.pop()
+		# 	self.filtered_heading = (sum(self.heading_array)/len(self.heading_array))   # moving average
 
 		if self.i==0:
 			self.before_qz = 0
@@ -179,10 +188,13 @@ class odomPublisher(Node):
 
 		self.velocity = np.sqrt(gps_vel.twist.twist.linear.x ** 2 + gps_vel.twist.twist.linear.y ** 2)
 
-		if self.velocity > 7/3.6:
-			self.gps_yaw = euler_from_quaternion(0.0, 0.0, gps_qz, gps_qw)
-			normalise_angle(self.gps_yaw)
+		# get yaw offset
+		if self.velocity > 12/3.6:
+      
+			self.gps_yaw = normalise_angle(euler_from_quaternion(0.0, 0.0, gps_qz, gps_qw))
 			self.yaw_offset = normalise_angle(self.final_imu_yaw - self.gps_yaw)
+		
+
 
 		self.i = self.i + 1
 

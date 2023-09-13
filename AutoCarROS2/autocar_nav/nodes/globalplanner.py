@@ -186,7 +186,8 @@ class GlobalPathPlanner(Node):
         transform = self.frame_transform(via_x[closest_id], via_y[closest_id], fx, fy, self.theta)
 
         if self.mode == 'revpark' and self.parking_path_num != -1:
-            wp_num = 46 + 5 * self.parking_path_num # kcity
+            parking_stop = [45, 50, 56]
+            wp_num = parking_stop[self.parking_path_num] # kcity
             # wp_num = 45-10 + 7 * self.parking_path_num # test
         self.traffic_stop_wp = wp_num - wp_ahead - closest_id
 

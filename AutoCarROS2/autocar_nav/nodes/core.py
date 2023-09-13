@@ -474,7 +474,7 @@ class Core(Node):
         elif self.mode == 'revpark':
             if self.status == 'driving':
                 self.t = 0
-                if self.traffic_stop_wp <= 10:
+                if self.traffic_stop_wp <= 8:
                     self.status = 'parking'
                 if self.waypoint >= 60:
                     self.status = 'complete'
@@ -492,7 +492,7 @@ class Core(Node):
                 elif self.traffic_stop_wp <= 12:
                     self.brake = 20.0
 
-                elif self.parking_stop_wp <= 8:
+                elif self.parking_stop_wp <= 9:
                     self.t = 0
                     self.gear = 0.0
                     self.status = 'return'

@@ -54,9 +54,17 @@ Visualization Manager:
         All Enabled: true
         car:
           Value: true
+        imu_link:
+          Value: true
         map:
           Value: true
         odom:
+          Value: true
+        odom_footprint:
+          Value: true
+        velodyne:
+          Value: true
+        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -67,6 +75,9 @@ Visualization Manager:
         map:
           odom:
             car:
+              velodyne:
+                {}
+            odom_footprint:
               {}
       Update Interval: 0
       Value: true
@@ -86,7 +97,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -134,7 +145,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -173,7 +184,7 @@ Visualization Manager:
       Enabled: true
       Name: WallScan
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -257,7 +268,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        {}
+        adaptive_clustering_v1: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -422,16 +433,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 196.28411865234375
+      Distance: 78.8475341796875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 23.887569427490234
-        Y: 103.05252075195312
-        Z: -42.032379150390625
+        X: -299.0274353027344
+        Y: 540.927978515625
+        Z: -41.808013916015625
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -440,7 +451,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 4.279033184051514
+      Yaw: 1.3308542966842651
     Saved: ~
 Window Geometry:
   Displays:
