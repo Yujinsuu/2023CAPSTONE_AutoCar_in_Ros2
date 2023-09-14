@@ -188,7 +188,7 @@ class GlobalPathPlanner(Node):
         if self.mode == 'revpark' and self.parking_path_num != -1:
             parking_stop = [45, 50, 56]
             wp_num = parking_stop[self.parking_path_num] # kcity
-            # wp_num = 45-10 + 7 * self.parking_path_num # test
+            # wp_num = 47 + 5 * self.parking_path_num
         self.traffic_stop_wp = wp_num - wp_ahead - closest_id
 
 
@@ -436,7 +436,7 @@ class GlobalPathPlanner(Node):
             to_yolo.data = 'static'
 
         # 정지선 15m 전부터 신호등 인식을 위한 YOLO 모델 활성화
-        elif self.traffic_stop_wp <= 15:
+        elif self.traffic_stop_wp <= 20:
             to_yolo.data = 'traffic'
 
         elif self.mode in ['delivery_A', 'delivery_B']:

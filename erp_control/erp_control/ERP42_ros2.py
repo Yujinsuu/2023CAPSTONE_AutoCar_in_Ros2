@@ -257,9 +257,9 @@ class erp42(Node):
 
 			if self.velocity - input_speed > -0.5:
 				self.speed = 0.0
-				self.brake = self.brake_force
+				self.brake = int(self.brake_force)
 
-			if time.time() - self.brake_time > 5:
+			if time.time() - self.brake_time > 5 or self.velocity < input_speed - 0.5:
 				self.slow_down = False
 				self.brake = 0
 				self.t = 0
@@ -281,7 +281,7 @@ class erp42(Node):
 
 		print("Speed :", round(self.speed*3.6, 1), "km/h\t", "Steer :", round(np.rad2deg(self.steer), 2), "deg\t",
 					"Brake :", self.brake, "%\t", 									"Gear :", self.dir[self.gear])
-		self.Send_to_ERP42(self.gear, self.speed, -self.steer, self.brake)
+		self.Send_to_ERP42(int(self.gear), float(self.speed), -float(self.steer), int(self.brake))
 
 	def plot_creator(self):
 		elapsed_time = time.time() - self.time

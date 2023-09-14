@@ -8,10 +8,10 @@ plt.figure(1)
 
 df = pd.read_csv('track.csv')
 
-x = df[df['Link']==6]['X-axis'].values.tolist()
-y = df[df['Link']==6]['Y-axis'].values.tolist()
+x = df[df['Link']==1]['X-axis'].values.tolist()
+y = df[df['Link']==1]['Y-axis'].values.tolist()
 
-d = 0
+d = 25
 r = 100
 plt.plot(x[d:d+r],y[d:d+r],'o-',linewidth=0.5)
 plt.plot(x[d],y[d],'ro',linewidth=0.5)
