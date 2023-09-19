@@ -35,7 +35,7 @@ class WallFollower(Node):
         # htech wall : 4.12m, kcity tunnel : 4.72m, tunnel lane : 3.38m
         self.WalltoPath = 4.72
         self.LaneWidth = 3.38
-        self.WalltoLane = [self.WalltoPath - 2.5, self.WalltoPath + 2.5]
+        self.WalltoLane = [self.WalltoPath - 2.8, self.WalltoPath + 2.8]
 
         self.x_coords = None
         self.y_coords = None

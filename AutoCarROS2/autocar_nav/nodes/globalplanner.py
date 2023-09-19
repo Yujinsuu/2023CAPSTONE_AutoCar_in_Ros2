@@ -265,11 +265,13 @@ class GlobalPathPlanner(Node):
             park_x = self.mx[self.link]
             park_y = self.my[self.link]
 
-            d = 0.9 # 주차 경로 d m 앞으로 이동
-            # park_x = [i - 0.4423572639935003 * d for i in park_x]
-            # park_y = [i - 0.8308233860879995 * d for i in park_y]
-            park_x = [i - 0.256388029315985 * d for i in park_x]
-            park_y = [i - 0.904206226115093 * d for i in park_y]
+            d = 0.2 # 주차 경로 d m 앞으로 이동
+            # kcity
+            park_x = [i - 0.4423572639935003 * d for i in park_x]
+            park_y = [i - 0.8308233860879995 * d for i in park_y]
+            # htech
+            # park_x = [i - 0.256388029315985 * d for i in park_x]
+            # park_y = [i - 0.904206226115093 * d for i in park_y]
 
             point_x0 = self.mx['global_' + str(self.global_index)][-1]
             point_x1 = park_x[0]

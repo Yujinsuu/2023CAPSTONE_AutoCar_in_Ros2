@@ -189,9 +189,9 @@ class ObstaclePub(Node):
             m.points.append(point2)
 
         if s == 'target':
-            m.scale.x = 0.3
-            m.scale.y = 0.3
-            m.scale.z = 0.3
+            m.scale.x = 0.2
+            m.scale.y = 0.2
+            m.scale.z = 0.2
 
             m.color.r = 1.0
             m.color.g = 0.0

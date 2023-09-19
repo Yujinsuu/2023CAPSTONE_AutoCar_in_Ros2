@@ -79,7 +79,7 @@ class PathTracker(Node):
         self.k = {'global'    : {'Straight': 1.0, 'Curve': 1.0},
                   'parking'   : {'Straight': 1.5, 'Curve': 1.5},
                   'revpark'   : {'Straight': 1.5, 'Curve': 1.5},
-                  'uturn'     : {'Straight': 2.0, 'Curve': 2.0},
+                  'uturn'     : {'Straight': 1.0, 'Curve': 1.0},
                   'static'    : {'Straight': 1.0, 'Curve': 1.0},
                   'dynamic'   : {'Straight': 1.0, 'Curve': 1.0},
                   'tollgate'  : {'Straight': 1.0, 'Curve': 1.0},

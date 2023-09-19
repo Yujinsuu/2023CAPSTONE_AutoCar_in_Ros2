@@ -11,7 +11,7 @@ from rclpy.parameter import Parameter
 from rcl_interfaces.msg import SetParametersResult
 
 from nav_msgs.msg import Odometry
-from std_msgs.msg import Float32, Float32MultiArray
+from std_msgs.msg import Float32, Float32MultiArray, String
 from sensor_msgs.msg import NavSatFix, Imu
 from autocar_msgs.msg import LinkArray
 from geometry_msgs.msg import TwistWithCovarianceStamped, QuaternionStamped, Vector3Stamped, TransformStamped
@@ -39,8 +39,11 @@ class odomPublisher(Node):
 		self.imu_sub = self.create_subscription(QuaternionStamped, '/filter/quaternion', self.imu_callback, qos_profile)
 		self.imu_angularV_sub = self.create_subscription(Vector3Stamped, '/imu/angular_velocity', self.imu_angularV_callback, qos_profile)
 		self.encoder_sub = self.create_subscription(Odometry, '/data/encoder_vel', self.encoder_callback, 10)
+		self.odom_state_sub = self.create_subscription(String, '/autocar/odom_state', self.state_callback, 10)
 		self.mode_sub = self.create_subscription(LinkArray,'/autocar/mode', self.mode_callback, qos_profile )
 		self.pose_offset_sub= self.create_subscription(Float32MultiArray , '/data/key_offset', self.pose_offset_cb, 10)
+
+		self.odom_state = 'GPS-Odometry'
 
 		self.heading_array = []
 		self.heading = 0
@@ -88,7 +91,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', -110)
+		self.declare_parameter('yaw_init', 0)
 		self.declare_parameter('yaw_offset_array', [])
 		self.declare_parameter('corr', False)
 		self.yaw_init = self.get_parameter('yaw_init').value
@@ -117,6 +120,8 @@ class odomPublisher(Node):
 
 		return SetParametersResult(successful=True)
 
+	def state_callback(self, msg):
+		self.odom_state = msg.data
 
 	def encoder_callback(self, enc):
 		self.encoder_vel = enc.twist.twist.linear.x
@@ -133,8 +138,8 @@ class odomPublisher(Node):
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['seoul'][0]
-		y = a - self.gps_offset['seoul'][1]
+		x = b - self.gps_offset['kcity'][0]
+		y = a - self.gps_offset['kcity'][1]
 
 		self.gpose.pose.pose.position.x=x + self.gx_key_offset
 		self.gpose.pose.pose.position.y=y + self.gy_key_offset
@@ -144,7 +149,7 @@ class odomPublisher(Node):
 		self.y_cov = gps.position_covariance[4]
 		self.gpose.pose.covariance[0] = self.x_cov
 		self.gpose.pose.covariance[7] = self.y_cov
-		if(self.x_cov < 0.01 and self.y_cov < 0.01):
+		if(self.x_cov < 0.05 and self.y_cov < 0.05):
 			self.corr_mode = True
 		else:
 			self.corr_mode = False
@@ -207,32 +212,38 @@ class odomPublisher(Node):
 		self.imu_data.angular_velocity.z = imuV.vector.z
 
 	def mode_callback(self, msg):
-		if not self.last_corr:
-			if msg.mode == 'uturn':
-				if self.corr == True:
-					self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
-					self.yaw_init -= np.rad2deg(self.yaw_offset_av)
-				self.corr = False
-				self.yaw_offset_array.clear()
+		if self.odom_state == 'GPS-Odometry':
+			if not self.last_corr:
+				if msg.link_num == 4:
+					if self.corr == True and len(self.yaw_offset_array) > 20:
+						self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+						self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+					self.corr = False
+					self.yaw_offset_array.clear()
 
-			# apply average yaw_offset when Straigt > Curve
-			elif msg.direction == 'Straight' and self.velocity > 7/3.6:
-				if self.corr_mode or msg.mode != 'tunnel' :
-					self.yaw_offset_array.append(self.yaw_offset)
-				if len(self.yaw_offset_array) != 0:
-					self.yaw_offset_av_print = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
-				if len(self.yaw_offset_array) > 20:
-					self.corr = True
+				# apply average yaw_offset when Straigt > Curve
+				elif msg.direction == 'Straight' and self.velocity > 12/3.6:
+					if self.corr_mode or msg.mode != 'tunnel' :
+						self.yaw_offset_array.append(self.yaw_offset)
+					if len(self.yaw_offset_array) != 0:
+						self.yaw_offset_av_print = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+					if len(self.yaw_offset_array) > 20:
+						self.corr = True
 
-			elif msg.direction == 'Curve':
-				if self.corr == True:
-					self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
-					self.yaw_init -= np.rad2deg(self.yaw_offset_av)
-				self.corr = False
-				self.yaw_offset_array.clear()
+				elif msg.direction == 'Curve':
+					if self.corr == True and len(self.yaw_offset_array) > 20:
+						self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+						self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+					self.corr = False
+					self.yaw_offset_array.clear()
 
-		if msg.mode == 'uturn':
-			self.last_corr = True
+			if msg.link_num == 4:
+				self.last_corr = True
+
+		else:
+			self.last_corr = False
+			self.yaw_offset_array.clear()
+
 
 
 	def imu_callback(self, imu):
@@ -240,8 +251,8 @@ class odomPublisher(Node):
 		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
 		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
 		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
-		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
-  		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
+		# self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t off	set_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
+		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')
 		# self.get_logger().info('corr_mode: %s' % self.corr_mode)
 
 		self.final_imu_yaw = normalise_angle(self.imu_yaw) #normalise_angle(self.imu_yaw - self.yaw_offset_av)

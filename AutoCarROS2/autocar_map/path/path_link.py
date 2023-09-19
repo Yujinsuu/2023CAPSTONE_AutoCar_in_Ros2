@@ -75,7 +75,7 @@ class Path(Node):
                 x0 = data['X-axis'].tolist()
                 y0 = data['Y-axis'].tolist()
 
-                d = [-0.1, 5.05, 10.6] # 주차 경로 d m 앞으로 이동
+                d = [-0.1, 5.05, 10.3] # 주차 경로 d m 앞으로 이동
                 # kcity
                 self.ax[var_name] = [i - 0.4423572639935003 * d[link] for i in x0]
                 self.ay[var_name] = [i - 0.8308233860879995 * d[link] for i in y0]
@@ -142,12 +142,13 @@ def htech():
     parking_file = None
     revpark_file = None
     htech = Path(base_file, global_file, parking_file, revpark_file)
+    htech.car_mode[0] = 'tollgate'
     htech.car_mode[1] = 'dynamic'
     # htech.car_mode[4] = 'tunnel'
     # htech.car_mode[0] = 'delivery_A'
     # htech.car_mode[3] = 'delivery_B'
 
-    htech.next_path[0] = 'right'
+    # htech.next_path[0] = 'right'
 
     return htech
 
@@ -208,5 +209,5 @@ def qualifier():
 
     return qualifier
 
-use_map = qualifier()
-start_index = 5
+use_map = kcity()
+start_index = 0

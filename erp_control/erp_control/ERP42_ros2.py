@@ -13,6 +13,7 @@ from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
 from autocar_msgs.msg import State2D
 from ackermann_msgs.msg import AckermannDriveStamped
+from nav_msgs.msg import Odometry
 
 fast_flag =False
 S = 0x53
@@ -36,296 +37,266 @@ count_alive=0
 cur_ENC_backup=0
 
 class erp42(Node):
+  def __init__(self):
+    super().__init__('erp42')
+    self.ackermann_subscriber = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.acker_callback, 10)
+    self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_callback, 10)
+    # self.state_sub = self.create_subscription(Odometry, '/data/encoder_vel_two', self.vehicle_callback, 10)
+    self.ser = serial.serial_for_url("/dev/ttyERP", baudrate=115200, timeout=1)
+    self.departure = time.time()
+    self.target_speed = 0.0
+    self.velocity = 0.0
+    self.speed = 0.0
+    self.cmd_steer = 0.0
+    self.vision_steer = 0.0
+    self.steer = 0.0
+    self.brake = 0
+    self.gear = 0
+    self.dir = ['Forward', 'Forward', 'Backward']
 
-	def __init__(self):
-		super().__init__('erp42')
-		self.ackermann_subscriber = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.acker_callback, 10)
-		self.state_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_callback, 10)
-		self.ser = serial.serial_for_url("/dev/ttyERP", baudrate=115200, timeout=1)
+    self.prev_speed = 0.0
+    self.prev_gear = 0
+    self.gear_change = False
+    self.slow_down = False
+    self.brake_time = time.time()
+    self.brake_force = 0
+    self.t = 0
+    self.dt = 0.3
 
-		self.departure = time.time()
-		self.velocity = 0.0
-		self.speed = 0.0
-		self.cmd_steer = 0.0
-		self.vision_steer = 0.0
-		self.steer = 0.0
-		self.brake = 0
-		self.gear = 0
-		self.dir = ['Forward', 'Forward', 'Backward']
+    ## PID const
+    self.kp = 1.65
+    self.ki = 0
+    self.kd = 0.0
+    self.prev_error = 0
+    self.integral = 0
 
-		self.prev_speed = 0.0
-		self.prev_gear = 0
-		self.gear_change = False
-		self.slow_down = False
-		self.brake_time = time.time()
-		self.brake_force = 0
-		self.t = 0
-		self.dt = 0.3
+    # plot variable
+    self.time = time.time()
+    self.times = []
+    self.target_value = []
+    self.actual_value = []
+    self.brake_value = []
+    self.input_value = []
 
-		# plot variable
-		self.time = time.time()
-		self.times = []
-		self.target_value = []
-		self.actual_value = []
-		self.brake_value = []
+    self.timer1 = self.create_timer(0.2, self.timer_callback)
+    self.timer2 = self.create_timer(0.1, self.plot_creator)
 
-		self.timer1 = self.create_timer(0.3, self.timer_callback)
-		self.timer2 = self.create_timer(0.1, self.plot_creator)
+  def GetAorM(self):
+    AorM = 0x01
+    return  AorM
 
-	def GetAorM(self):
-		AorM = 0x01
-		return  AorM
+  def GetESTOP(self):
+    ESTOP = 0x00
+    return  ESTOP
 
-	def GetESTOP(self):
-		ESTOP = 0x00
-		return  ESTOP
+  def GetGEAR(self, gear):
+    GEAR = gear
+    return  GEAR
 
-	def GetGEAR(self, gear):
-		GEAR = gear
-		return  GEAR
+  def GetSPEED(self, speed):
+    global count
+    SPEED0 = 0x00
+    SPEED = int(speed*36) # float to integer
+    SPEED1 = abs(SPEED) # m/s to km/h*10
+    return SPEED0, SPEED1
 
-	def GetSPEED(self, speed):
-		global count
-		SPEED0 = 0x00
-		SPEED = int(speed*36) # float to integer
-		SPEED1 = abs(SPEED) # m/s to km/h*10
-		return SPEED0, SPEED1
+  def GetSTEER(self, steer): # steer은 rad/s 값으로 넣어줘야한다.
+    steer=steer*71*(180/np.pi) # rad/s to degree/s*71
 
-	def GetSTEER(self, steer): # steer은 rad/s 값으로 넣어줘야한다.
-		steer=steer*71*(180/np.pi) # rad/s to degree/s*71
+    if(steer>=2000):
+      steer=1999
+    elif(steer<=-2000):
+      steer=-1999
+    steer_max=0b0000011111010000 # +2000
+    steer_0 = 0b0000000000000000
+    steer_min=0b1111100000110000 # -2000
 
-		if(steer>=2000):
-			steer=1999
-		elif(steer<=-2000):
-			steer=-1999
-		steer_max=0b0000011111010000 # +2000
-		steer_0 = 0b0000000000000000
-		steer_min=0b1111100000110000 # -2000
+    if (steer>=0):
+      angle=int(steer)
+      STEER=steer_0+angle
+    else:
+      angle=int(-steer)
+      angle=2000-angle
+      STEER=steer_min+angle
 
-		if (steer>=0):
-			angle=int(steer)
-			STEER=steer_0+angle
-		else:
-			angle=int(-steer)
-			angle=2000-angle
-			STEER=steer_min+angle
+    STEER0=STEER & 0b1111111100000000
+    STEER0=STEER0 >> 8
+    STEER1=STEER & 0b0000000011111111
+    return STEER0, STEER1
 
-		STEER0=STEER & 0b1111111100000000
-		STEER0=STEER0 >> 8
-		STEER1=STEER & 0b0000000011111111
-		return STEER0, STEER1
+  def GetBRAKE(self, brake):
+    BRAKE = brake
+    return  BRAKE
 
-	def GetBRAKE(self, brake):
-		BRAKE = brake
-		return  BRAKE
+  def Send_to_ERP42(self, gear, speed, steer, brake):
+    global S, T, X, AorM, ESTOP, GEAR, SPEED0, SPEED1, STEER0, STEER1, BRAKE, ALIVE, ETX0, ETX1, count_alive
+    count_alive = count_alive+1
 
-	def Send_to_ERP42(self, gear, speed, steer, brake):
-		global S, T, X, AorM, ESTOP, GEAR, SPEED0, SPEED1, STEER0, STEER1, BRAKE, ALIVE, ETX0, ETX1, count_alive
-		count_alive = count_alive+1
+    if count_alive==0xff:
+      count_alive=0x00
 
-		if count_alive==0xff:
-			count_alive=0x00
+    AorM = self.GetAorM()
+    ESTOP = self.GetESTOP()
+    GEAR = self.GetGEAR(gear)
+    SPEED0, SPEED1 = self.GetSPEED(speed)
+    STEER0, STEER1 = self.GetSTEER(steer)
+    BRAKE = self.GetBRAKE(brake)
 
-		AorM = self.GetAorM()
-		ESTOP = self.GetESTOP()
-		GEAR = self.GetGEAR(gear)
-		SPEED0, SPEED1 = self.GetSPEED(speed)
-		STEER0, STEER1 = self.GetSTEER(steer)
-		BRAKE = self.GetBRAKE(brake)
+    ALIVE = count_alive
 
-		ALIVE = count_alive
+    vals = [S, T, X, AorM, ESTOP,GEAR, SPEED0, SPEED1, STEER0, STEER1, BRAKE, ALIVE, ETX0, ETX1]
+    # print(vals[8], vals[9])
+    # print(hex(vals[8]), hex(vals[9]))
+    # print(vals[8].to_bytes(1, byteorder='big'),vals[9].to_bytes(1, byteorder='big'))
+    for i in range(len(vals)):
+      self.ser.write(vals[i].to_bytes(1, byteorder='big')) # send!
 
-		vals = [S, T, X, AorM, ESTOP,GEAR, SPEED0, SPEED1, STEER0, STEER1, BRAKE, ALIVE, ETX0, ETX1]
-		# print(vals[8], vals[9])
-		# print(hex(vals[8]), hex(vals[9]))
-		# print(vals[8].to_bytes(1, byteorder='big'),vals[9].to_bytes(1, byteorder='big'))
-		for i in range(len(vals)):
-			self.ser.write(vals[i].to_bytes(1, byteorder='big')) # send!
+    # for i in range(8, 10):
+    # 	self.ser.write(vals[i].to_bytes(1, byteorder='big')) # send!
 
-		# for i in range(8, 10):
-		# 	self.ser.write(vals[i].to_bytes(1, byteorder='big')) # send!
+  def real_steer(self, input_steer):
+    input_range  = np.array([-22, -21, -18.5, -16, -13.5, -11,  -9.5,  -8,   -6, -4.5, -3, 0, 3, 4.5,   6,  8,  9.5, 11, 13.5, 16, 18.5, 21, 22])
+    output_range = np.array([-27, -25, -22.5, -20, -17.5, -15, -12.5, -10, -7.5,   -5, -3, 0, 3,   5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27])
 
-	def real_steer(self, input_steer):
-		input_range  = np.array([-22, -21, -18.5, -16, -13.5, -11,  -9.5,  -8,   -6, -4.5, -3, 0, 3, 4.5,   6,  8,  9.5, 11, 13.5, 16, 18.5, 21, 22])
-		output_range = np.array([-27, -25, -22.5, -20, -17.5, -15, -12.5, -10, -7.5,   -5, -3, 0, 3,   5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27])
+    output_steer = 0.0
+    if input_steer >= max(input_range):
+      output_steer = max(output_range)
 
-		output_steer = 0.0
-		if input_steer >= max(input_range):
-			output_steer = max(output_range)
+    elif input_steer <= min(input_range):
+      output_steer = min(output_range)
 
-		elif input_steer <= min(input_range):
-			output_steer = min(output_range)
+    else:
+      output_steer = np.interp(input_steer, input_range, output_range)
 
-		else:
-			output_steer = np.interp(input_steer, input_range, output_range)
+    return np.deg2rad(output_steer)
 
-		return np.deg2rad(output_steer)
+  def speed_control(self, target_speed):
+    max_speed = 20/3.6
+    error = target_speed - self.velocity
+    # self.integral += error
+    derivative = error - self.prev_error
 
-	def faster_motor_control(self, target_speed, gps_vel):
-		if target_speed != 0 and gps_vel <= 0.2:
-			speed = 5.0
-		else :
-			speed = target_speed
-		#print("target_speed", speed)
+    # PD Control
+    output1 = (self.kp * error) # + (self.kd * derivative) # + (self.ki * self.integral)
+    output2 = (self.kp * error) + (self.kd * derivative) # + (self.ki * self.integral)
 
-		return speed
+    if output1 > max_speed: output1 = max_speed
+    elif output1 < -max_speed: output1= -max_speed
+    if output2 > max_speed: output2 = max_speed
+    elif output2 < -max_speed: output2= -max_speed
+    
+    self.prev_error = error
 
-	def vehicle_callback(self, msg):
-		self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
-		if self.velocity >= 0.5:
-			self.departure += 0.1
+    if output1 >= 0:
+      speed = output1 + self.velocity
+      if speed < target_speed: speed = target_speed
+      if speed > max_speed: speed = max_speed
+      self.speed = speed
+      self.brake = 0
 
-	def acker_callback1(self, msg):
-		# self.speed = msg.drive.speed
-		self.speed = self.faster_motor_control(msg.drive.speed, self.velocity)
+    else:
+      # -5 ~ 0 범위의 output을 1~200 범위의 brake값으로 환산
+      self.speed = 0.0
+      self.brake = int((abs(output1) * 130) / max_speed)
+      if self.brake > 200: self.brake = 200
 
-		# self.steer = msg.drive.steering_angle
-		cmd_steer = np.rad2deg(msg.drive.steering_angle)
-		self.steer = self.real_steer(cmd_steer)
-		# self.steer = self.vision_steer
+  def vehicle_callback(self, msg):
+    self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
+    # self.velocity = msg.twist.twist.linear.x
+    if self.velocity >= 0.5:
+      self.departure += 0.1
 
-		self.gear = int(msg.drive.acceleration)
+  def acker_callback(self, msg):
+    self.target_speed = msg.drive.speed
+    # target speed 0일때 급정지
+    if msg.drive.speed == 0.0:
+      self.speed = 0.0
+      self.steer = 0.0
+      self.brake = 200
+      return
 
-		# self.brake = int(msg.drive.jerk)
-		if self.departure < 5:
-			self.brake = 0
+    cmd_steer = np.rad2deg(msg.drive.steering_angle)
+    self.steer = self.real_steer(cmd_steer)
+    self.gear = int(msg.drive.acceleration)
+    
+    if msg.drive.speed > 10/3.6:
+      if abs(self.velocity - msg.drive.speed) > 0.6: # 0.42 : 1.5km/h,  0.28 : 1km/h
+        self.speed_control(msg.drive.speed)
+      else:
+        self.speed = msg.drive.speed
+        self.brake = 1
+        
+    elif msg.drive.speed > 7/3.6:
+      if abs(self.velocity - msg.drive.speed) > 0.45: # 0.42 : 1.5km/h,  0.28 : 1km/h
+        self.speed_control(msg.drive.speed)
+      else:
+        self.speed = msg.drive.speed
+        self.brake = 1
+        
+    else:
+      if abs(self.velocity - msg.drive.speed) > 0.35: # 0.42 : 1.5km/h,  0.28 : 1km/h
+        self.speed_control(msg.drive.speed)
+      else:
+        self.speed = msg.drive.speed
+        self.brake = 1
+        
+        
+    if abs(self.velocity - msg.drive.speed) > 0.56: # 0.42 : 1.5km/h,  0.28 : 1km/h
+      self.speed_control(msg.drive.speed)
 
-		elif self.velocity - self.speed > - 0.5:
-			self.brake = int(msg.drive.jerk)
 
-		else:
-			self.brake = 0
+  def timer_callback(self):
+    # steer=radians(float(input("steer_angle:")))
 
-	def brake_control(self, b, m, t=3):
-		brake = b * self.t
-		self.t += self.dt
+    print("Speed :", round(self.speed*3.6, 1), "km/h\t", "Steer :", round(np.rad2deg(self.steer), 2), "deg\t",
+          "Brake :", self.brake, "\t", 									"Gear :", self.dir[self.gear])
+    self.Send_to_ERP42(self.gear, self.speed, -self.steer, self.brake)
 
-		if brake >= m: brake = m
+  def plot_creator(self):
+    elapsed_time = time.time() - self.time
+    self.times.append(elapsed_time)
+    self.target_value.append(self.target_speed * 3.6)
+    self.input_value.append(self.speed * 3.6)
+    self.actual_value.append(self.velocity * 3.6)
+    self.brake_value.append(self.brake/10)
 
-		return int(brake)
+  def save(self, output_folder):
+    count = 0
+    output = os.path.join(output_folder, f'speed_graph_{count}.png')
+    while os.path.exists(output):
+        count += 1
+        output = os.path.join(output_folder, f'speed_graph_{count}.png')
 
-	def acker_callback(self, msg):
-		# self.steer = msg.drive.steering_angle
-		cmd_steer = np.rad2deg(msg.drive.steering_angle)
-		self.steer = self.real_steer(cmd_steer)
+    # 그래프 그리기
+    plt.figure(figsize=(10, 6))
+    plt.plot(self.times, self.target_value, label='target_speed', color='blue')
+    plt.plot(self.times, self.actual_value, label='actual_speed', color='red')
+    plt.plot(self.times, self.brake_value, label='brake_force', color='black')
+    plt.plot(self.times, self.input_value, label='input', color='yellow')
+    plt.xlabel("Time (s)")
+    plt.ylabel("Speed (km/h)")
+    plt.title("Speed Data Graph")
+    plt.legend()
 
-		quick_stop = bool(msg.drive.jerk)
-
-		input_speed = msg.drive.speed
-		if self.prev_speed - input_speed > 0 and input_speed != 0:
-			if self.velocity - self.prev_speed > -0.5 and self.velocity > 8/3.6:
-				if not self.slow_down:
-					self.brake_time = time.time()
-					self.brake_force = 100 * (self.prev_speed - input_speed) / self.prev_speed
-				self.slow_down = True
-
-		self.gear = int(msg.drive.acceleration)
-		if self.gear != self.prev_gear:
-			self.gear_change = True
-
-		# Full brake
-		if quick_stop:
-			print("Quick Stop")
-			self.speed = 0.0
-
-			if self.velocity > 0.1:
-				self.brake_time = time.time()
-
-			if time.time() - self.brake_time < 2:
-				self.steer = 0.0
-				self.brake = 200
-
-		# Gear Change
-		elif self.gear_change:
-			print("Gear Change")
-			self.speed = 0.0
-
-			if self.velocity > 0.1:
-				self.brake_time = time.time()
-
-			if time.time() - self.brake_time < 1:
-				self.steer = 0.0
-				self.brake = 200
-
-			else:
-				self.gear_change = False
-				self.brake = 0
-
-		# Deceleration zones
-		elif self.slow_down:
-			print("Slow Down")
-
-			if self.velocity - input_speed > -0.5:
-				self.speed = 0.0
-				self.brake = int(self.brake_force)
-
-			if time.time() - self.brake_time > 5 or self.velocity < input_speed - 0.5:
-				self.slow_down = False
-				self.brake = 0
-				self.t = 0
-
-		else:
-			print("Else")
-			self.speed = self.faster_motor_control(input_speed, self.velocity)
-			self.brake = 0
-
-		# On initial departure
-		if self.departure < 5:
-			self.brake = 0
-
-		self.prev_gear = self.gear
-		self.prev_speed = input_speed
-
-	def timer_callback(self):
-		# steer=radians(float(input("steer_angle:")))
-
-		print("Speed :", round(self.speed*3.6, 1), "km/h\t", "Steer :", round(np.rad2deg(self.steer), 2), "deg\t",
-					"Brake :", self.brake, "%\t", 									"Gear :", self.dir[self.gear])
-		self.Send_to_ERP42(int(self.gear), float(self.speed), -float(self.steer), int(self.brake))
-
-	def plot_creator(self):
-		elapsed_time = time.time() - self.time
-		self.times.append(elapsed_time)
-		self.target_value.append(self.speed * 3.6)
-		self.actual_value.append(self.velocity * 3.6)
-		self.brake_value.append(self.brake/10)
-
-	def save(self, output_folder):
-		count = 0
-		output = os.path.join(output_folder, f'speed_graph_{count}.png')
-		while os.path.exists(output):
-				count += 1
-				output = os.path.join(output_folder, f'speed_graph_{count}.png')
-
-		# 그래프 그리기
-		plt.figure(figsize=(10, 6))
-		plt.plot(self.times, self.target_value, label='target_speed', color='blue')
-		plt.plot(self.times, self.actual_value, label='actual_speed', color='red')
-		plt.plot(self.times, self.brake_value, label='brake_force', color='black')
-		plt.xlabel("Time (s)")
-		plt.ylabel("Speed (km/h)")
-		plt.title("Speed Data Graph")
-		plt.legend()
-
-		plt.savefig(output)
-		plt.show()
+    plt.savefig(output)
+    plt.show()
 
 def main(args=None):
-	rclpy.init(args=args)
-	node = erp42()
+  rclpy.init(args=args)
+  node = erp42()
 
-	try:
-		rclpy.spin(node)
+  try:
+    rclpy.spin(node)
 
-	except KeyboardInterrupt:
-		home_folder = os.path.expanduser("~")
-		plot_folder = os.path.join(home_folder, 'dataset')
-		node.save(plot_folder)
-		node.get_logger().info('Plot Img Saved')
+  except KeyboardInterrupt:
+    home_folder = os.path.expanduser("~")
+    plot_folder = os.path.join(home_folder, 'dataset')
+    node.save(plot_folder)
+    node.get_logger().info('Plot Img Saved')
 
-	finally:
-		node.destroy_node()
-		rclpy.shutdown()
+  finally:
+    node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
-	main()
+  main()

@@ -56,7 +56,7 @@ class make_delaunay(Node):
         self.path_y = None
         self.path_yaw = None
 
-        self.velocity = 1.5
+        self.velocity = 15/3.6
         self.k = 1.0
 
         self.max_steer = 0.42
@@ -273,7 +273,7 @@ class make_delaunay(Node):
             crosstrack_error = np.dot([dx[idx], dy[idx]], vector)
             crosstrack_term = np.arctan2((self.k * crosstrack_error), (self.velocity))
 
-            dist = 1.5 * 0.425
+            dist = 1#1.5 * 0.425
 
             car_yaw = dist * np.tan(self.sigma) / self.L
 

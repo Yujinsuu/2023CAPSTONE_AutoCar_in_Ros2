@@ -14,12 +14,10 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 from sklearn.linear_model import RANSACRegressor
 
-from std_msgs.msg import Float64MultiArray, Float32MultiArray, Float32, Float64, String
+from std_msgs.msg import Float64MultiArray, Float32MultiArray, Float32
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D, LinkArray, Path2D
 from geometry_msgs.msg import PoseStamped, TransformStamped
-from rcl_interfaces.msg import SetParametersResult
-
 
 from autocar_nav.quaternion import yaw_to_quaternion
 
@@ -34,20 +32,15 @@ class Localization(Node):
         self.localization_pub = self.create_publisher(State2D, '/autocar/state2D', 10)
         self.trajectory_pub = self.create_publisher(Path, '/rviz/trajectory', 10)
         self.offset_pub = self.create_publisher(Float64MultiArray, '/autocar/dr_offset', 10)
-        self.state_pub = self.create_publisher(String, '/autocar/odom_state', 10)
-
 
         # Initialise subscribers
         self.GPS_odom_sub = self.create_subscription(Odometry, '/autocar/odom', self.vehicle_state_cb, 10)
         self.EKF_odom_sub = self.create_subscription(Odometry, '/odometry/filtered', self.dead_reckoning_cb, 10, callback_group=ReentrantCallbackGroup())
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
         self.pose_offset_sub= self.create_subscription(Float32MultiArray , '/data/key_offset', self.pose_offset_cb, 10)
-
         self.goals_sub = self.create_subscription(Path2D, '/autocar/goals', self.goals_cb, 10)
         self.lateral_error_sub = self.create_subscription(Float32, '/lanenet/lateral_error', self.lateral_error_cb, 10)
 
-        self.he_error_sub = self.create_subscription(Float64, '/autocar/he_error', self.he_error_cb, 10)
-        self.mission_status_sub = self.create_subscription(String, '/autocar/mission_status', self.mission_status_cb, 10)
 
         # Load parameters
         try:
@@ -83,7 +76,7 @@ class Localization(Node):
 
         self.cov1 =0.0
         self.cov2 =0.0
-
+        
         self.dx_key_offset = 0.0
         self.dy_key_offset = 0.0
 
@@ -104,7 +97,7 @@ class Localization(Node):
         self.mode = 'global'
         self.waypoint = 0
         self.tunnel_exit = False
-        self.odom_state = 'GPS-Odometry'
+        self.odom_state = 'GPS Odometry'
 
         self.tf_broadcaster = StaticTransformBroadcaster(self)
         self.ransac = RANSACRegressor()
@@ -117,54 +110,7 @@ class Localization(Node):
         self.timer = self.create_timer(self.ds, self.trajectory)
         
         self.lateral_error = 0.0
-        self.corr = False
-    
-
-        self.declare_parameter('corr', False)
-        self.corr = self.get_parameter('corr').value
-        self.declare_parameter('dr_mode', False)
-        self.dr_mode = self.get_parameter('dr_mode').value
-        self.add_on_set_parameters_callback(self.update_parameter)
-        
-        self.direction = 'Curve'
-        self.ct_error = 0.0
-        self.link = 0
-        self.t = 0
-        self.status = ''
-        self.after_utrun = False
-
-        self.link_corr = [True, True, True]
-        self.LE_x = [0, 0, 0]
-        self.LE_y = [0, 0, 0]
-
-        self.LE_offset_x = 0.0
-        self.LE_offset_y = 0.0
-        self.path_yaw = 0.0
-        
-    def mission_status_cb(self, msg):
-
-        self.status = msg.data
-        if self.status == 'track':
-            self.after_track = True
-
-    def he_error_cb(self, msg):
-        
-        # m로 환산 필요
-        self.he_error = msg.data
-
-    def update_parameter(self, params):
-        
-        for param in params:
-
-            if param.name == 'corr':
-
-                self.corr = True
-            if param.name == 'dr_mode':
-                self.dr_mode = True
-
-
-        return SetParametersResult(successful=True)
-        
+                
     def goals_cb(self, msg):
         self.ax = []
         self.ay = []
@@ -173,35 +119,17 @@ class Localization(Node):
             py = msg.poses[i].y
             self.ax.append(px)
             self.ay.append(py)
-        path_yaw = self.get_path_yaw(self.ax, self.ay)
-        if abs(self.state2d.pose.theta - path_yaw) < math.pi:
-            self.path_yaw = path_yaw
-        else:
-            self.path_yaw = path_yaw + math.pi
 
+        self.path_yaw = self.get_path_yaw(self.ax, self.ay)
         
-    def lateral_error_cb(self, msg):	
-        self.lateral_error =  msg.data	
-        path_ver_yaw = self.path_yaw + math.pi/2	
-        if self.direction == 'Straight' and self.he_error < 3:	
-            if self.link == 1 and self.link_corr[0]:	
-                self.LE_x[0] = -self.lateral_error*math.cos(path_ver_yaw)	
-                self.LE_y[0] = -self.lateral_error*math.sin(path_ver_yaw)	
-                self.link_corr[0] = False	
-                
-            elif self.link == 2 and self.link_corr[1]:	
-                self.LE_x[1] = -self.lateral_error*math.cos(path_ver_yaw)	
-                self.LE_y[1] = -self.lateral_error*math.sin(path_ver_yaw)	
-                self.link_corr[1] = False	
-                
-            elif self.status == 'complete' and self.link_corr[2]:	
-                self.LE_x[2] = -self.lateral_error*math.cos(path_ver_yaw)	
-                self.LE_y[2] = -self.lateral_error*math.sin(path_ver_yaw)	
-                self.link_corr[2] = False	
-                
-        self.LE_offset_x = self.LE_x[0] + self.LE_x[1] + self.LE_x[2]
-        self.LE_offset_y = self.LE_y[0] + self.LE_y[1] + self.LE_y[2]
+    def lateral_error_cb(self, msg):
 
+        self.lateral_error =  msg.data
+        #self.state2d.pose.theta
+        #self.path_yaw
+        
+        
+        
     def vehicle_state_cb(self, msg):
         zz = 3
         self.state = msg
@@ -227,19 +155,14 @@ class Localization(Node):
                 self.update_state(self.dr_state)
             else:
                 self.update_state(self.state)
-            
-            s = String()
-            s.data = self.odom_state
-            self.state_pub.publish(s)
-
 
 
     def dead_reckoning_cb(self, msg):
 
-        # if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link == 5:
+        # if (self.cov1 > 0.2 or self.cov2 > 0.2) or self.mode == 'tunnel':
         #     self.dr_mode = True
         #     self.odom_state = 'Dead-Reckoning'
-        # elif (self.cov1 < 0.05 or self.cov2 < 0.05) and self.link > 5:
+        # elif (self.cov1 < 0.1 or self.cov2 < 0.1) and self.mode != 'tunnel':
         #     self.dr_mode = False
         #     self.odom_state = 'GPS-Odometry'
 
@@ -260,7 +183,7 @@ class Localization(Node):
             self.offset_y = self.dgy + (self.init_y - self.dDy)
             self.get_offset = True
 
-        elif (self.dr_mode == True) and (self.get_offset == True) and (138 <= self.waypoint <= 140): # kcity
+        elif (self.dr_mode == True) and (self.get_offset == True) and (150 <= self.waypoint <= 152): # kcity
         # elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
             if not self.tunnel_exit:
                 index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
@@ -271,11 +194,11 @@ class Localization(Node):
                 self.tunnel_exit = True
 
         self.dr_state = msg
-        self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x + self.dx_key_offset + self.LE_offset_x
-        self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y
+        self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x + self.offset_x + self.dx_key_offset
+        self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y + self.offset_y + self.dy_key_offset
 
         offset = Float64MultiArray()
-        offset.data = [- self.init_x + self.offset_x + self.dx_key_offset +  self.LE_offset_x , - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y]
+        offset.data = [- self.init_x + self.offset_x + self.dx_key_offset, - self.init_y + self.offset_y + self.dy_key_offset]
         self.offset_pub.publish(offset)
         #self.get_logger().info('offset  : %s' %offset.data)
 
@@ -351,14 +274,12 @@ class Localization(Node):
     def mode_cb(self, msg):
         self.mode = msg.mode
         self.waypoint = msg.closest_wp if self.mode == 'tunnel' else 0
-        self.direction = msg.direction
-        self.link = msg.link_num
 
     def status_cb(self, msg):
         self.status = msg.data
 
     def pose_offset_cb(self, msg):
-
+        
         self.dx_key_offset = msg.data[2]
         self.dy_key_offset = msg.data[3]
 
@@ -424,8 +345,8 @@ class Localization(Node):
     
     def get_path_yaw(self, ax ,ay):
         
-        x = np.array(ax).reshape(-1, 1)
-        y = np.array(ay).reshape(-1, 1)
+        x = ax.reshape(-1, 1)
+        y = ay.reshape(-1, 1)
 
         self.ransac.fit(x, y)
 

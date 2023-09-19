@@ -45,6 +45,11 @@ ament_target_dependencies(adaptive_clustering
   PCL
 )
 
+install(PROGRAMS
+  src/lidar_extract_channel.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 # Install executable
 install(TARGETS
   adaptive_clustering

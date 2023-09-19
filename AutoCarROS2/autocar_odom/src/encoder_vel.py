@@ -74,7 +74,7 @@ class Pub_Two_Enc_Vel2(Node):
 
         self.j =0
 
-        self.timer = self.create_timer(0.1, self.data_callback)
+        self.timer = self.create_timer(0.3, self.data_callback)
 
     def get_enc_tic(self,msg):
 
@@ -223,7 +223,7 @@ class Pub_Two_Enc_Vel2(Node):
                 self.pub_enc_vel_one.publish(self.encoder_vel_one)
 
     def data_callback(self):
-        self.pub_encoder_vel_one()
+        # self.pub_encoder_vel_one()
         self.pub_encoder_vel_two()
 
 

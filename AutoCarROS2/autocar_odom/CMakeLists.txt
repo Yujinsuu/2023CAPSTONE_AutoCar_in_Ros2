@@ -39,6 +39,7 @@ install(PROGRAMS
   src/tf_pub.py
   src/move_position.py
   src/get_yaw_init.py
+  src/lidar_extract_channel.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
