@@ -180,8 +180,8 @@ def kcity():
     revpark_file = file_path + '/kcity/revpark.csv'
     kcity = Path(base_file, global_file, parking_file, revpark_file)
     kcity.car_mode[1] = 'delivery_A'
-    kcity.car_mode[2] = 'static'
-    kcity.car_mode[5] = 'static'
+    kcity.car_mode[2] = 'static0'
+    kcity.car_mode[5] = 'static1'
     kcity.car_mode[6] = 'delivery_B'
     kcity.car_mode[12] = 'revpark'
 

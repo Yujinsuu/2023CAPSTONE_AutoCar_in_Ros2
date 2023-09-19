@@ -80,7 +80,8 @@ class PathTracker(Node):
                   'parking'   : {'Straight': 1.5, 'Curve': 1.5},
                   'revpark'   : {'Straight': 1.5, 'Curve': 1.5},
                   'uturn'     : {'Straight': 1.0, 'Curve': 1.0},
-                  'static'    : {'Straight': 1.0, 'Curve': 1.0},
+                  'static0'   : {'Straight': 1.2, 'Curve': 1.2},
+                  'static1'   : {'Straight': 1.2, 'Curve': 1.2},
                   'dynamic'   : {'Straight': 1.0, 'Curve': 1.0},
                   'tollgate'  : {'Straight': 1.0, 'Curve': 1.0},
                   'tunnel'    : {'Straight': 1.0, 'Curve': 1.0},
@@ -263,7 +264,7 @@ class PathTracker(Node):
             sigma_t = -self.max_steer
 
         if self.mode == 'revpark':
-            if self.status in ['parking', 'return']:
+            if self.status == 'parking':
                 self.kyaw = 2.0
                 if abs(sigma_t) > np.deg2rad(15):
                     sigma_t = self.max_steer * sigma_t/abs(sigma_t)

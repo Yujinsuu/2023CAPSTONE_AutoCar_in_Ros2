@@ -78,6 +78,7 @@ class Localization(Node):
         self.dr_state = None
         self.offset_x = 0.0
         self.offset_y = 0.0
+        self.offset_quat = [0.0, 0.0]
         self.init_x = 0.0
         self.init_y = 0.0
 
@@ -115,17 +116,17 @@ class Localization(Node):
 
         self.ds = 1 / self.frequency
         self.timer = self.create_timer(self.ds, self.trajectory)
-        
+
         self.lateral_error = 0.0
         self.corr = False
-    
+
 
         self.declare_parameter('corr', False)
         self.corr = self.get_parameter('corr').value
         self.declare_parameter('dr_mode', False)
         self.dr_mode = self.get_parameter('dr_mode').value
         self.add_on_set_parameters_callback(self.update_parameter)
-        
+
         self.direction = 'Curve'
         self.ct_error = 0.0
         self.link = 0
@@ -140,7 +141,7 @@ class Localization(Node):
         self.LE_offset_x = 0.0
         self.LE_offset_y = 0.0
         self.path_yaw = 0.0
-        
+
     def mission_status_cb(self, msg):
 
         self.status = msg.data
@@ -148,12 +149,12 @@ class Localization(Node):
             self.after_track = True
 
     def he_error_cb(self, msg):
-        
+
         # m로 환산 필요
         self.he_error = msg.data
 
     def update_parameter(self, params):
-        
+
         for param in params:
 
             if param.name == 'corr':
@@ -164,7 +165,7 @@ class Localization(Node):
 
 
         return SetParametersResult(successful=True)
-        
+
     def goals_cb(self, msg):
         self.ax = []
         self.ay = []
@@ -179,26 +180,26 @@ class Localization(Node):
         else:
             self.path_yaw = path_yaw + math.pi
 
-        
-    def lateral_error_cb(self, msg):	
-        self.lateral_error =  msg.data	
-        path_ver_yaw = self.path_yaw + math.pi/2	
-        if self.direction == 'Straight' and self.he_error < 3:	
-            if self.link == 1 and self.link_corr[0]:	
-                self.LE_x[0] = -self.lateral_error*math.cos(path_ver_yaw)	
-                self.LE_y[0] = -self.lateral_error*math.sin(path_ver_yaw)	
-                self.link_corr[0] = False	
-                
-            elif self.link == 2 and self.link_corr[1]:	
-                self.LE_x[1] = -self.lateral_error*math.cos(path_ver_yaw)	
-                self.LE_y[1] = -self.lateral_error*math.sin(path_ver_yaw)	
-                self.link_corr[1] = False	
-                
-            elif self.status == 'complete' and self.link_corr[2]:	
-                self.LE_x[2] = -self.lateral_error*math.cos(path_ver_yaw)	
-                self.LE_y[2] = -self.lateral_error*math.sin(path_ver_yaw)	
-                self.link_corr[2] = False	
-                
+
+    def lateral_error_cb(self, msg):
+        self.lateral_error =  msg.data
+        path_ver_yaw = self.path_yaw + math.pi/2
+        if self.direction == 'Straight' and self.he_error < 3:
+            if self.link == 1 and self.link_corr[0]:
+                self.LE_x[0] = -self.lateral_error*math.cos(path_ver_yaw)
+                self.LE_y[0] = -self.lateral_error*math.sin(path_ver_yaw)
+                self.link_corr[0] = False
+
+            elif self.link == 2 and self.link_corr[1]:
+                self.LE_x[1] = -self.lateral_error*math.cos(path_ver_yaw)
+                self.LE_y[1] = -self.lateral_error*math.sin(path_ver_yaw)
+                self.link_corr[1] = False
+
+            elif self.status == 'complete' and self.link_corr[2]:
+                self.LE_x[2] = -self.lateral_error*math.cos(path_ver_yaw)
+                self.LE_y[2] = -self.lateral_error*math.sin(path_ver_yaw)
+                self.link_corr[2] = False
+
         self.LE_offset_x = self.LE_x[0] + self.LE_x[1] + self.LE_x[2]
         self.LE_offset_y = self.LE_y[0] + self.LE_y[1] + self.LE_y[2]
 
@@ -227,7 +228,7 @@ class Localization(Node):
                 self.update_state(self.dr_state)
             else:
                 self.update_state(self.state)
-            
+
             s = String()
             s.data = self.odom_state
             self.state_pub.publish(s)
@@ -260,12 +261,15 @@ class Localization(Node):
             self.offset_y = self.dgy + (self.init_y - self.dDy)
             self.get_offset = True
 
-        elif (self.dr_mode == True) and (self.get_offset == True) and (138 <= self.waypoint <= 140): # kcity
+        elif (self.dr_mode == True) and (self.get_offset == True) and (138 <= self.waypoint <= 142): # kcity
         # elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
             if not self.tunnel_exit:
                 index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
                 self.offset_x = self.tunnel_x[index]
                 self.offset_y = self.tunnel_y[index]
+                offset_yaw = np.arctan2(self.tunnel_y[index+1] - self.tunnel_y[index], self.tunnel_x[index+1]-self.tunnel_x[index]) - self.state2d.pose.theta
+                offset_quat = yaw_to_quaternion(offset_yaw)
+                self.offset_quat = [offset_quat.z, offset_quat.w]
                 self.init_x = msg.pose.pose.position.x
                 self.init_y = msg.pose.pose.position.y
                 self.tunnel_exit = True
@@ -273,6 +277,8 @@ class Localization(Node):
         self.dr_state = msg
         self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x + self.dx_key_offset + self.LE_offset_x
         self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y
+        self.dr_state.pose.pose.orientation.z += self.offset_quat[0]
+        self.dr_state.pose.pose.orientation.w += self.offset_quat[1]
 
         offset = Float64MultiArray()
         offset.data = [- self.init_x + self.offset_x + self.dx_key_offset +  self.LE_offset_x , - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y]
@@ -421,9 +427,9 @@ class Localization(Node):
                     path.poses.append(vpose)
 
                 self.trajectory_pub.publish(path)
-    
+
     def get_path_yaw(self, ax ,ay):
-        
+
         x = np.array(ax).reshape(-1, 1)
         y = np.array(ay).reshape(-1, 1)
 
@@ -433,7 +439,7 @@ class Localization(Node):
         yaw = math.atan2(slope, 1.0)
 
         return yaw
-        
+
 
 
 def main(args=None):

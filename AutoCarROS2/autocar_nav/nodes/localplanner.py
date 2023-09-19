@@ -68,10 +68,10 @@ class LocalPathPlanner(Node):
         df = pd.read_csv(file_path + '/kcity/track.csv')
         lane1_x = df[df['Link']==2]['X-axis'].to_list()[25:52:5]
         lane1_y = df[df['Link']==2]['Y-axis'].to_list()[25:52:5]
-        self.make_lane(lane1_x, lane1_y, 2.5, 2.5) # 9월 12일에 0.2 씩 더했음
+        self.make_lane(lane1_x, lane1_y, 2.55, 2.55) # 9월 12일에 0.2 씩 더했음  # 0919 + 0.05
         lane2_x = df[df['Link']==5]['X-axis'].to_list()[74:124:5]
         lane2_y = df[df['Link']==5]['Y-axis'].to_list()[74:124:5]
-        self.make_lane(lane2_x, lane2_y, 2.0, 4.4 )# 9월 12일에 0.2 씩 더했음
+        self.make_lane(lane2_x, lane2_y, 2.05, 4.45 )# 9월 12일에 0.2 씩 더했음  # 0919 + 0.05
         self.center_x = list(np.concatenate(self.center_x))
         self.center_y = list(np.concatenate(self.center_y))
         self.center_yaw = list(np.concatenate(self.center_yaw))
@@ -91,7 +91,7 @@ class LocalPathPlanner(Node):
         self.start = time.time()
         self.mode = 'global'
         self.GtoL = 1.29 # gps to lidar distance
-        self.L = 1.55 #1.04/2+1.6/2 # 차량 길이
+        self.L = 1.6 #1.04/2+1.6/2 # 차량 길이
         self.W = 1.75# 차량 폭 # 이전에는 1.45였음
         self.p_L = 5.0 # viz상의 차선 길이
         self.p_W = 0.1 # viz상의 차선 폭
@@ -175,7 +175,7 @@ class LocalPathPlanner(Node):
         self.obstacles = [(o.x, o.y, o.yaw, o.length, o.width) for o in msg.object_list]
         self.path_lane = []
         # 차선정보 넣기
-        if self.mode in ['tunnel', 'static']:
+        if self.mode in ['tunnel', 'static0','static1']:
             for i in range(len(self.center_x)):
                 # length는 waypoint 간격만큼, width는 차선의 폭 (가능하면 최대한 작게)
                 self.path_lane.append((self.center_x[i], self.center_y[i], self.center_yaw[i], self.p_L, self.p_W))
@@ -232,8 +232,10 @@ class LocalPathPlanner(Node):
             for i in range(0,len(cyaw),10):
                 if self.mode == 'uturn':
                     car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.))
+                elif self.mode == 'static1':
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.5))
                 else:
-                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.7))
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.0))
 
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
@@ -248,7 +250,7 @@ class LocalPathPlanner(Node):
             o = obstacle_colliding[0]
             self.obstacle_dist = np.sqrt((self.x - o[0])**2 + (self.y - o[1])**2)
             self.obstacle_detected = True
-            if self.mode in ['static', 'tunnel']:
+            if self.mode in ['static0', 'static1', 'tunnel']:
                 cx, cy, cyaw = self.collision_reroute(cx, cy, cyaw, obstacle_colliding)
 
             # elif self.mode == 'dynamic':
@@ -268,7 +270,7 @@ class LocalPathPlanner(Node):
         return cx, cy, cyaw
 
     def collision_reroute(self, cx, cy, cyaw, obstacle_colliding):
-        if self.mode == 'static': step = 70
+        if self.mode == 'static1': step = 70
         else: step = 50
         # step_region = 15
         obs_first = obstacle_colliding[-1]
@@ -322,6 +324,8 @@ class LocalPathPlanner(Node):
         region2_x = cx[target_idx_e] + 15
         region2_y = cy[target_idx_e] + 15
         obstacles = self.obstacles + self.path_lane
+        if self.mode == 'static1': self.W = 2.2
+        else: self.W = 1.85
 
         hy_a_star = hybrid_a_star(region1_x, region2_x,
                                   region1_y, region2_y,
@@ -375,7 +379,7 @@ class LocalPathPlanner(Node):
         cx = dx[:-1]
         cy = dy[:-1]
 
-        if self.mode in ['dynamic', 'static', 'tunnel', 'uturn']:
+        if self.mode in ['dynamic', 'static0','static1', 'tunnel', 'uturn']:
             cx, cy, cyaw = self.determine_path(cx, cy, cyaw)
         if self.is_fail == True:
             return
