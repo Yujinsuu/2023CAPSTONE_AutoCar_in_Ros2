@@ -138,8 +138,8 @@ class odomPublisher(Node):
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
 		a, b = transformer.transform(gps.latitude, gps.longitude)
 
-		x = b - self.gps_offset['kcity'][0]
-		y = a - self.gps_offset['kcity'][1]
+		x = b - self.gps_offset['seoul'][0]
+		y = a - self.gps_offset['seoul'][1]
 
 		self.gpose.pose.pose.position.x=x + self.gx_key_offset
 		self.gpose.pose.pose.position.y=y + self.gy_key_offset

@@ -36,14 +36,23 @@ class LidarDataProcessor(Node):
             point.x = x
             point.y = y
             point.z = z
-            if z > 1 and x > 0:
+            if z > 1.8 and x < 5 and x > 0:
                 intensity.append(int)
                 self.pointcloud.points.append(point)
+                print('z', z)
                 if z < min_z:
                     min_z = z
 
-        print('min_z', min_z)
 
+        if len(self.pointcloud.points) == 0:
+            self.outside_of_tunnel = True
+        else:
+            self.outside_of_tunnel = False
+        
+        print(len(self.pointcloud.points))
+        print('mode',self.outside_of_tunnel)
+        
+ 
         self.channel.values = intensity
 
         self.publisher.publish(self.pointcloud)

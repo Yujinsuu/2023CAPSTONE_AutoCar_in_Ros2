@@ -31,7 +31,10 @@ class Pub_Two_Enc_Vel2(Node):
         qos_profile = QoSProfile(depth=10)
         self.pub_enc_vel_two = self.create_publisher(Odometry, '/data/encoder_vel_two', qos_profile)
         self.pub_enc_vel_one = self.create_publisher(Odometry, '/data/encoder_vel_one', qos_profile)
-
+        self.enc_L_pub = self.create_publisher(Float32, '/encL', qos_profile)
+        self.enc_R_pub = self.create_publisher(Float32, '/encR', qos_profile)
+        self.enc_L = Float32()
+        self.enc_R = Float32()
         self.steer_sub = self.create_subscription(AckermannDriveStamped, '/autocar/autocar_cmd', self.steer_callback, 10)
         self.sub_enc_tic = self.create_subscription(Int32MultiArray, '/data/encoder_tic',self.get_enc_tic, qos_profile)
 
@@ -40,7 +43,6 @@ class Pub_Two_Enc_Vel2(Node):
         self.encoder_tic_right = None
 
         self.encoder_vel_two = Odometry()
-        self.encoder_vel_two.header.stamp = self.get_clock().now().to_msg()
         self.encoder_vel_two.header.frame_id = 'odom_footprint'
 
         self.encoder_vel_one = Odometry()
@@ -74,7 +76,7 @@ class Pub_Two_Enc_Vel2(Node):
 
         self.j =0
 
-        self.timer = self.create_timer(0.3, self.data_callback)
+        self.timer = self.create_timer(0.1, self.data_callback)
 
     def get_enc_tic(self,msg):
 
@@ -83,7 +85,7 @@ class Pub_Two_Enc_Vel2(Node):
         print(self.encoder_tic_left)
 
     def pub_encoder_vel_two(self): #steer값 오른쪽이 -값 -0.45 ~ 0.48
-
+        self.encoder_vel_two.header.stamp = self.get_clock().now().to_msg()
         #time.time으로 변경
         current_time = time.time_ns()
         delta_time = (current_time-self.time_old)/10**9
@@ -116,6 +118,9 @@ class Pub_Two_Enc_Vel2(Node):
 
                 print(delta_pos,"yea")
                 self.encoder_vel_two.twist.twist.linear.x= ( delta_pos / delta_time )
+                
+                # self.enc_L.data = delta_enc_left
+                # self.enc_R.data = delta_enc_right
 
             self.j=1
         #if(self.encoder_vel0.twist.twist.linear.x != 0):
@@ -225,6 +230,7 @@ class Pub_Two_Enc_Vel2(Node):
     def data_callback(self):
         # self.pub_encoder_vel_one()
         self.pub_encoder_vel_two()
+        
 
 
 def main(args=None):

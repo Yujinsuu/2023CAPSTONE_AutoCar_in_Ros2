@@ -12,7 +12,7 @@ Panels:
         - /Image2
         - /Image3
       Splitter Ratio: 0.4969097673892975
-    Tree Height: 543
+    Tree Height: 441
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -55,9 +55,17 @@ Visualization Manager:
         All Enabled: true
         car:
           Value: true
+        imu_link:
+          Value: true
         map:
           Value: true
         odom:
+          Value: true
+        odom_footprint:
+          Value: true
+        velodyne:
+          Value: true
+        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -68,6 +76,9 @@ Visualization Manager:
         map:
           odom:
             car:
+              velodyne:
+                {}
+            odom_footprint:
               {}
       Update Interval: 0
       Value: true
@@ -87,7 +98,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -135,7 +146,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -213,7 +224,7 @@ Visualization Manager:
       Enabled: true
       Name: Obstacles
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -236,7 +247,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 255
+      Max Intensity: 136
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
@@ -258,7 +269,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        {}
+        adaptive_clustering_v1: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -342,7 +353,7 @@ Visualization Manager:
       Enabled: true
       Name: Target_range
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -354,7 +365,7 @@ Visualization Manager:
       Enabled: true
       Name: Angle_range
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -492,25 +503,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 169.3722381591797
+      Distance: 222.98220825195312
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 53.93396759033203
-        Y: 196.9562225341797
-        Z: -51.171546936035156
+        X: -269.8189697265625
+        Y: 517.7334594726562
+        Z: -50.26578140258789
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5647963285446167
+      Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 4.227219581604004
+      Yaw: 4.457222938537598
     Saved: ~
 Window Geometry:
   Displays:

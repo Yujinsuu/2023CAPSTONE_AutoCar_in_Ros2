@@ -64,7 +64,7 @@ class erp42(Node):
     self.dt = 0.3
 
     ## PID const
-    self.kp = 1.75
+    self.kp = 1.7
     self.ki = 0
     self.kd = 0.0
     self.prev_error = 0
@@ -176,32 +176,27 @@ class erp42(Node):
     # self.integral += error
     derivative = error - self.prev_error
 
-    # PD Control
-    output1 = (self.kp * error) # + (self.kd * derivative) # + (self.ki * self.integral)
-    output2 = (self.kp * error) + (self.kd * derivative) # + (self.ki * self.integral)
+    output = (self.kp * error) # + (self.kd * derivative) # + (self.ki * self.integral)
 
-    if output1 > max_speed: output1 = max_speed
-    elif output1 < -max_speed: output1= -max_speed
-    if output2 > max_speed: output2 = max_speed
-    elif output2 < -max_speed: output2= -max_speed
-
+    if output > max_speed: output = max_speed
+    elif output < -max_speed: output= -max_speed
+    
     self.prev_error = error
 
-    if output1 >= 0:
-      speed = output1 + self.velocity
+    if output >= 0:
+      speed = output + self.velocity
       if speed < target_speed: speed = target_speed
-      if speed > max_speed: speed = max_speed
-      if target_speed < 10:
-        self.speed = speed * 1.5
+      elif speed > max_speed: speed = max_speed
+      
+      if target_speed < 10/3.6:
+        self.speed = min(speed * 1.9, max_speed)
       else:
         self.speed = speed
-      self.brake = 0
+      self.brake = 1
 
     else:
-      # -5 ~ 0 범위의 output을 1~200 범위의 brake값으로 환산
-      self.speed = target_speed
-      self.brake = int((abs(output1) * 130) / max_speed)
-      if self.brake > 200: self.brake = 200
+        self.speed = 0.0
+        self.brake = 65
 
   def vehicle_callback(self, msg):
     self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
@@ -221,29 +216,33 @@ class erp42(Node):
     cmd_steer = np.rad2deg(msg.drive.steering_angle)
     self.steer = self.real_steer(cmd_steer)
     self.gear = int(msg.drive.acceleration)
-
-    if msg.drive.speed > 12/3.6:
+    
+    if msg.drive.speed > 12/3.6: # 15 km/h
+      if msg.drive.speed - 0.6 > self.velocity: # 0.42 : 1.5km/h,  0.28 : 1km/h
+        self.speed_control(msg.drive.speed)
+      else:
+        self.speed = msg.drive.speed
+        self.brake = 1
+        
+    elif msg.drive.speed > 7/3.6: # 10 km/h, 8 km/h
       if abs(self.velocity - msg.drive.speed) > 0.6: # 0.42 : 1.5km/h,  0.28 : 1km/h
         self.speed_control(msg.drive.speed)
       else:
         self.speed = msg.drive.speed
         self.brake = 1
-
-    elif msg.drive.speed > 7/3.6:
-      if abs(self.velocity - msg.drive.speed) > 0.45: # 0.42 : 1.5km/h,  0.28 : 1km/h
+        
+    else: # 6 km/h, 4 km/h
+      if abs(self.velocity - msg.drive.speed) > 0.3: # 0.42 : 1.5km/h,  0.28 : 1km/h
         self.speed_control(msg.drive.speed)
       else:
         self.speed = msg.drive.speed
         self.brake = 1
-
-    else:
-      if abs(self.velocity - msg.drive.speed) > 0.33: # 0.42 : 1.5km/h,  0.28 : 1km/h
-        self.speed_control(msg.drive.speed)
-      else:
-        self.speed = msg.drive.speed
-        self.brake = 1
+        
     # if abs(self.velocity - msg.drive.speed) > 0.56: # 0.42 : 1.5km/h,  0.28 : 1km/h
     #   self.speed_control(msg.drive.speed)
+    # else:
+    #   self.speed = msg.drive.speed
+    #   self.brake = 1
 
 
   def timer_callback(self):

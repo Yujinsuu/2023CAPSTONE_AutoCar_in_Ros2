@@ -223,7 +223,7 @@ class GlobalPathPlanner(Node):
 
         closest_id, transform = self.get_closest_waypoints()
 
-        if self.mode in ['tunnel', 'static']:
+        if self.mode in ['tunnel', 'static0', 'static1']:
             self.wp_ahead = 20
             self.wp_behind = 10
         else:
@@ -434,7 +434,7 @@ class GlobalPathPlanner(Node):
         if self.mode == 'tunnel':
             to_yolo.data = 'tunnel'
 
-        elif self.global_index == 2 and self.mode == 'static':
+        elif self.global_index == 2 and self.mode == 'static0':
             to_yolo.data = 'static'
 
         # 정지선 15m 전부터 신호등 인식을 위한 YOLO 모델 활성화

@@ -142,8 +142,8 @@ def htech():
     parking_file = None
     revpark_file = None
     htech = Path(base_file, global_file, parking_file, revpark_file)
-    htech.car_mode[0] = 'tollgate'
-    htech.car_mode[1] = 'dynamic'
+    htech.car_mode[0] = 'static0'
+    htech.car_mode[1] = 'static1'
     # htech.car_mode[4] = 'tunnel'
     # htech.car_mode[0] = 'delivery_A'
     # htech.car_mode[3] = 'delivery_B'
@@ -209,5 +209,5 @@ def qualifier():
 
     return qualifier
 
-use_map = kcity()
+use_map = htech()
 start_index = 0

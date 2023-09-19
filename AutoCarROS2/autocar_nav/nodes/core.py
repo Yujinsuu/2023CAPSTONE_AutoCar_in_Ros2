@@ -258,10 +258,8 @@ class Core(Node):
                 if 3 <= self.traffic_stop_wp <= 8:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
-                elif self.traffic_stop_wp < 3:
+                else:
                     self.traffic_stop = False
-
-                elif self.traffic_stop_wp > 8:
                     self.pause = time.time()
 
         # elif self.mode == 'tollgate':
@@ -339,7 +337,11 @@ class Core(Node):
         elif self.mode in ['static0', 'static1']:
             if self.status == 'driving':
                 self.cmd_speed = self.target_speed['tunnel']
-                if self.traffic_stop_wp <= 15:
+
+                if self.mode == 'static0' and self.traffic_stop_wp < 30:
+                    self.status = 'complete'
+
+                elif self.mode == 'static1' and self.traffic_stop_wp <= 15:
                     self.status = 'complete'
 
                 elif self.obstacle_detected:
@@ -351,19 +353,27 @@ class Core(Node):
                 if self.obstacle_detected:
                     self.avoid_count = time.time()
 
-                if time.time() - self.avoid_count >= 2:
+                if time.time() - self.avoid_count >= 3:
                     self.status = 'driving'
 
             else:
-                self.cmd_speed = self.target_speed['traffic']
-                if 3 <= self.traffic_stop_wp <= 8:
-                    self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                if self.mode == 'static0':
+                    self.cmd_speed = self.target_speed['traffic']
+                    if (3 <= self.traffic_stop_wp <= 5) or (19 <= self.traffic_stop_wp <= 21):
+                        self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
-                elif self.traffic_stop_wp < 3:
-                    self.traffic_stop = False
+                    else:
+                        self.traffic_stop = False
+                        self.pause = time.time()
 
-                elif self.traffic_stop_wp > 8:
-                    self.pause = time.time()
+                else:
+                    self.cmd_speed = self.target_speed['traffic']
+                    if 3 <= self.traffic_stop_wp <= 8:
+                        self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+
+                    else:
+                        self.traffic_stop = False
+                        self.pause = time.time()
 
 
         # elif self.mode == 'dynamic':
@@ -503,7 +513,7 @@ class Core(Node):
                     self.stop_wp = self.waypoint + int(self.distance) -1
                     self.status = 'detected'
 
-                if self.sign_pose >= 300:
+                if self.sign_pose >= 500:
                     self.parking_time = time.time()
                     self.status = 'stop'
 
@@ -573,8 +583,9 @@ class Core(Node):
                 if 3 <= self.traffic_stop_wp <= 8:
                     self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
-                elif self.traffic_stop_wp < 3:
+                else:
                     self.traffic_stop = False
+                    self.pause = time.time()
 
 
         elif self.mode == 'finish':
