@@ -2,10 +2,11 @@
 
 import rclpy
 from rclpy.node import Node
+import numpy as np
 from sensor_msgs.msg import PointCloud2, PointCloud, ChannelFloat32
 from sensor_msgs_py import point_cloud2
 from geometry_msgs.msg import Point32
-import numpy as np
+from autocar_msgs.msg import State2D
 
 class LidarDataProcessor(Node):
 
@@ -17,9 +18,17 @@ class LidarDataProcessor(Node):
         self.channel = ChannelFloat32()
         self.channel.name = 'intensity'
         self.pointcloud.channels.append(self.channel)
-        
         self.subscription = self.create_subscription( PointCloud2, '/velodyne_points', self.lidar_callback, 10)
+        self.subscription = self.create_subscription(State2D, '/autocar/state2D',self.state2D_cb , 10)
         self.publisher = self.create_publisher( PointCloud, '/upper_points', 10)
+        
+        self.px = 0.0
+        self.py = 0.0
+       
+    def state2D_cb(self, msg):
+
+        self.px = msg.pose.x
+        self.py = msg.pose.y
 
 
     def lidar_callback(self, msg):
@@ -36,8 +45,8 @@ class LidarDataProcessor(Node):
             point.x = x
             point.y = y
             point.z = z
-            if z > 1.8 and x < 5 and x > 0:
-                intensity.append(int)
+            if z > 2 and x < 5 and x > 0:
+                intensity.append(int)   
                 self.pointcloud.points.append(point)
                 print('z', z)
                 if z < min_z:
@@ -48,9 +57,13 @@ class LidarDataProcessor(Node):
             self.outside_of_tunnel = True
         else:
             self.outside_of_tunnel = False
+            
+        if self.outside_of_tunnel:
+            print('px: ',self.px, 'py: ', self.py)
         
         print(len(self.pointcloud.points))
         print('mode',self.outside_of_tunnel)
+            
         
  
         self.channel.values = intensity

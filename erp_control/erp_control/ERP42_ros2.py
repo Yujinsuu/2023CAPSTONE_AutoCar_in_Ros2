@@ -171,7 +171,7 @@ class erp42(Node):
     return np.deg2rad(output_steer)
 
   def speed_control(self, target_speed):
-    max_speed = 20/3.6
+    max_speed = 23/3.6
     error = target_speed - self.velocity
     # self.integral += error
     derivative = error - self.prev_error
@@ -188,8 +188,10 @@ class erp42(Node):
       if speed < target_speed: speed = target_speed
       elif speed > max_speed: speed = max_speed
       
-      if target_speed < 10/3.6:
-        self.speed = min(speed * 1.9, max_speed)
+      if target_speed < 12/3.6:
+        self.speed = min(speed * 2.2, max_speed)
+      elif target_speed < 8/3.6:
+        self.speed = min(speed * 2.5, max_speed)
       else:
         self.speed = speed
       self.brake = 1

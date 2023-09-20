@@ -17,8 +17,11 @@ from sklearn.linear_model import RANSACRegressor
 from std_msgs.msg import Float64MultiArray, Float32MultiArray, Float32, Float64, String
 from nav_msgs.msg import Path, Odometry
 from autocar_msgs.msg import State2D, LinkArray, Path2D
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped, Point32
 from rcl_interfaces.msg import SetParametersResult
+
+from sensor_msgs.msg import PointCloud2, PointCloud, ChannelFloat32
+from sensor_msgs_py import point_cloud2
 
 
 from autocar_nav.quaternion import yaw_to_quaternion
@@ -55,7 +58,7 @@ class Localization(Node):
                 namespace='',
                 parameters=[
                     ('update_frequency', 10.0),
-                    ('centreofgravity_to_frontaxle', 1.04)
+                    ('centreofgravity_to_frontaxle', 1.04/2)
                 ]
             )
 
@@ -141,6 +144,56 @@ class Localization(Node):
         self.LE_offset_x = 0.0
         self.LE_offset_y = 0.0
         self.path_yaw = 0.0
+        
+        self.tunnel_exit_lidar = False
+        self.longitudinal_offset = False
+        self.pointcloud = PointCloud()
+        self.pointcloud.header.stamp = self.get_clock().now().to_msg()
+        self.pointcloud.header.frame_id = 'velodyne'
+        self.channel = ChannelFloat32()
+        self.channel.name = 'intensity'
+        self.pointcloud.channels.append(self.channel)
+        self.subscription = self.create_subscription( PointCloud2, '/velodyne_points', self.lidar_callback, 10)
+        self.publisher = self.create_publisher( PointCloud, '/upper_points', 10)
+    
+    def lidar_callback(self, msg):
+        # Read the point cloud data
+        pc_data = list(point_cloud2.read_points(msg, field_names=("x", "y", "z", "intensity", "ring"), skip_nans=True))
+        filtered_list = [tup for tup in pc_data if tup[-1] == 15]
+        xyz_data = [(point[0], point[1], point[2],  point[3]) for point in filtered_list]
+        #print('filtered_list',filtered_list)
+        intensity = []
+        self.pointcloud.points.clear()
+        min_z = 100.0
+        for x, y, z, int in xyz_data:
+            point = Point32()
+            point.x = x
+            point.y = y
+            point.z = z
+            if z > 2 and x < 5 and x > 0:
+                intensity.append(int)       
+                self.pointcloud.points.append(point)
+                print('z', z)
+                if z < min_z:
+                    min_z = z
+
+        if len(self.pointcloud.points) < 3 and self.tunnel_exit:
+
+            self.tunnel_exit_lidar = True
+        else:
+            self.tunnel_exit_lidar = False
+        
+        print(len(self.pointcloud.points))
+        print('mode',self.tunnel_exit_lidar)
+        
+        self.get_logger().info('tunnel_exit  : %s' %self.tunnel_exit_lidar)
+        
+        
+ 
+        self.channel.values = intensity
+
+        self.publisher.publish(self.pointcloud)
+        
 
     def mission_status_cb(self, msg):
 
@@ -184,7 +237,7 @@ class Localization(Node):
     def lateral_error_cb(self, msg):
         self.lateral_error =  msg.data
         path_ver_yaw = self.path_yaw + math.pi/2
-        if self.direction == 'Straight' and self.he_error < 3:
+        if self.dr_mode and self.direction == 'Straight' and self.he_error < 3:
             if self.link == 1 and self.link_corr[0]:
                 self.LE_x[0] = -self.lateral_error*math.cos(path_ver_yaw)
                 self.LE_y[0] = -self.lateral_error*math.sin(path_ver_yaw)
@@ -237,12 +290,12 @@ class Localization(Node):
 
     def dead_reckoning_cb(self, msg):
 
-        # if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link == 5:
-        #     self.dr_mode = True
-        #     self.odom_state = 'Dead-Reckoning'
-        # elif (self.cov1 < 0.05 or self.cov2 < 0.05) and self.link > 5:
-        #     self.dr_mode = False
-        #     self.odom_state = 'GPS-Odometry'
+        if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link == 5:
+            self.dr_mode = True
+            self.odom_state = 'Dead-Reckoning'
+        elif (self.cov1 < 0.05 or self.cov2 < 0.05) and self.link > 5:
+            self.dr_mode = False
+            self.odom_state = 'GPS-Odometry'
 
 
         self.dp.append((msg.pose.pose.position.x,msg.pose.pose.position.y,time.time()))
@@ -273,12 +326,25 @@ class Localization(Node):
                 self.init_x = msg.pose.pose.position.x
                 self.init_y = msg.pose.pose.position.y
                 self.tunnel_exit = True
+        
+        if self.tunnel_exit_lidar:
+            if not self.longitudinal_offset:
+                self.init_x = msg.pose.pose.position.x
+                self.init_y = msg.pose.pose.position.y
+                self.offset_x = 78.9926
+                self.offset_y = -56.6766
+                #px:  79.4543860264821 py:  -55.46677113138139
+                
+                self.longitudinal_offset = True
+                
+            
+            
 
         self.dr_state = msg
         self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x + self.dx_key_offset + self.LE_offset_x
         self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y
-        self.dr_state.pose.pose.orientation.z += self.offset_quat[0]
-        self.dr_state.pose.pose.orientation.w += self.offset_quat[1]
+        # self.dr_state.pose.pose.orientation.z += self.offset_quat[0]
+        # self.dr_state.pose.pose.orientation.w += self.offset_quat[1]
 
         offset = Float64MultiArray()
         offset.data = [- self.init_x + self.offset_x + self.dx_key_offset +  self.LE_offset_x , - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y]

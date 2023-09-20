@@ -325,7 +325,7 @@ class Core(Node):
                     self.status = 'lanenet'
 
             elif self.status == 'avoid':
-                self.cmd_speed = self.target_speed['static']
+                self.cmd_speed = self.target_speed['static0']
 
                 if self.obstacle == 'static':
                     self.avoid_count = time.time()

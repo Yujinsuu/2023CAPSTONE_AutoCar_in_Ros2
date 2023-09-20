@@ -12,7 +12,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
 from std_msgs.msg import Float64MultiArray, Int32, String
-from autocar_msgs.msg import Path2D, State2D, LinkArray
+from autocar_msgs.msg import Path2D, State2D, LinkArray, Obstacle
 from geometry_msgs.msg import Pose2D
 
 from autocar_nav.calculate_offset import point_offset, line_offset
@@ -43,6 +43,7 @@ class GlobalPathPlanner(Node):
         self.mission_status_sub = self.create_subscription(String,'/autocar/mission_status', self.mission_status_cb, 10)
         self.walls_sub = self.create_subscription(Path2D, '/wall_path', self.walls_cb, 10)
         self.lanes_sub = self.create_subscription(Path2D, '/wall_lane', self.lanes_cb, 10)
+        self.obstacle_sub = self.create_subscription(Obstacle, '/autocar/obs_recog', self.obstacle_cb, 10)
 
         # Load parameters
         try:
@@ -115,9 +116,14 @@ class GlobalPathPlanner(Node):
         self.tunnel_y = []
         self.lane_x = []
         self.lane_y = []
+        self.map_fix = False
 
         self.offset_x = 0.0
         self.offset_y = 0.0
+        
+        self.obstacle_detected = 0
+        self.obstacle = 'None'
+        self.obs_distance = float(1e3)
 
 
     def parking_path_cb(self, msg):
@@ -161,6 +167,11 @@ class GlobalPathPlanner(Node):
         self.theta = msg.pose.theta
 
         self.set_waypoints()
+        
+    def obstacle_cb(self, msg):
+        self.obstacle_detected = msg.detected
+        self.obstacle = msg.obstacle
+        self.obs_distance = msg.distance
 
 
     def get_closest_waypoints(self):
@@ -332,13 +343,19 @@ class GlobalPathPlanner(Node):
 
             if self.mode == 'tunnel':
                 lx,ly,lyaw = [1e6],[1e6],0.0
-                if self.status == 'lanenet' and len(self.tx) != 0:
+                if self.status == 'aviod' and self.obs_distance <= 6:
+                    self.map_fix = True
+                    
+                elif self.map_fix == True and self.status == 'lanenet':
+                    self.map_fix = False
+                
+                if (self.status == 'lanenet' or self.map_fix == False) and len(self.tx) != 0 :
                     self.tunnel_x = self.tx
                     self.tunnel_y = self.ty
                     self.lane_x = self.lx
                     self.lane_y = self.ly
 
-                elif self.status == 'avoid':
+                elif self.status == 'avoid' and self.map_fix == True:
                     lx = self.lane_x
                     ly = self.lane_y
                     lyaw = np.arctan2((py[-1]-py[0]),(px[-1]-px[0]))
