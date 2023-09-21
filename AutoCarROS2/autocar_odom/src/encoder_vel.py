@@ -26,7 +26,7 @@ class LowPassFilter:
 
 class Pub_Two_Enc_Vel2(Node):
     def __init__(self):
-        super().__init__('pub_enc_tic')
+        super().__init__('pub_enc_vel')
 
         qos_profile = QoSProfile(depth=10)
         self.pub_enc_vel_two = self.create_publisher(Odometry, '/data/encoder_vel_two', qos_profile)

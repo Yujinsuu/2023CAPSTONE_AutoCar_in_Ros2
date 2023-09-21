@@ -38,7 +38,7 @@ class odomPublisher(Node):
 		self.gps_vel_sub = self.create_subscription(TwistWithCovarianceStamped, '/ublox_gps/fix_velocity', self.gps_vel_callback, qos_profile)
 		self.imu_sub = self.create_subscription(QuaternionStamped, '/filter/quaternion', self.imu_callback, qos_profile)
 		self.imu_angularV_sub = self.create_subscription(Vector3Stamped, '/imu/angular_velocity', self.imu_angularV_callback, qos_profile)
-		self.encoder_sub = self.create_subscription(Odometry, '/data/encoder_vel', self.encoder_callback, 10)
+		# self.encoder_sub = self.create_subscription(Odometry, '/data/encoder_vel', self.encoder_callback, 10)
 		self.odom_state_sub = self.create_subscription(String, '/autocar/odom_state', self.state_callback, 10)
 		self.mode_sub = self.create_subscription(LinkArray,'/autocar/mode', self.mode_callback, qos_profile )
 		self.pose_offset_sub= self.create_subscription(Float32MultiArray , '/data/key_offset', self.pose_offset_cb, 10)
@@ -138,7 +138,7 @@ class odomPublisher(Node):
 
 	def tunnel_yaw_cb(self, msg):
 		self.tunnel_yaw = msg.data
-  
+		self.get_logger().info('tunnel_yaw: %s' % self.tunnel_yaw)
 	def gps_callback(self, gps):
 
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')

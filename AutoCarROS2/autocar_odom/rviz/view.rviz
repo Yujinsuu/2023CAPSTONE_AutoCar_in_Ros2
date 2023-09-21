@@ -13,7 +13,7 @@ Panels:
         - /Image3
         - /PointCloud1
       Splitter Ratio: 0.4969097673892975
-    Tree Height: 441
+    Tree Height: 797
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -60,6 +60,8 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
+        odom_footprint:
+          Value: true
         velodyne:
           Value: true
       Marker Scale: 0.800000011920929
@@ -70,7 +72,11 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            {}
+            car:
+              velodyne:
+                {}
+            odom_footprint:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
@@ -89,7 +95,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -101,7 +107,7 @@ Visualization Manager:
       Enabled: true
       Name: car_steer
       Namespaces:
-        {}
+        arrows: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -173,17 +179,17 @@ Visualization Manager:
         Value: /autocar/viz_path
       Value: true
     - Class: rviz_default_plugins/Marker
-      Enabled: false
+      Enabled: true
       Name: WallScan
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/wall
-      Value: false
+      Value: true
     - Alpha: 100
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -215,7 +221,7 @@ Visualization Manager:
       Enabled: true
       Name: Obstacles
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -238,9 +244,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 95
+      Max Intensity: 105
       Min Color: 0; 0; 0
-      Min Intensity: 0
+      Min Intensity: 1
       Name: PointCloud2
       Position Transformer: XYZ
       Selectable: true
@@ -260,7 +266,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        {}
+        adaptive_clustering_v1: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -344,7 +350,7 @@ Visualization Manager:
       Enabled: true
       Name: Target_range
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -356,7 +362,7 @@ Visualization Manager:
       Enabled: true
       Name: Angle_range
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -433,9 +439,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: -999999
+      Max Intensity: 23
       Min Color: 0; 0; 0
-      Min Intensity: 999999
+      Min Intensity: 2
       Name: PointCloud
       Position Transformer: XYZ
       Selectable: true
@@ -494,16 +500,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 374.7586669921875
+      Distance: 177.29681396484375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 57.8769416809082
-        Y: 62.455928802490234
-        Z: -50.62364959716797
+        X: 114.63347625732422
+        Y: -29.960159301757812
+        Z: -50.69798278808594
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -512,7 +518,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 4.457222938537598
+      Yaw: 4.447222709655762
     Saved: ~
 Window Geometry:
   Displays:
@@ -530,5 +536,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 960
-  X: 960
+  X: 0
   Y: 27

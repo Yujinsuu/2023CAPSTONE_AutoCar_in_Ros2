@@ -7,6 +7,7 @@ from sensor_msgs.msg import PointCloud2, PointCloud, ChannelFloat32
 from sensor_msgs_py import point_cloud2
 from geometry_msgs.msg import Point32
 from autocar_msgs.msg import State2D
+from nav_msgs.msg import Odometry
 
 class LidarDataProcessor(Node):
 
@@ -19,16 +20,16 @@ class LidarDataProcessor(Node):
         self.channel.name = 'intensity'
         self.pointcloud.channels.append(self.channel)
         self.subscription = self.create_subscription( PointCloud2, '/velodyne_points', self.lidar_callback, 10)
-        self.subscription = self.create_subscription(State2D, '/autocar/state2D',self.state2D_cb , 10)
+        self.subscription = self.create_subscription(Odometry, '/autocar/odom',self.odom_cb , 10)
         self.publisher = self.create_publisher( PointCloud, '/upper_points', 10)
         
         self.px = 0.0
         self.py = 0.0
        
-    def state2D_cb(self, msg):
+    def odom_cb(self, msg):
 
-        self.px = msg.pose.x
-        self.py = msg.pose.y
+        self.px = msg.pose.pose.position.x
+        self.py = msg.pose.pose.position.y
 
 
     def lidar_callback(self, msg):

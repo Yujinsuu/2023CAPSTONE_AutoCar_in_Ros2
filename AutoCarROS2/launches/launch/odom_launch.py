@@ -49,12 +49,12 @@ def generate_launch_description():
         #     executable = 'encoder_vel.py'
         # ),
 
-        Node(
-            package = 'robot_localization',
-            name = 'ekf_filter_node',
-            executable = 'ekf_node',
-            parameters = [ekf]
-        ),
+        # Node(
+        #     package = 'robot_localization',
+        #     name = 'ekf_filter_node',
+        #     executable = 'ekf_node',
+        #     parameters = [ekf]
+        # ),
 
         # Node(
         #     package = odom,

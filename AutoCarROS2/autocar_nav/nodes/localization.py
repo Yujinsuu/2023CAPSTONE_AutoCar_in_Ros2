@@ -152,8 +152,7 @@ class Localization(Node):
         self.tunnel_exit_lidar = False
         self.longitudinal_offset = False
         self.pointcloud = PointCloud()
-        self.pointcloud.header.stamp = self.get_clock().now().to_msg()
-        self.pointcloud.header.frame_id = 'velodyne'
+        self.pointcloud.header.frame_id = 'car'
         self.channel = ChannelFloat32()
         self.channel.name = 'intensity'
         self.pointcloud.channels.append(self.channel)
@@ -171,6 +170,7 @@ class Localization(Node):
         
     def lidar_callback(self, msg):
         # Read the point cloud data
+        self.pointcloud.header.stamp = self.get_clock().now().to_msg()
         pc_data = list(point_cloud2.read_points(msg, field_names=("x", "y", "z", "intensity", "ring"), skip_nans=True))
         filtered_list = [tup for tup in pc_data if tup[-1] == 15]
         xyz_data = [(point[0], point[1], point[2],  point[3]) for point in filtered_list]
@@ -333,7 +333,7 @@ class Localization(Node):
                 index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
                 self.offset_x = self.tunnel_x[index]
                 self.offset_y = self.tunnel_y[index]
-                self.offset_yaw = np.arctan2(self.tunnel_y[index+1] - self.tunnel_y[index], self.tunnel_x[index+1]-self.tunnel_x[index]) - self.state2d.pose.theta
+                self.offset_yaw = normalise_angle(np.arctan2(self.tunnel_y[index+1] - self.tunnel_y[index], self.tunnel_x[index+1]-self.tunnel_x[index]) - self.state2d.pose.theta)
                 self.l_offset_yaw = normalise_angle(-2.635 - (self.lidar_yaw + self.state2d.pose.theta))
                 self.init_x = msg.pose.pose.position.x
                 self.init_y = msg.pose.pose.position.y
@@ -361,47 +361,27 @@ class Localization(Node):
         
         tunnel_yaw = Float32()
         tunnel_yaw.data = self.offset_yaw
-        # tunnel_yaw.data = self.l_offset_yaw
+        #tunnel_yaw.data = self.l_offset_yaw
         self.tunnel_yaw_pub.publish(tunnel_yaw)
         
         
-        if len(self.gp) >20:
-            #time_offset = abs(self.gp[-1][2] - self.dp[-1][2])
-            gp_list = [item[2] for item in self.gp[-15:-1]]
-            dp_list = [item[2] for item in self.dp[-15:-1]]
-            dp_gp_offset = [abs(item[2]-gp_list[-14]) for item in self.dp[-15:-1]]
-            dp_gp_offset_min = min(dp_gp_offset)
-            self.min_offset_list.append(dp_gp_offset_min)
-            max_min = max(self.min_offset_list)
+        
+        #---debug and select dp_gp_offset_max---#
+        
+        # if len(self.gp) >20:
+        #     #time_offset = abs(self.gp[-1][2] - self.dp[-1][2])
+        #     gp_list = [item[2] for item in self.gp[-15:-1]]
+        #     dp_list = [item[2] for item in self.dp[-15:-1]]
+        #     dp_gp_offset = [abs(item[2]-gp_list[-14]) for item in self.dp[-15:-1]]
+        #     dp_gp_offset_min = min(dp_gp_offset)
+        #     self.min_offset_list.append(dp_gp_offset_min)
+        #     max_min = max(self.min_offset_list)
 
-            #debug and select dp_gp_offset_max
-            # self.get_logger().info('gps_list  : %s' %(gp_list))
-            # self.get_logger().info('DP_list : %s' %(dp_list))
-            # self.get_logger().info('dp_gp_offset  : %s' %(dp_gp_offset))
-            # self.get_logger().info('dp_gp_offset_max  : %s' %(max_min)) # 1.5sec - 0.72
+        # self.get_logger().info('gps_list  : %s' %(gp_list))
+        # self.get_logger().info('DP_list : %s' %(dp_list))
+        # self.get_logger().info('dp_gp_offset  : %s' %(dp_gp_offset))
+        # self.get_logger().info('dp_gp_offset_max  : %s' %(max_min)) # 1.5sec - 0.72
 
-
-
-        # if self.state is not None:
-        #     if self.mode == 'tunnel':
-        #         self.mode_change += 1
-
-
-        #     if 1 <= self.mode_change <= 3:
-        #         self.odom_state = 'Dead_Reckoning'
-        #         self.offset_x = self.state.pose.pose.position.x
-        #         self.offset_y = self.state.pose.pose.position.y
-        #         self.init_x = msg.pose.pose.position.x
-        #         self.init_y = msg.pose.pose.position.y
-
-        #     self.dr_state = msg
-        #     #offset filterd position
-        #     self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x
-        #     self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y
-
-            # offset = Float64MultiArray()
-            # offset.data = [- self.init_x + self.offset_x, - self.init_y + self.offset_y]
-            # self.offset_pub.publish(offset)
 
     def get_past_position(self):
         found = False
@@ -420,7 +400,6 @@ class Localization(Node):
                     found = True
             if found:
                 break
-
 
     def get_lateral_error(self, x, y):
         wp_num = len(self.tunnel_x)
