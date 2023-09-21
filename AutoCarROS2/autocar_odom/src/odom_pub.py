@@ -42,6 +42,7 @@ class odomPublisher(Node):
 		self.odom_state_sub = self.create_subscription(String, '/autocar/odom_state', self.state_callback, 10)
 		self.mode_sub = self.create_subscription(LinkArray,'/autocar/mode', self.mode_callback, qos_profile )
 		self.pose_offset_sub= self.create_subscription(Float32MultiArray , '/data/key_offset', self.pose_offset_cb, 10)
+		self.tunnel_yaw_sub = self.create_subscription(Float32, '/autocar/tunnel_yaw', self.tunnel_yaw_cb, 10)
 
 		self.odom_state = 'GPS-Odometry'
 
@@ -68,6 +69,8 @@ class odomPublisher(Node):
 		self.yaw_offset_av_pub = Float32()
 		self.final_yaw_pub = Float32()
 		self.gps_yaw_pub= Float32()
+  
+		self.tunnel_yaw = 0.0
 
 		self.last_corr = False
 
@@ -133,6 +136,9 @@ class odomPublisher(Node):
 		self.dx_key_offset = msg.data[2]
 		self.dy_key_offset = msg.data[3]
 
+	def tunnel_yaw_cb(self, msg):
+		self.tunnel_yaw = msg.data
+  
 	def gps_callback(self, gps):
 
 		transformer = Transformer.from_crs('EPSG:4326', 'EPSG:5179')
@@ -249,7 +255,7 @@ class odomPublisher(Node):
 	def imu_callback(self, imu):
 
 		imu_yaw = euler_from_quaternion(imu.quaternion.x, imu.quaternion.y, imu.quaternion.z, imu.quaternion.w)
-		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) # 오차 보정 #73
+		self.imu_yaw = imu_yaw + np.deg2rad(self.yaw_init) + self.tunnel_yaw # 오차 보정 #73
 		self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t offset_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
 		# self.get_logger().info(f'yaw_offset : {round(np.rad2deg(-self.yaw_offset),2)}\t off	set_av : {round(np.rad2deg(-self.yaw_offset_av),2)}\t yaw_init : {round(self.yaw_init,2)}\t yaw_offset_av_realtime : {round(np.rad2deg(self.yaw_offset_av_print),2)}' )
 		# self.get_logger().info(f'yaw_offset_array : {self.yaw_offset_array}')

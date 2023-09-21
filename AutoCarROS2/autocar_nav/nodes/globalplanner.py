@@ -343,7 +343,7 @@ class GlobalPathPlanner(Node):
 
             if self.mode == 'tunnel':
                 lx,ly,lyaw = [1e6],[1e6],0.0
-                if self.status == 'aviod' and self.obs_distance <= 6:
+                if self.status == 'avoid' and self.obs_distance <= 6:
                     self.map_fix = True
                     
                 elif self.map_fix == True and self.status == 'lanenet':

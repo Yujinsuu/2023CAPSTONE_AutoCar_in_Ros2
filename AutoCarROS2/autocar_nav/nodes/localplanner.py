@@ -233,9 +233,9 @@ class LocalPathPlanner(Node):
                 if self.mode == 'uturn':
                     car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.))
                 elif self.mode == 'static1':
-                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.5))
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.6))
                 else:
-                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.0))
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.1))
 
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
@@ -324,7 +324,7 @@ class LocalPathPlanner(Node):
         region2_x = cx[target_idx_e] + 15
         region2_y = cy[target_idx_e] + 15
         obstacles = self.obstacles + self.path_lane
-        if self.mode == 'static1': self.W = 2.2
+        if self.mode == 'static1': self.W = 2.35
         else: self.W = 1.85
 
         hy_a_star = hybrid_a_star(region1_x, region2_x,

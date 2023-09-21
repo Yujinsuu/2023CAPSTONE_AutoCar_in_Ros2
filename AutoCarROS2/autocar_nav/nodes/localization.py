@@ -25,6 +25,7 @@ from sensor_msgs_py import point_cloud2
 
 
 from autocar_nav.quaternion import yaw_to_quaternion
+from autocar_nav.normalise_angle import normalise_angle
 
 
 class Localization(Node):
@@ -38,6 +39,7 @@ class Localization(Node):
         self.trajectory_pub = self.create_publisher(Path, '/rviz/trajectory', 10)
         self.offset_pub = self.create_publisher(Float64MultiArray, '/autocar/dr_offset', 10)
         self.state_pub = self.create_publisher(String, '/autocar/odom_state', 10)
+        self.tunnel_yaw_pub = self.create_publisher(Float32, '/autocar/tunnel_yaw', 10)
 
 
         # Initialise subscribers
@@ -51,6 +53,8 @@ class Localization(Node):
 
         self.he_error_sub = self.create_subscription(Float64, '/autocar/he_error', self.he_error_cb, 10)
         self.mission_status_sub = self.create_subscription(String, '/autocar/mission_status', self.mission_status_cb, 10)
+        
+        self.lidar_yaw_sub = self.create_subscription(Float32, '/lidar_yaw', self.lidar_yaw_cb , 10)
 
         # Load parameters
         try:
@@ -81,7 +85,7 @@ class Localization(Node):
         self.dr_state = None
         self.offset_x = 0.0
         self.offset_y = 0.0
-        self.offset_quat = [0.0, 0.0]
+        self.offset_yaw = 0.0
         self.init_x = 0.0
         self.init_y = 0.0
 
@@ -155,7 +159,16 @@ class Localization(Node):
         self.pointcloud.channels.append(self.channel)
         self.subscription = self.create_subscription( PointCloud2, '/velodyne_points', self.lidar_callback, 10)
         self.publisher = self.create_publisher( PointCloud, '/upper_points', 10)
+        
+        self.lidar_yaw = 0.0
+        self.l_offset_yaw = 0.0
     
+    def lidar_yaw_cb(self, msg):
+        
+        self.lidar_yaw = msg.data
+        
+
+        
     def lidar_callback(self, msg):
         # Read the point cloud data
         pc_data = list(point_cloud2.read_points(msg, field_names=("x", "y", "z", "intensity", "ring"), skip_nans=True))
@@ -186,7 +199,7 @@ class Localization(Node):
         print(len(self.pointcloud.points))
         print('mode',self.tunnel_exit_lidar)
         
-        self.get_logger().info('tunnel_exit  : %s' %self.tunnel_exit_lidar)
+        # self.get_logger().info('tunnel_exit  : %s' %self.tunnel_exit_lidar)
         
         
  
@@ -290,10 +303,10 @@ class Localization(Node):
 
     def dead_reckoning_cb(self, msg):
 
-        if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link == 5:
+        if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link >= 5:
             self.dr_mode = True
             self.odom_state = 'Dead-Reckoning'
-        elif (self.cov1 < 0.05 or self.cov2 < 0.05) and self.link > 5:
+        elif (self.cov1 < 0.05 or self.cov2 < 0.05):
             self.dr_mode = False
             self.odom_state = 'GPS-Odometry'
 
@@ -320,9 +333,8 @@ class Localization(Node):
                 index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
                 self.offset_x = self.tunnel_x[index]
                 self.offset_y = self.tunnel_y[index]
-                offset_yaw = np.arctan2(self.tunnel_y[index+1] - self.tunnel_y[index], self.tunnel_x[index+1]-self.tunnel_x[index]) - self.state2d.pose.theta
-                offset_quat = yaw_to_quaternion(offset_yaw)
-                self.offset_quat = [offset_quat.z, offset_quat.w]
+                self.offset_yaw = np.arctan2(self.tunnel_y[index+1] - self.tunnel_y[index], self.tunnel_x[index+1]-self.tunnel_x[index]) - self.state2d.pose.theta
+                self.l_offset_yaw = normalise_angle(-2.635 - (self.lidar_yaw + self.state2d.pose.theta))
                 self.init_x = msg.pose.pose.position.x
                 self.init_y = msg.pose.pose.position.y
                 self.tunnel_exit = True
@@ -338,19 +350,21 @@ class Localization(Node):
                 self.longitudinal_offset = True
                 
             
-            
-
         self.dr_state = msg
         self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x + self.dx_key_offset + self.LE_offset_x
         self.dr_state.pose.pose.position.y = msg.pose.pose.position.y - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y
-        # self.dr_state.pose.pose.orientation.z += self.offset_quat[0]
-        # self.dr_state.pose.pose.orientation.w += self.offset_quat[1]
 
         offset = Float64MultiArray()
         offset.data = [- self.init_x + self.offset_x + self.dx_key_offset +  self.LE_offset_x , - self.init_y + self.offset_y + self.dy_key_offset + self.LE_offset_y]
         self.offset_pub.publish(offset)
         #self.get_logger().info('offset  : %s' %offset.data)
-
+        
+        tunnel_yaw = Float32()
+        tunnel_yaw.data = self.offset_yaw
+        # tunnel_yaw.data = self.l_offset_yaw
+        self.tunnel_yaw_pub.publish(tunnel_yaw)
+        
+        
         if len(self.gp) >20:
             #time_offset = abs(self.gp[-1][2] - self.dp[-1][2])
             gp_list = [item[2] for item in self.gp[-15:-1]]

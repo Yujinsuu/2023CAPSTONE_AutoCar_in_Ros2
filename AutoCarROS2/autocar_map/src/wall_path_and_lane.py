@@ -8,7 +8,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
 
-from std_msgs.msg import Int32MultiArray, String
+from std_msgs.msg import Int32MultiArray, String, Float32
 from sensor_msgs.msg import LaserScan
 from autocar_msgs.msg import Path2D
 from geometry_msgs.msg import Point, Pose2D, TransformStamped
@@ -28,6 +28,7 @@ class WallFollower(Node):
         self.viz_pub = self.create_publisher(Marker, '/rviz/wall', 10)
         self.path_pub = self.create_publisher(Path2D, '/wall_path', 10)
         self.lane_pub = self.create_publisher(Path2D, '/wall_lane', 10)
+        self.lidar_yaw_pub = self.create_publisher(Float32, '/lidar_yaw', 10)
 
         self.scan_sub = self.create_subscription(LaserScan,'/scan', self.scan_callback, 10)
         self.mode_sub = self.create_subscription(String, '/yolo_mode', self.mode_callback, 10)
@@ -56,6 +57,7 @@ class WallFollower(Node):
 
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.lidar_yaw = Float32()
 
         self.timer = self.create_timer(0.1, self.scaned_publish)
 
@@ -92,7 +94,7 @@ class WallFollower(Node):
         y_coords_raw = np.delete(y_coords_raw, x_indices)
         x_coords, y_coords, x_lane1, y_lane1, x_lane2, y_lane2 = self.get_line_RANSAC(x_coords_raw, y_coords_raw)
         self.slope = np.arctan2(y_coords[-1]-y_coords[0],x_coords[-1]-x_coords[0])
-
+        self.lidar_yaw.data = float(self.slope)
         self.x_coords = x_coords
         self.y_coords = y_coords
         self.x_lane1 = x_lane1
@@ -100,6 +102,7 @@ class WallFollower(Node):
         self.x_lane2 = x_lane2
         self.y_lane2 = y_lane2
 
+        self.lidar_yaw_pub.publish(self.lidar_yaw)
 
     def get_line_RANSAC(self, x_coords_raw, y_coords_raw) :
 

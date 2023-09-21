@@ -60,8 +60,6 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
-        odom_footprint:
-          Value: true
         velodyne:
           Value: true
       Marker Scale: 0.800000011920929
@@ -72,11 +70,7 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            car:
-              velodyne:
-                {}
-            odom_footprint:
-              {}
+            {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
@@ -95,7 +89,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -107,7 +101,7 @@ Visualization Manager:
       Enabled: true
       Name: car_steer
       Namespaces:
-        arrows: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -143,7 +137,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -500,16 +494,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 79.300048828125
+      Distance: 374.7586669921875
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 198.33457946777344
-        Y: 23.083215713500977
-        Z: -50.62629699707031
+        X: 57.8769416809082
+        Y: 62.455928802490234
+        Z: -50.62364959716797
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -536,5 +530,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 960
-  X: 0
+  X: 960
   Y: 27

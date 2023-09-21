@@ -50,8 +50,8 @@ class Core(Node):
 
         self.target_speed = { 'global' : 15/3.6,      'curve':  8/3.6,    'traffic': 10/3.6, 'finish': 15/3.6,
                               'revpark':  8/3.6,    'parking':  6/3.6,      'uturn': 15/3.6,  'track': 12/3.6,
-                              'dynamic':  8/3.6,    'static0':  6/3.6,    'static1':  6/3.6, 'tunnel': 10/3.6,
-                             'tollgate': 13/3.6, 'delivery_A':  4/3.6, 'delivery_B':  4/3.6}
+                              'dynamic': 6/3.6,    'static0':  6/3.6,    'static1':  6/3.6, 'tunnel': 10/3.6,
+                             'tollgate': 15/3.6, 'delivery_A':  4/3.6, 'delivery_B':  4/3.6}
 
         self.vel = 1.0
         self.cmd_speed = self.target_speed[self.mode]

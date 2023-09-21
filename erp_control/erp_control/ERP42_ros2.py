@@ -188,17 +188,21 @@ class erp42(Node):
       if speed < target_speed: speed = target_speed
       elif speed > max_speed: speed = max_speed
       
-      if target_speed < 12/3.6:
-        self.speed = min(speed * 2.2, max_speed)
-      elif target_speed < 8/3.6:
-        self.speed = min(speed * 2.5, max_speed)
+      if target_speed < 8/3.6:
+        self.speed = min(speed * 2.05, max_speed)
+      elif target_speed < 10/3.6:
+        self.speed = min(speed * 2.0, max_speed)
       else:
         self.speed = speed
       self.brake = 1
 
     else:
-        self.speed = 0.0
-        self.brake = 65
+      # if target_speed < 8:
+      #   self.speed = 0.0
+      #   self.brake = 50
+      # else:
+      self.speed = 0.0
+      self.brake = 65
 
   def vehicle_callback(self, msg):
     self.velocity = np.sqrt((msg.twist.x**2.0) + (msg.twist.y**2.0))
@@ -227,14 +231,14 @@ class erp42(Node):
         self.brake = 1
         
     elif msg.drive.speed > 7/3.6: # 10 km/h, 8 km/h
-      if abs(self.velocity - msg.drive.speed) > 0.6: # 0.42 : 1.5km/h,  0.28 : 1km/h
+      if not (-0.6 < self.velocity - msg.drive.speed < 0.6): # 0.42 : 1.5km/h,  0.28 : 1km/h
         self.speed_control(msg.drive.speed)
       else:
         self.speed = msg.drive.speed
         self.brake = 1
         
     else: # 6 km/h, 4 km/h
-      if abs(self.velocity - msg.drive.speed) > 0.3: # 0.42 : 1.5km/h,  0.28 : 1km/h
+      if not (-0.25 < self.velocity - msg.drive.speed < 0.45): # 0.42 : 1.5km/h,  0.28 : 1km/h
         self.speed_control(msg.drive.speed)
       else:
         self.speed = msg.drive.speed
