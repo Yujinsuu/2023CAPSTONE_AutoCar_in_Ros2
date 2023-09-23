@@ -25,6 +25,7 @@ class LidarDataProcessor(Node):
         
         self.px = 0.0
         self.py = 0.0
+        self.check = False
        
     def odom_cb(self, msg):
 
@@ -46,24 +47,26 @@ class LidarDataProcessor(Node):
             point.x = x
             point.y = y
             point.z = z
-            if z > 2 and x < 5 and x > 0:
+            if z > 2 and x < 10 and x > 0 and y < 0 :
                 intensity.append(int)   
                 self.pointcloud.points.append(point)
-                print('z', z)
+                #print('z', z)
                 if z < min_z:
                     min_z = z
 
 
-        if len(self.pointcloud.points) == 0:
+        if len(self.pointcloud.points) < 3 and not self.check:
             self.outside_of_tunnel = True
         else:
             self.outside_of_tunnel = False
             
         if self.outside_of_tunnel:
+            self.check = True
             print('px: ',self.px, 'py: ', self.py)
+            print(len(self.pointcloud.points))
         
-        print(len(self.pointcloud.points))
-        print('mode',self.outside_of_tunnel)
+        # print(len(self.pointcloud.points))
+        # print('mode',self.outside_of_tunnel)
             
         
  

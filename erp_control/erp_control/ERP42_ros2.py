@@ -189,9 +189,9 @@ class erp42(Node):
       elif speed > max_speed: speed = max_speed
       
       if target_speed < 8/3.6:
-        self.speed = min(speed * 2.05, max_speed)
+        self.speed = min(speed * 1.7, max_speed)
       elif target_speed < 10/3.6:
-        self.speed = min(speed * 2.0, max_speed)
+        self.speed = min(speed * 1.3, max_speed)
       else:
         self.speed = speed
       self.brake = 1
@@ -222,8 +222,20 @@ class erp42(Node):
     cmd_steer = np.rad2deg(msg.drive.steering_angle)
     self.steer = self.real_steer(cmd_steer)
     self.gear = int(msg.drive.acceleration)
+    parking = bool(msg.drive.jerk)
     
-    if msg.drive.speed > 12/3.6: # 15 km/h
+    if parking:
+      self.brake = 1
+      if msg.drive.speed == 0.0:
+        self.speed = 0.0
+        self.steer = 0.0
+        self.brake = 200 if self.velocity > 1e-6 else 0
+      elif self.velocity < 0.5:
+        self.speed = 15/3.6
+      else:
+        self.speed = msg.drive.speed
+
+    elif msg.drive.speed > 12/3.6: # 15 km/h
       if msg.drive.speed - 0.6 > self.velocity: # 0.42 : 1.5km/h,  0.28 : 1km/h
         self.speed_control(msg.drive.speed)
       else:
@@ -238,12 +250,14 @@ class erp42(Node):
         self.brake = 1
         
     else: # 6 km/h, 4 km/h
-      if not (-0.25 < self.velocity - msg.drive.speed < 0.45): # 0.42 : 1.5km/h,  0.28 : 1km/h
+      if not (-0.35 < self.velocity - msg.drive.speed < 0.45): # 0.42 : 1.5km/h,  0.28 : 1km/h
         self.speed_control(msg.drive.speed)
       else:
         self.speed = msg.drive.speed
         self.brake = 1
         
+
+
     # if abs(self.velocity - msg.drive.speed) > 0.56: # 0.42 : 1.5km/h,  0.28 : 1km/h
     #   self.speed_control(msg.drive.speed)
     # else:
@@ -254,8 +268,8 @@ class erp42(Node):
   def timer_callback(self):
     # steer=radians(float(input("steer_angle:")))
 
-    print("Speed :", round(self.speed*3.6, 1), "km/h\t", "Steer :", round(np.rad2deg(self.steer), 2), "deg\t",
-          "Brake :", self.brake, "\t", 									"Gear :", self.dir[self.gear])
+    print("Speed :", round(self.speed*3.6, 1), " km/h\t", "Steer :", round(np.rad2deg(self.steer), 2), " deg\t",
+          "Brake :", self.brake, " %\t", 									"Gear :", self.dir[self.gear])
     self.Send_to_ERP42(self.gear, self.speed, -self.steer, self.brake)
 
   def plot_creator(self):

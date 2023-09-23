@@ -48,10 +48,10 @@ class Core(Node):
         self.next_path = 'straight'
         self.status = 'driving'
 
-        self.target_speed = { 'global' : 15/3.6,      'curve':  8/3.6,    'traffic': 10/3.6, 'finish': 15/3.6,
-                              'revpark':  8/3.6,    'parking':  6/3.6,      'uturn': 15/3.6,  'track': 12/3.6,
-                              'dynamic': 6/3.6,    'static0':  6/3.6,    'static1':  6/3.6,  'tunnel': 10/3.6,
-                             'tollgate': 15/3.6, 'delivery_A':  4/3.6, 'delivery_B':  4/3.6}
+        self.target_speed = { 'global' : 15/3.6,   'curve':  6/3.6,    'traffic': 10/3.6,     'finish': 15/3.6,
+                              'revpark':  8/3.6, 'parking':  6/3.6,      'uturn': 15/3.6,      'track': 12/3.6,
+                              'dynamic':  6/3.6, 'static0':  6/3.6,    'static1':  6/3.6,     'tunnel': 10/3.6,
+                             'tollgate': 15/3.6, 'regular': 10/3.6, 'delivery_A':  4/3.6, 'delivery_B':  4/3.6}
 
         self.vel = 1.0
         self.cmd_speed = self.target_speed[self.mode]
@@ -189,10 +189,10 @@ class Core(Node):
 
 
     def identify_traffic_light(self, path, wp):
-        if path == 'straight': tf_light = ['Green', 'Straightleft']
-        elif path == 'left': tf_light = ['Left', 'Straightleft']
+        if path == 'straight': tf_light = ['Green', 'Straightleft', 'None']
+        elif path == 'left': tf_light = ['Left', 'Straightleft', 'None']
         elif path == 'right':
-            if time.time() - self.pause < 3:
+            if time.time() - self.pause < 3.5:
                 tf_light = []
             else:
                 tf_light = ['Green', 'Left', 'Red', 'Straightleft', 'Yellow', 'None']
@@ -250,7 +250,7 @@ class Core(Node):
             #     self.cmd_speed = self.target_speed['curve']
             # else:
             #     self.brake = 0.0
-            if self.link_num == 7 and self.direction == 'Curve':
+            if self.link_num == 7 and self.traffic_stop_wp <= 40:
                 self.cmd_speed = self.target_speed['curve']
 
             if self.next_path != 'none' and self.traffic_stop_wp <= 15:
@@ -296,7 +296,7 @@ class Core(Node):
         elif self.mode == 'tunnel':
             if self.status == 'driving':
                 # self.cmd_steer = self.vision_steer
-                if self.waypoint >= 25:
+                if self.waypoint >= 15:
                     self.status = 'lanenet'
 
             elif self.status == 'lanenet':
@@ -338,7 +338,10 @@ class Core(Node):
             if self.status == 'driving':
                 self.cmd_speed = self.target_speed['tunnel']
 
-                if self.mode == 'static0' and self.traffic_stop_wp < 30:
+                if self.mode == 'static0' and 30 <= self.waypoint <= 50:
+                    self.cmd_speed = self.target_speed['static0']
+
+                elif self.mode == 'static0' and self.traffic_stop_wp < 30:
                     self.status = 'complete'
 
                 elif self.mode == 'static1' and self.traffic_stop_wp <= 15:
@@ -359,7 +362,7 @@ class Core(Node):
             else:
                 if self.mode == 'static0':
                     self.cmd_speed = self.target_speed['traffic']
-                    if (3 <= self.traffic_stop_wp <= 5) or (19 <= self.traffic_stop_wp <= 21):
+                    if (3 <= self.traffic_stop_wp <= 7) or (19 <= self.traffic_stop_wp <= 23):
                         self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
                     else:
@@ -482,15 +485,15 @@ class Core(Node):
                 self.cmd_speed = self.target_speed['parking']
                 self.gear = 0.0
 
-                if time.time() - self.parking_time < 10:
+                if time.time() - self.parking_time < 3:
                     self.cmd_speed = 0.0
                     self.cmd_steer = 0.0
 
-                elif self.parking_stop_wp <= 14:
+                elif self.parking_stop_wp <=12:
                     self.cmd_steer = 0.45
 
-                elif self.parking_stop_wp >= 15 and abs(self.he_term) > 10:
-                    self.cmd_steer = -0.45
+                # elif self.parking_stop_wp >= 15 and abs(self.he_term) > 10:
+                #     self.cmd_steer = -0.45
 
                 elif self.parking_stop_wp >= 25:
                     self.status = 'complete'
@@ -505,12 +508,12 @@ class Core(Node):
                     self.status = 'check'
 
                 elif self.waypoint < 20:
-                    self.cmd_speed = self.target_speed['curve']
+                    self.cmd_speed = self.target_speed['regular']
 
 
             elif self.status == 'check':
                 if self.distance != -1:
-                    self.stop_wp = self.waypoint + int(self.distance) -1
+                    self.stop_wp = self.waypoint + int(self.distance)
                     self.status = 'detected'
 
                 if self.sign_pose >= 500:
@@ -536,7 +539,7 @@ class Core(Node):
                     self.status = 'complete'
 
             else:
-                self.cmd_speed = self.target_speed['traffic']
+                self.cmd_speed = self.target_speed['curve']
 
 
         elif self.mode == 'delivery_B':
@@ -545,11 +548,11 @@ class Core(Node):
                     self.status = 'check'
 
                 elif self.waypoint < 20:
-                    self.cmd_speed = self.target_speed['curve']
+                    self.cmd_speed = self.target_speed['regular']
 
             elif self.status == 'check':
                 if self.distance != -1:
-                    self.stop_wp = self.waypoint + int(self.distance) -1
+                    self.stop_wp = self.waypoint + int(self.distance)
                     self.status = 'detected'
 
                 if self.sign_pose >= 500:
@@ -577,7 +580,7 @@ class Core(Node):
 
             else:
                 self.cmd_speed = self.target_speed['curve']
-                if self.traffic_stop_wp <= 15:
+                if self.traffic_stop_wp <= 20:
                     self.cmd_speed = self.target_speed['traffic']
 
                 if 3 <= self.traffic_stop_wp <= 8:
@@ -615,6 +618,11 @@ class Core(Node):
         else:
             car.drive.steering_angle = self.cmd_steer
             car.drive.speed = self.cmd_speed
+
+        if self.status in ['parking', 'return']:
+            car.drive.jerk = 1.0
+        else:
+            car.drive.jerk = 0.0
 
         self.autocar_pub.publish(car)
 

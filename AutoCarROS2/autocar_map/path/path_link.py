@@ -70,6 +70,7 @@ class Path(Node):
 
                 var_name = 'revpark_' + str(link)
 
+                # 얕게
                 data = df[df['Link'] == 0]
 
                 x0 = data['X-axis'].tolist()
@@ -179,7 +180,7 @@ def kcity():
     base_file = file_path + '/KC_base.csv'
     global_file = file_path + '/kcity/track.csv'
     parking_file = None
-    revpark_file = file_path + '/kcity/revpark.csv'
+    revpark_file = file_path + '/kcity/revpark1.csv'
     kcity = Path(base_file, global_file, parking_file, revpark_file)
     kcity.car_mode[1] = 'delivery_A'
     kcity.car_mode[2] = 'static0'
@@ -211,5 +212,5 @@ def qualifier():
 
     return qualifier
 
-use_map = qualifier()
-start_index = 2
+use_map = kcity()
+start_index = 12

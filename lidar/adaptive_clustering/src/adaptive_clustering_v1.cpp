@@ -128,7 +128,7 @@ class AdaptiveClustering : public rclcpp::Node
         else if (mode == "static") {
             pt.setInputCloud(pcl_pc_in);
             pt.setFilterFieldName("z");
-            pt.setFilterLimits(0, 4.0);
+            pt.setFilterLimits(-0.5, 4.0);
             pt.filter(*pcl_pc_in);
 
             pt.setInputCloud(pcl_pc_in);
@@ -146,7 +146,7 @@ class AdaptiveClustering : public rclcpp::Node
         else{
             pt.setInputCloud(pcl_pc_in);
             pt.setFilterFieldName("z");
-            pt.setFilterLimits(-0.5, 4.0);
+            pt.setFilterLimits(-0.6, 4.0);
             pt.filter(*pcl_pc_in);
 
             pt.setInputCloud(pcl_pc_in);

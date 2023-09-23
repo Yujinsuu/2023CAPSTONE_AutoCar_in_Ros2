@@ -43,9 +43,10 @@ class odomPublisher(Node):
 		self.mode_sub = self.create_subscription(LinkArray,'/autocar/mode', self.mode_callback, qos_profile )
 		self.pose_offset_sub= self.create_subscription(Float32MultiArray , '/data/key_offset', self.pose_offset_cb, 10)
 		self.tunnel_yaw_sub = self.create_subscription(Float32, '/autocar/tunnel_yaw', self.tunnel_yaw_cb, 10)
+		self.mission_status_sub = self.create_subscription(String, '/autocar/mission_status', self.mission_status_cb, 10)
 
 		self.odom_state = 'GPS-Odometry'
-
+		self.mode = 'global'
 		self.heading_array = []
 		self.heading = 0
 		self.filtered_heading = 0
@@ -94,13 +95,16 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', 0)
+		self.declare_parameter('yaw_init', -130)
 		self.declare_parameter('yaw_offset_array', [])
 		self.declare_parameter('corr', False)
 		self.yaw_init = self.get_parameter('yaw_init').value
 		self.yaw_offset_array = self.get_parameter('yaw_offset_array').value
 		self.corr = self.get_parameter('corr').value
 		self.add_on_set_parameters_callback(self.update_parameter)
+		self.status = 'driving'
+		self.time = 0
+		self.corr_uturn = False
 
 		#self.odom_pub = self.create_publisher(Odometry, '/odometry/filtered', qos_profile)
 
@@ -122,6 +126,10 @@ class odomPublisher(Node):
 				self.yaw_offset_array.clear()
 
 		return SetParametersResult(successful=True)
+
+	def mission_status_cb(self, msg):
+
+		self.status = msg.data
 
 	def state_callback(self, msg):
 		self.odom_state = msg.data
@@ -218,6 +226,7 @@ class odomPublisher(Node):
 		self.imu_data.angular_velocity.z = imuV.vector.z
 
 	def mode_callback(self, msg):
+		self.mode = msg.mode
 		if self.odom_state == 'GPS-Odometry':
 			if not self.last_corr:
 				if msg.link_num == 4:
@@ -229,7 +238,7 @@ class odomPublisher(Node):
 
 				# apply average yaw_offset when Straigt > Curve
 				elif msg.direction == 'Straight' and self.velocity > 12/3.6:
-					if self.corr_mode or msg.mode != 'tunnel' :
+					if (self.corr_mode or msg.mode != 'tunnel') or (self.mode == 'uturn' and self.status != 'track'):
 						self.yaw_offset_array.append(self.yaw_offset)
 					if len(self.yaw_offset_array) != 0:
 						self.yaw_offset_av_print = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
@@ -243,13 +252,37 @@ class odomPublisher(Node):
 					self.corr = False
 					self.yaw_offset_array.clear()
 
-			if msg.link_num == 4:
+			if msg.link_num == 3:
 				self.last_corr = True
 
 		else:
 			self.last_corr = False
 			self.yaw_offset_array.clear()
 
+		if msg.mode == 'uturn':
+			self.yaw_correction()
+			self.time += 1
+
+	def yaw_correction(self):
+
+		corr_length = 20 # 보정할 때 offset값을 얼마나 보관할 것인가, 리스트 길이(너무 짧으면 부정확할 수 있음)
+		time_period = 20 #보정할 주기 2초
+		# corr true면 보정하고 offset 쌓인 리스트 비워줌. 시간 초기화
+		if self.corr_uturn == True:
+			self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+			self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+			#reset variable
+			self.corr_uturn = False
+			self.time = 0
+			self.yaw_offset_array.clear()
+
+		# corr 모드(correction 모드) 일때만 yaw offset array에 yaw offset 추가
+		if len(self.yaw_offset_array) > corr_length and self.time > time_period:
+			self.corr_uturn = True
+
+		self.get_logger().info(f'time : {self.time}')
+		self.get_logger().info(f'len : {len(self.yaw_offset_array)}')
+		self.get_logger().info(f'corr_mode : {self.corr_uturn}')
 
 
 	def imu_callback(self, imu):

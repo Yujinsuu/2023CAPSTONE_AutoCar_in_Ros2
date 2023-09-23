@@ -19,7 +19,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray, String
 
-WEIGHTS = 'weights/trafficlight.pt'
+WEIGHTS = 'weights/tf_best.pt'
 IMG_SIZE = 640
 DEVICE = ''
 AUGMENT = False

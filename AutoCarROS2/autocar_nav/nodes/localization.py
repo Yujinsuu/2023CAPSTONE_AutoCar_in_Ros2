@@ -183,7 +183,7 @@ class Localization(Node):
             point.x = x
             point.y = y
             point.z = z
-            if z > 2 and x < 5 and x > 0:
+            if z > 2 and x < 10 and x > 0 and y < 0 :
                 intensity.append(int)       
                 self.pointcloud.points.append(point)
                 print('z', z)
@@ -303,12 +303,12 @@ class Localization(Node):
 
     def dead_reckoning_cb(self, msg):
 
-        if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link >= 5:
-            self.dr_mode = True
-            self.odom_state = 'Dead-Reckoning'
-        elif (self.cov1 < 0.05 or self.cov2 < 0.05):
-            self.dr_mode = False
-            self.odom_state = 'GPS-Odometry'
+        # if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link >= 5:
+        #     self.dr_mode = True
+        #     self.odom_state = 'Dead-Reckoning'
+        # elif (self.cov1 < 0.05 or self.cov2 < 0.05):
+        #     self.dr_mode = False
+        #     self.odom_state = 'GPS-Odometry'
 
 
         self.dp.append((msg.pose.pose.position.x,msg.pose.pose.position.y,time.time()))
@@ -327,7 +327,7 @@ class Localization(Node):
             self.offset_y = self.dgy + (self.init_y - self.dDy)
             self.get_offset = True
 
-        elif (self.dr_mode == True) and (self.get_offset == True) and (138 <= self.waypoint <= 142): # kcity
+        elif (self.dr_mode == True) and (self.get_offset == True) and (137 <= self.waypoint <= 140): # kcity
         # elif (self.dr_mode == True) and (self.get_offset == True) and (75 <= self.waypoint <= 80):
             if not self.tunnel_exit:
                 index = self.get_lateral_error(self.dr_state.pose.pose.position.x, self.dr_state.pose.pose.position.y)
@@ -343,12 +343,17 @@ class Localization(Node):
             if not self.longitudinal_offset:
                 self.init_x = msg.pose.pose.position.x
                 self.init_y = msg.pose.pose.position.y
-                self.offset_x = 78.9926
-                self.offset_y = -56.6766
+                self.offset_x = 80.4499220085563#80.0851558577269
+                self.offset_y = -55.9572509087157#-56.1592498770915
                 #px:  79.4543860264821 py:  -55.46677113138139
                 
                 self.longitudinal_offset = True
-                
+				
+
+	
+	
+
+
             
         self.dr_state = msg
         self.dr_state.pose.pose.position.x = msg.pose.pose.position.x - self.init_x + self.offset_x + self.dx_key_offset + self.LE_offset_x

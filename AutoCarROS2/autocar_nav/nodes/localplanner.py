@@ -233,9 +233,11 @@ class LocalPathPlanner(Node):
                 if self.mode == 'uturn':
                     car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 1.))
                 elif self.mode == 'static1':
-                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.6))
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.8))
+                elif self.mode == 'static0':
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.5))
                 else:
-                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.1))
+                    car_vertices = get_vertice_rect((cx[i],cy[i],cyaw[i], 1.6, 2.2))
 
                 obstacle_vertices = get_vertice_rect(obs)
                 is_collide = separating_axis_theorem(car_vertices, obstacle_vertices)
@@ -270,8 +272,9 @@ class LocalPathPlanner(Node):
         return cx, cy, cyaw
 
     def collision_reroute(self, cx, cy, cyaw, obstacle_colliding):
-        if self.mode == 'static1': step = 70
-        else: step = 50
+        if self.mode == 'static1': step = 90
+        elif self.mode =='static0': step = 70
+        else: step = 55
         # step_region = 15
         obs_first = obstacle_colliding[-1]
         obs_end = obstacle_colliding[0]
@@ -319,13 +322,14 @@ class LocalPathPlanner(Node):
         end_yaw = cyaw[target_idx_e + step]
         end = (end_x, end_y,  np.rad2deg(end_yaw))
 
-        region1_x = cx[target_idx_e] - 15
-        region1_y = cy[target_idx_e] - 15
-        region2_x = cx[target_idx_e] + 15
-        region2_y = cy[target_idx_e] + 15
+        region1_x = cx[target_idx_e] - 20
+        region1_y = cy[target_idx_e] - 20
+        region2_x = cx[target_idx_e] + 20
+        region2_y = cy[target_idx_e] + 20
         obstacles = self.obstacles + self.path_lane
-        if self.mode == 'static1': self.W = 2.35
-        else: self.W = 1.85
+        if self.mode == 'static1': self.W = 2.4
+        elif self.mode == 'static0' : self.W = 2.05
+        else: self.W = 1.9
 
         hy_a_star = hybrid_a_star(region1_x, region2_x,
                                   region1_y, region2_y,
