@@ -283,7 +283,7 @@ class Core(Node):
                 self.cmd_speed = self.target_speed['track']
                 self.cmd_steer = self.track_steer
 
-                if self.waypoint > 215:
+                if self.waypoint > 230:
                     if abs(self.cte_term) <= 10:
                         self.avoid_count = time.time()
                         self.status = 'complete'
@@ -333,18 +333,20 @@ class Core(Node):
                 if time.time() - self.avoid_count >= 3:
                     self.status = 'lanenet'
 
-
-        elif self.mode in ['static0', 'static1']:
+        elif self.mode == 'static0':
             if self.status == 'driving':
                 self.cmd_speed = self.target_speed['tunnel']
+                
+                if self.waypoint >= 20:
+                    self.status = 'check'
+            
+            if self.status == 'check':
+                self.cmd_speed = self.target_speed['tunnel']
 
-                if self.mode == 'static0' and 30 <= self.waypoint <= 50:
+                if 30 <= self.waypoint <= 50:
                     self.cmd_speed = self.target_speed['static0']
 
-                elif self.mode == 'static0' and self.traffic_stop_wp < 30:
-                    self.status = 'complete'
-
-                elif self.mode == 'static1' and self.traffic_stop_wp <= 15:
+                elif self.traffic_stop_wp < 30:
                     self.status = 'complete'
 
                 elif self.obstacle_detected:
@@ -357,26 +359,95 @@ class Core(Node):
                     self.avoid_count = time.time()
 
                 if time.time() - self.avoid_count >= 3:
-                    self.status = 'driving'
+                    self.status = 'check'
 
             else:
-                if self.mode == 'static0':
-                    self.cmd_speed = self.target_speed['traffic']
-                    if (3 <= self.traffic_stop_wp <= 7) or (19 <= self.traffic_stop_wp <= 23):
-                        self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                self.cmd_speed = self.target_speed['traffic']
+                if (3 <= self.traffic_stop_wp <= 7) or (19 <= self.traffic_stop_wp <= 23):
+                    self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                    
+                else:
+                    self.traffic_stop = False
+                    self.pause = time.time()
 
-                    else:
-                        self.traffic_stop = False
-                        self.pause = time.time()
+        elif self.mode == 'static1':
+            if self.status == 'driving':
+                self.cmd_speed = self.target_speed['global']
+                
+                if self.waypoint >= 20:
+                    self.status = 'check'
+            
+            if self.status == 'check':
+                self.cmd_speed = self.target_speed['tunnel']
+
+                if self.traffic_stop_wp <= 15:
+                    self.status = 'complete'
+
+                elif self.obstacle_detected:
+                    self.avoid_count = time.time()
+                    self.status = 'avoid'
+
+            elif self.status == 'avoid':
+
+                if self.obstacle_detected:
+                    self.avoid_count = time.time()
+
+                if time.time() - self.avoid_count >= 3:
+                    self.status = 'check'
+
+            else:
+                self.cmd_speed = self.target_speed['traffic']
+                if 3 <= self.traffic_stop_wp <= 8:
+                    self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
 
                 else:
-                    self.cmd_speed = self.target_speed['traffic']
-                    if 3 <= self.traffic_stop_wp <= 8:
-                        self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+                    self.traffic_stop = False
+                    self.pause = time.time()
 
-                    else:
-                        self.traffic_stop = False
-                        self.pause = time.time()
+
+        # elif self.mode in ['static0', 'static1']:
+        #     if self.status == 'driving':
+        #         self.cmd_speed = self.target_speed['tunnel']
+
+        #         if self.mode == 'static0' and 30 <= self.waypoint <= 50:
+        #             self.cmd_speed = self.target_speed['static0']
+
+        #         elif self.mode == 'static0' and self.traffic_stop_wp < 30:
+        #             self.status = 'complete'
+
+        #         elif self.mode == 'static1' and self.traffic_stop_wp <= 15:
+        #             self.status = 'complete'
+
+        #         elif self.obstacle_detected:
+        #             self.avoid_count = time.time()
+        #             self.status = 'avoid'
+
+        #     elif self.status == 'avoid':
+
+        #         if self.obstacle_detected:
+        #             self.avoid_count = time.time()
+
+        #         if time.time() - self.avoid_count >= 3:
+        #             self.status = 'driving'
+
+        #     else:
+        #         if self.mode == 'static0':
+        #             self.cmd_speed = self.target_speed['traffic']
+        #             if (3 <= self.traffic_stop_wp <= 7) or (19 <= self.traffic_stop_wp <= 23):
+        #                 self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+
+        #             else:
+        #                 self.traffic_stop = False
+        #                 self.pause = time.time()
+
+        #         else:
+        #             self.cmd_speed = self.target_speed['traffic']
+        #             if 3 <= self.traffic_stop_wp <= 8:
+        #                 self.identify_traffic_light(self.next_path, self.traffic_stop_wp)
+
+        #             else:
+        #                 self.traffic_stop = False
+        #                 self.pause = time.time()
 
 
         # elif self.mode == 'dynamic':

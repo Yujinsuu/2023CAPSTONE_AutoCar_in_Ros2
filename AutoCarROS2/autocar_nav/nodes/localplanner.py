@@ -40,6 +40,7 @@ class LocalPathPlanner(Node):
         self.localisation_sub = self.create_subscription(State2D, '/autocar/state2D', self.vehicle_state_cb, 10, callback_group=ReentrantCallbackGroup())
         self.obstacle_sub = self.create_subscription(ObjectArray, '/obstacles', self.obstacle_cb, 10)
         self.mode_sub = self.create_subscription(LinkArray, '/autocar/mode', self.mode_cb, 10)
+        self.status_sub = self.create_subscription(String, '/autocar/mission_status', self.status_cb, 10)
 
         # Load parameters
         try:
@@ -89,15 +90,20 @@ class LocalPathPlanner(Node):
         self.y = 0.0
         self.yaw = 0.0
         self.start = time.time()
+
         self.mode = 'global'
+        self.status = 'driving'
+
         self.GtoL = 1.29 # gps to lidar distance
         self.L = 1.6 #1.04/2+1.6/2 # 차량 길이
         self.W = 1.75# 차량 폭 # 이전에는 1.45였음
         self.p_L = 5.0 # viz상의 차선 길이
         self.p_W = 0.1 # viz상의 차선 폭
+
         self.obstacle_detected = False
         self.obstacle_info = 'None'
         self.obstacle_dist = 1e3
+
         self.dist_thresh = 6 # 정적 및 동적 판단 기준 : 6m
         self.queue = 0
         self.prev_dist = None
@@ -170,6 +176,9 @@ class LocalPathPlanner(Node):
         self.parking_stop_wp = msg.parking_stop_wp
         self.direction = msg.direction
         self.next_path = msg.next_path
+    
+    def status_cb(self, msg):
+        self.status = msg.data
 
     def obstacle_cb(self, msg):
         self.obstacles = [(o.x, o.y, o.yaw, o.length, o.width) for o in msg.object_list]
@@ -274,7 +283,7 @@ class LocalPathPlanner(Node):
     def collision_reroute(self, cx, cy, cyaw, obstacle_colliding):
         if self.mode == 'static1': step = 90
         elif self.mode =='static0': step = 70
-        else: step = 55
+        else: step = 70
         # step_region = 15
         obs_first = obstacle_colliding[-1]
         obs_end = obstacle_colliding[0]
@@ -311,15 +320,15 @@ class LocalPathPlanner(Node):
         if target_idx_e + (step+5) >= len(cyaw) or target_idx_e - (step+5) <= 0: # 10 대신 step_region
             return cx, cy, cyaw
 
-        # Points to leave path
+		# Points to leave path
         start_x= cx[target_idx_e - step]
         start_y= cy[target_idx_e - step]
         start_yaw= cyaw[target_idx_e - step]
         start = (start_x, start_y, np.rad2deg(start_yaw))
 
-        end_x = cx[target_idx_e + step]
-        end_y = cy[target_idx_e + step]
-        end_yaw = cyaw[target_idx_e + step]
+        end_x = cx[min(len(cx)-1,target_idx_e + step)]
+        end_y = cy[min(len(cx)-1,target_idx_e + step)]
+        end_yaw = cyaw[min(len(cx)-1,target_idx_e + step)]
         end = (end_x, end_y,  np.rad2deg(end_yaw))
 
         region1_x = cx[target_idx_e] - 20
@@ -383,7 +392,7 @@ class LocalPathPlanner(Node):
         cx = dx[:-1]
         cy = dy[:-1]
 
-        if self.mode in ['dynamic', 'static0','static1', 'tunnel', 'uturn']:
+        if self.mode in ['dynamic', 'static1', 'tunnel', 'uturn'] or (self.mode == 'static0' and self.status == 'check'):
             cx, cy, cyaw = self.determine_path(cx, cy, cyaw)
         if self.is_fail == True:
             return

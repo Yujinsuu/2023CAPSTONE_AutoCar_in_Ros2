@@ -202,7 +202,7 @@ def kcity():
 
 def qualifier():
     base_file = file_path + '/KC_base.csv'
-    global_file = file_path + '/kcity/qualifier.csv'
+    global_file = file_path + '/kcity/modify.csv'
     parking_file = None
     revpark_file = None
     qualifier = Path(base_file, global_file, parking_file, revpark_file)
@@ -213,4 +213,4 @@ def qualifier():
     return qualifier
 
 use_map = kcity()
-start_index = 12
+start_index = 0
