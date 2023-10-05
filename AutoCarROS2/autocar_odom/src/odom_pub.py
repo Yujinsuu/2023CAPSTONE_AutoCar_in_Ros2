@@ -245,6 +245,12 @@ class odomPublisher(Node):
 					if len(self.yaw_offset_array) > 20:
 						self.corr = True
 
+					# if self.corr and msg.mode == 'delivery_B':
+					# 	self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+					# 	self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+					# 	self.corr = False
+					# 	self.yaw_offset_array.clear()
+
 				elif msg.direction == 'Curve':
 					if self.corr == True and len(self.yaw_offset_array) > 20:
 						self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)

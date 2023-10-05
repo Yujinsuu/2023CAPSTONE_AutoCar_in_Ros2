@@ -13,7 +13,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from ament_index_python.packages import get_package_share_directory
 
 from nav_msgs.msg import Path
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, String
 from autocar_msgs.msg import Path2D, State2D, ObjectArray, LinkArray, Obstacle
 from geometry_msgs.msg import Pose2D, PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray

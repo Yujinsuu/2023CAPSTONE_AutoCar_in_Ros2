@@ -163,7 +163,7 @@ class hybrid_a_star:
                                 hq.heappush(open_heap, (total_cost,neighbour))
                                 open_diction[neighbour]=(total_cost, neighbour, chosen_c_node)
 
-            if time.time() - start_time > 2.0:
+            if time.time() - start_time > 1.5:
                 return None
         # print("Did not find the goal - it's unattainable.")
         return None #[(start[0],start[1],math.radians(start[2])), (end[0],end[1],math.radians(end[2]))]
