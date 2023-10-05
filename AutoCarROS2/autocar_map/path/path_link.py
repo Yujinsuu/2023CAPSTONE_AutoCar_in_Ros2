@@ -76,7 +76,7 @@ class Path(Node):
                 x0 = data['X-axis'].tolist()
                 y0 = data['Y-axis'].tolist()
 
-                d = [-0.1, 5.05, 10.3] # 주차 경로 d m 앞으로 이동
+                d = [-0.1, 5.1, 10.2] # 주차 경로 d m 앞으로 이동
                 # kcity
                 self.ax[var_name] = [i - 0.4423572639935003 * d[link] for i in x0]
                 self.ay[var_name] = [i - 0.8308233860879995 * d[link] for i in y0]
@@ -156,12 +156,13 @@ def htech():
     return htech
 
 def revpark():
-    base_file = file_path + '/ST_base.csv'
-    global_file = file_path + '/htech/rev_global.csv'
-    parking_file = file_path + '/htech/parking_line.csv'
-    revpark_file = file_path + '/htech/revpark.csv'
+    base_file = file_path + '/KC_base.csv'
+    global_file = file_path + '/kcity/track.csv'
+    parking_file = file_path + '/kcity/revpark1.csv'
+    revpark_file = file_path + '/kcity/revpark2.csv'
     revpark = Path(base_file, global_file, parking_file, revpark_file)
-    revpark.car_mode[1] = 'revpark'
+    
+    revpark.car_mode[12] = 'revpark'
 
     return revpark
 
@@ -180,7 +181,7 @@ def kcity():
     base_file = file_path + '/KC_base.csv'
     global_file = file_path + '/kcity/track.csv'
     parking_file = None
-    revpark_file = file_path + '/kcity/revpark1.csv'
+    revpark_file = file_path + '/kcity/revpark2.csv'
     kcity = Path(base_file, global_file, parking_file, revpark_file)
     kcity.car_mode[1] = 'delivery_A'
     kcity.car_mode[2] = 'static0'
@@ -212,5 +213,5 @@ def qualifier():
 
     return qualifier
 
-use_map = kcity()
+use_map = qualifier()
 start_index = 0

@@ -548,7 +548,7 @@ class Core(Node):
                     self.cmd_speed = 0.0
                     self.cmd_steer = 0.0
 
-                elif self.parking_stop_wp <= 11:
+                elif self.parking_stop_wp <= 7:
                     self.parking_time = time.time()
                     self.status = 'return'
 
@@ -556,17 +556,17 @@ class Core(Node):
                 self.cmd_speed = self.target_speed['parking']
                 self.gear = 0.0
 
-                if time.time() - self.parking_time < 3:
+                if time.time() - self.parking_time <= 10:
                     self.cmd_speed = 0.0
                     self.cmd_steer = 0.0
 
-                elif self.parking_stop_wp <=12:
+                elif self.parking_stop_wp <=9:
                     self.cmd_steer = 0.45
 
                 # elif self.parking_stop_wp >= 15 and abs(self.he_term) > 10:
                 #     self.cmd_steer = -0.45
 
-                elif self.parking_stop_wp >= 25:
+                elif self.parking_stop_wp >= 21:
                     self.status = 'complete'
 
             else:

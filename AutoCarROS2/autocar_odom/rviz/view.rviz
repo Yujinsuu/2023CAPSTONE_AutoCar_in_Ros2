@@ -52,9 +52,19 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        car:
+          Value: true
+        imu_link:
+          Value: true
         map:
           Value: true
         odom:
+          Value: true
+        odom_footprint:
+          Value: true
+        velodyne:
+          Value: true
+        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -64,14 +74,18 @@ Visualization Manager:
       Tree:
         map:
           odom:
-            {}
+            car:
+              velodyne:
+                {}
+            odom_footprint:
+              {}
       Update Interval: 0
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: GPS_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -83,7 +97,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -95,7 +109,7 @@ Visualization Manager:
       Enabled: true
       Name: car_steer
       Namespaces:
-        {}
+        arrows: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -107,7 +121,7 @@ Visualization Manager:
       Enabled: true
       Name: Global_Map
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -119,7 +133,7 @@ Visualization Manager:
       Enabled: true
       Name: Base_Map
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -131,7 +145,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -167,7 +181,7 @@ Visualization Manager:
         Value: /autocar/viz_path
       Value: true
     - Class: rviz_default_plugins/Marker
-      Enabled: true
+      Enabled: false
       Name: WallScan
       Namespaces:
         {}
@@ -177,7 +191,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/wall
-      Value: true
+      Value: false
     - Alpha: 100
       Buffer Length: 1
       Class: rviz_default_plugins/Path
@@ -206,7 +220,7 @@ Visualization Manager:
         Value: /rviz/trajectory
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: Obstacles
       Namespaces:
         {}
@@ -216,7 +230,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/obstacles
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -232,7 +246,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 129
+      Max Intensity: 255
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: PointCloud2
@@ -296,7 +310,7 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: Rubber_cone
       Namespaces:
         {}
@@ -306,12 +320,12 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/rubber_cone
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz_default_plugins/Path
       Color: 25; 255; 0
-      Enabled: true
+      Enabled: false
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
@@ -333,9 +347,9 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/track_path
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/Marker
-      Enabled: true
+      Enabled: false
       Name: Target_range
       Namespaces:
         {}
@@ -345,7 +359,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /rviz/target_range
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/Marker
       Enabled: false
       Name: Angle_range
@@ -427,9 +441,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: -999999
+      Max Intensity: 24
       Min Color: 0; 0; 0
-      Min Intensity: 999999
+      Min Intensity: 8
       Name: PointCloud
       Position Transformer: XYZ
       Selectable: true
@@ -488,16 +502,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 4247.43017578125
+      Distance: 57.411712646484375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 46.8411865234375
-        Y: 62.624977111816406
-        Z: -20.633535385131836
+        X: 40.796329498291016
+        Y: 93.92428588867188
+        Z: -20.58467674255371
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -506,7 +520,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 4.235394477844238
+      Yaw: 1.0372096300125122
     Saved: ~
 Window Geometry:
   Displays:

@@ -95,7 +95,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', -130)
+		self.declare_parameter('yaw_init', -121.42)
 		self.declare_parameter('yaw_offset_array', [])
 		self.declare_parameter('corr', False)
 		self.yaw_init = self.get_parameter('yaw_init').value
