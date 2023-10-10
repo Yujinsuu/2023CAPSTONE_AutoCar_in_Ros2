@@ -54,17 +54,9 @@ Visualization Manager:
         All Enabled: true
         car:
           Value: true
-        imu_link:
-          Value: true
         map:
           Value: true
         odom:
-          Value: true
-        odom_footprint:
-          Value: true
-        velodyne:
-          Value: true
-        world:
           Value: true
       Marker Scale: 0.800000011920929
       Name: TF
@@ -75,9 +67,6 @@ Visualization Manager:
         map:
           odom:
             car:
-              velodyne:
-                {}
-            odom_footprint:
               {}
       Update Interval: 0
       Value: true
@@ -97,7 +86,7 @@ Visualization Manager:
       Enabled: true
       Name: DR_CAR
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -145,7 +134,7 @@ Visualization Manager:
       Enabled: true
       Name: Path_Lane
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -268,7 +257,7 @@ Visualization Manager:
       Enabled: true
       Name: Cluster
       Namespaces:
-        adaptive_clustering_v1: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -502,16 +491,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 57.411712646484375
+      Distance: 68.40303039550781
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 40.796329498291016
-        Y: 93.92428588867188
-        Z: -20.58467674255371
+        X: -93.37553405761719
+        Y: 610.7958374023438
+        Z: -21.120973587036133
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
@@ -520,7 +509,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: odom
       Value: Orbit (rviz)
-      Yaw: 1.0372096300125122
+      Yaw: 4.095395565032959
     Saved: ~
 Window Geometry:
   Displays:

@@ -303,9 +303,9 @@ class Localization(Node):
 
     def dead_reckoning_cb(self, msg):
 
-        # if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link >= 5:
-        #     self.dr_mode = True
-        #     self.odom_state = 'Dead-Reckoning'
+        if ((self.cov1 > 0.2 or self.cov2 > 0.2) and self.link == 4) or self.link >= 5:
+            self.dr_mode = True
+            self.odom_state = 'Dead-Reckoning'
         # elif (self.cov1 < 0.05 or self.cov2 < 0.05):
         #     self.dr_mode = False
         #     self.odom_state = 'GPS-Odometry'

@@ -227,6 +227,8 @@ class odomPublisher(Node):
 
 	def mode_callback(self, msg):
 		self.mode = msg.mode
+
+		# 예선
 		if self.odom_state == 'GPS-Odometry':
 			if not self.last_corr:
 				if msg.link_num == 4:
@@ -245,12 +247,6 @@ class odomPublisher(Node):
 					if len(self.yaw_offset_array) > 20:
 						self.corr = True
 
-					# if self.corr and msg.mode == 'delivery_B':
-					# 	self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
-					# 	self.yaw_init -= np.rad2deg(self.yaw_offset_av)
-					# 	self.corr = False
-					# 	self.yaw_offset_array.clear()
-
 				elif msg.direction == 'Curve':
 					if self.corr == True and len(self.yaw_offset_array) > 20:
 						self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
@@ -258,7 +254,7 @@ class odomPublisher(Node):
 					self.corr = False
 					self.yaw_offset_array.clear()
 
-			if msg.link_num == 3:
+			if msg.link_num == 4:
 				self.last_corr = True
 
 		else:
@@ -268,6 +264,31 @@ class odomPublisher(Node):
 		if msg.mode == 'uturn':
 			self.yaw_correction()
 			self.time += 1
+
+		# 본선
+		# if msg.direction == 'Straight' and self.velocity > 12/3.6:
+		# 	if self.corr_mode:
+		# 		self.yaw_offset_array.append(self.yaw_offset)
+		# 	if len(self.yaw_offset_array) != 0:
+		# 		self.yaw_offset_av_print = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+		# 	if len(self.yaw_offset_array) > 20:
+		# 		self.corr = True
+
+		# elif msg.direction == 'Curve':
+		# 	if self.corr == True and len(self.yaw_offset_array) > 20:
+		# 		self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+		# 		self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+		# 	self.corr = False
+		# 	self.yaw_offset_array.clear()
+
+		# if not self.last_corr and msg.mode == 'delivery_A':
+		# 	if self.corr == True and len(self.yaw_offset_array) > 20:
+		# 		self.yaw_offset_av = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
+		# 		self.yaw_init -= np.rad2deg(self.yaw_offset_av)
+		# 	self.last_corr = True
+		# 	self.corr = False
+		# 	self.yaw_offset_array.clear()
+
 
 	def yaw_correction(self):
 

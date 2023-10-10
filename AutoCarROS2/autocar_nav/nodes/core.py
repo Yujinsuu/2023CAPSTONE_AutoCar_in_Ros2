@@ -663,7 +663,7 @@ class Core(Node):
 
 
         elif self.mode == 'finish':
-            # if self.waypoint >= 50:
+            if self.traffic_stop_wp <= 0:
                 self.status = 'complete'
                 self.cmd_speed = 0.0
                 self.cmd_steer = 0.0
