@@ -95,7 +95,7 @@ class odomPublisher(Node):
 		self.imu_data.header.frame_id = 'odom_footprint'
 
 
-		self.declare_parameter('yaw_init', -121.42)
+		self.declare_parameter('yaw_init', 0)
 		self.declare_parameter('yaw_offset_array', [])
 		self.declare_parameter('corr', False)
 		self.yaw_init = self.get_parameter('yaw_init').value
@@ -267,8 +267,8 @@ class odomPublisher(Node):
 
 		# 본선
 		# if msg.direction == 'Straight' and self.velocity > 12/3.6:
-		# 	if self.corr_mode:
-		# 		self.yaw_offset_array.append(self.yaw_offset)
+		# 	# if self.corr_mode:
+		# 	self.yaw_offset_array.append(self.yaw_offset)
 		# 	if len(self.yaw_offset_array) != 0:
 		# 		self.yaw_offset_av_print = sum(self.yaw_offset_array)/len(self.yaw_offset_array)
 		# 	if len(self.yaw_offset_array) > 20:

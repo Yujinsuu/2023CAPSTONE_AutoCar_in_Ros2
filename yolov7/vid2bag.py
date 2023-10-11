@@ -9,14 +9,14 @@ from cv_bridge import CvBridge
 class VideoPublisherNode(Node):
     def __init__(self):
         super().__init__('video_publisher_node')
-        self.publisher = self.create_publisher(Image, '/forward_camera', 10)
+        self.publisher = self.create_publisher(Image, '/side/image_raw', 10)
         self.timer = self.create_timer(0.05, self.publish_video)
         self.bridge = CvBridge()
-        self.cap = cv2.VideoCapture('data/drive.mp4')
+        self.cap = cv2.VideoCapture('data/delivery_A.mp4')
 
     def publish_video(self):
         if(self.cap.get(cv2.CAP_PROP_POS_FRAMES) == self.cap.get(cv2.CAP_PROP_FRAME_COUNT)):
-            self.cap.open('data/drive.mp4')
+            self.cap.open('data/delivery_A.mp4')
         ret, frame = self.cap.read()
         if not ret:
             self.cap.release()

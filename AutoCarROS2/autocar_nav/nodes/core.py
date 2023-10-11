@@ -173,7 +173,7 @@ class Core(Node):
                     self.sign_pose = msg.data[self.A_num + 4]
 
             if not self.A_check and self.mode == 'delivery_B':
-                self.sign_pose = msg.data[5]
+                self.sign_pose = msg.data[4]
 
             if self.sign_pose <= 100:
                 angle.data = 0.0
@@ -250,6 +250,9 @@ class Core(Node):
             #     self.cmd_speed = self.target_speed['curve']
             # else:
             #     self.brake = 0.0
+            if self.link_num == 3:
+                self.cmd_speed = self.target_speed['traffic']
+                
             if self.link_num == 7 and self.traffic_stop_wp <= 40:
                 self.cmd_speed = self.target_speed['curve']
 
@@ -340,10 +343,10 @@ class Core(Node):
                 if self.waypoint >= 20:
                     self.status = 'check'
             
-            if self.status == 'check':
+            elif self.status == 'check':
                 self.cmd_speed = self.target_speed['tunnel']
 
-                if 30 <= self.waypoint <= 50:
+                if 25 <= self.waypoint <= 57:
                     self.cmd_speed = self.target_speed['static0']
 
                 elif self.traffic_stop_wp < 30:
@@ -556,7 +559,7 @@ class Core(Node):
                 self.cmd_speed = self.target_speed['parking']
                 self.gear = 0.0
 
-                if time.time() - self.parking_time <= 10:
+                if time.time() - self.parking_time <= 11:
                     self.cmd_speed = 0.0
                     self.cmd_steer = 0.0
 
@@ -626,9 +629,9 @@ class Core(Node):
                     self.stop_wp = self.waypoint + int(self.distance)
                     self.status = 'detected'
 
-                if self.sign_pose >= 500:
-                    self.parking_time = time.time()
-                    self.status = 'stop'
+                # if self.sign_pose >= 500:
+                #     self.parking_time = time.time()
+                #     self.status = 'stop'
 
                 if self.traffic_stop_wp <= 70:
                     self.status = 'complete'

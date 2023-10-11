@@ -392,7 +392,7 @@ class LocalPathPlanner(Node):
         cx = dx[:-1]
         cy = dy[:-1]
 
-        if self.mode in ['dynamic', 'static1', 'tunnel', 'uturn'] or (self.mode == 'static0' and self.status == 'check'):
+        if self.mode in ['dynamic', 'static1', 'tunnel', 'uturn'] or (self.mode == 'static0' and self.status in ['check','avoid']):
             cx, cy, cyaw = self.determine_path(cx, cy, cyaw)
         if self.is_fail == True:
             return

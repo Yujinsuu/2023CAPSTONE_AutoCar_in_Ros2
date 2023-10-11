@@ -115,14 +115,14 @@ def boong():
     revpark_file = file_path + '/boong/boong_revpark.csv'
     boong = Path(base_file, global_file, parking_file, revpark_file)
     boong.car_mode[1] = 'delivery_A'
-    # boong.car_mode[3] = 'static0'
-    # boong.car_mode[5] = 'static1'
+    boong.car_mode[3] = 'static0'
+    boong.car_mode[5] = 'static1'
     # boong.car_mode[7] = 'delivery_A'
     # boong.car_mode[9] = 'delivery_B'
     # boong.car_mode[14] = 'revpark'
 
-    for i in range(len(boong.next_path)):
-        boong.next_path[i] = 'right'
+    # for i in range(len(boong.next_path)):
+    #     boong.next_path[i] = 'right'
 
     return boong
 
@@ -205,4 +205,4 @@ def qualifier():
     return qualifier
 
 use_map = kcity()
-start_index = 0
+start_index = 6
