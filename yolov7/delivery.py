@@ -71,8 +71,12 @@ class YOLOv7(Node):
         self.image_sub = self.create_subscription(Image, "/side/image_raw", self.image_cb, 10)
 
         self.img_width = IMG_SIZE
-        self.mode = 'None'
+        self.mode = 'delivery'
         self.sign = 0
+
+        self.B1 = []
+        self.B2 = []
+        self.B3 = []
 
         # [[A queue], [B1 queue], [B2 queue], ...]
         self.queue_list = [[-1 for i in range(QUEUE_SIZE)] for j in range(len(CLASS_MAP))]
@@ -154,15 +158,36 @@ class YOLOv7(Node):
                 xmean = (xmin + xmax) / 2
 
                 if xmean > 50 and xmean < self.img_width - 50:
-                    self.id_to_queue_list[id + 3].append(int(xmean))
                     if id in (0, 1, 2):
+                        self.id_to_queue_list[id + 3].append(int(xmean))
                         self.id_to_queue_list[0].append(id)
+                    
+                    if id == 3: 
+                        self.B1.append(int(xmean))
+                    elif id == 4: 
+                        self.B2.append(int(xmean))
+                    elif id == 5: 
+                        self.B3.append(int(xmean))
 
                 else:
                     for queue in self.queue_list:
                         if len(queue) == QUEUE_SIZE: # append -1 to an undetected classes
                             queue.append(-1)
-
+            
+            if len(self.B1):
+                bx = min(self.B1)
+                self.id_to_queue_list[6].append(bx)
+            if len(self.B2):
+                bx = min(self.B2)
+                self.id_to_queue_list[7].append(bx)
+            if len(self.B3):
+                bx = min(self.B3)
+                self.id_to_queue_list[8].append(bx)
+        
+            self.B1 = []
+            self.B2 = []
+            self.B3 = []
+        
         else:
             for queue in self.queue_list:
                 if len(queue) == QUEUE_SIZE: # append -1 to an undetected classes

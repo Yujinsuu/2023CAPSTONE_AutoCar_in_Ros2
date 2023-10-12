@@ -204,5 +204,5 @@ def qualifier():
 
     return qualifier
 
-use_map = kcity()
-start_index = 6
+use_map = qualifier()
+start_index = 0
