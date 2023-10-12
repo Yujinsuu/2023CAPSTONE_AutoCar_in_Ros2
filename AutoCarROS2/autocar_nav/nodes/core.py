@@ -581,7 +581,7 @@ class Core(Node):
                 if self.waypoint > 45:
                     self.status = 'check'
 
-                elif self.waypoint < 20:
+                elif self.waypoint < 25:
                     self.cmd_speed = self.target_speed['regular']
 
 
@@ -621,7 +621,7 @@ class Core(Node):
                 if self.waypoint > 45:
                     self.status = 'check'
 
-                elif self.waypoint < 20:
+                elif self.waypoint < 23:
                     self.cmd_speed = self.target_speed['regular']
 
             elif self.status == 'check':
